@@ -1,0 +1,23 @@
+.header {
+    background-color: #2E5765; /* Header background color */
+    padding: 10px 20px; /* Padding for the header */
+}
+
+.header .navbar-nav .nav-link {
+    color: white; /* Text color for nav links */
+}
+
+.header .navbar-brand {
+    color: white; /* Text color for brand/logo */
+    font-weight: bold; /* Make brand bold */
+}
+
+.logout-button {
+    background-color: #2E5765; /* Button color */
+    color: white; /* Button text color */
+    border: none; /* Remove border */
+}
+
+.logout-button:hover {
+    background-color: #0056b3; /* Darker shade on hover */
+}

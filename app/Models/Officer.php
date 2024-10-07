@@ -1,5 +1,6 @@
 <?php
 
+// app/Models/Officer.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,11 +10,13 @@ class Officer extends Model
 {
     use HasFactory;
 
-    // Define the fillable fields
+    protected $table = 'officers';
+
+    // Fields that are mass assignable
     protected $fillable = [
-        'name', 
-        'email', 
-        'rank', 
-        'phone_number'
+        'officer_email', 
+        'officer_pass', 
+        'officer_name', 
+        'officer_phoneNo'
     ];
 }

@@ -12,14 +12,12 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
-        \App\Http\Middleware\TrustProxies::class,
-        \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
+       
         \Illuminate\Routing\Middleware\SubstituteBindings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
-        \App\Http\Middleware\TrimStrings::class,
+      
         \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-        \App\Http\Middleware\SetCacheHeaders::class,
-        // Add other middleware here as needed
+    
     ];
 
     /**
@@ -30,8 +28,7 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $routeMiddleware = [
-        'auth' => \App\Http\Middleware\Authenticate::class,
-        'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+    
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         // Add your custom middleware here
     ];

@@ -14,12 +14,13 @@ class CreateCleanersTable extends Migration
     public function up()
     {
         Schema::create('cleaners', function (Blueprint $table) {
-            $table->id('cleaner_id'); // Primary key
-            $table->string('cleaner_name'); // Cleaner name
-            $table->string('cleaner_phoneNo'); // Cleaner phone number
-            $table->boolean('cleaner_available')->default(true); // Cleaner availability status
+            $table->id('cleaner_id'); // Primary key, automatically unsignedBigInteger
+            $table->string('cleaner_name');
+            $table->string('cleaner_phoneNo');
+            $table->string('status'); // Assuming this holds "available" or "unavailable"
             $table->timestamps();
         });
+        
     }
 
     /**
@@ -29,6 +30,6 @@ class CreateCleanersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('cleaners');
+        Schema::dropIfExists('cleaners'); // Drop the cleaners table if it exists
     }
 }
