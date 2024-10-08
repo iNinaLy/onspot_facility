@@ -1,5 +1,3 @@
-
-
 <x-app-layout>
     <style>
         /* Additional custom styles */
@@ -24,7 +22,7 @@
         .fade-in.visible {
             opacity: 1;
         }
-        
+
         body {
             background-color: #ffffff;
         }
@@ -82,30 +80,30 @@
         }
 
         .stats-card {
-        background-color: #f3f4f6; /* Light background */
-        padding: 20px;
-        border-radius: 10px;
-        text-align: center;
-        transition: transform 0.3s ease-in-out;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        width: 100%;
-        height: 150px; /* Consistent height */
-    }
+            background-color: #f3f4f6; /* Light background */
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            height: 150px; /* Consistent height */
+        }
 
-    .stats-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    }
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
 
-    .stats-number {
-        font-size: 2rem;
-        font-weight: bold;
-        color: #374151;
-    }
+        .stats-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #374151;
+        }
     </style>
 
     <div class="py-12">
@@ -153,61 +151,56 @@
                     </button>
 
                     <div class="grid grid-cols-2 gap-4 mt-4">
-                    <!-- Total Cleaners -->
-                    <div class="stats-card">
-                        <div class="text-lg font-semibold">Total Cleaners</div>
-                        <div class="stats-number" data-count="{{ $totalCleaners }}">0</div>
-                    </div>
+                        <!-- Total Cleaners -->
+                        <div class="stats-card">
+                            <div class="text-lg font-semibold">Total Cleaners</div>
+                            <div class="stats-number" data-count="{{ $totalCleaners }}">0</div>
+                        </div>
 
-                    <!-- Available Cleaners -->
-                    <div class="stats-card">
-                        <div class="text-lg font-semibold">Available Cleaners</div>
-                        <div class="stats-number" data-count="{{ $availableCleaners }}">0</div>
+                        <!-- Available Cleaners -->
+                        <div class="stats-card">
+                            <div class="text-lg font-semibold">Available Cleaners</div>
+                            <div class="stats-number" data-count="{{ $availableCleaners }}">0</div>
+                        </div>
                     </div>
-                </div>
                 </div>
             </div>
             <!-- End of Check Cleaners On Duty Section -->
 
-          
-        <!-- Add some margin between sections -->
-        <div class="mt-10">
-        <div class="flex justify-between items-center">
-            <h2 class="text-2xl font-bold text-gray-800">Recent Complaint</h2>
-            <a href="{{ route('supervisor.complaints.index') }}" class="text-blue-500 hover:underline text-sm">See all</a>
-        </div>
-        <div class="w-full max-w-xl mx-auto mt-4">
-            @if(isset($recentComplaint) && $recentComplaint)
-                <div class="bg-blue-200 rounded-lg shadow-lg p-8 flex flex-col items-start">
-                    <div class="flex justify-between items-center w-full">
-                        <div class="flex items-center space-x-5">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 text-blue-900">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 16.862A9.953 9.953 0 0122.5 12c0-5.523-4.477-10-10-10S2.5 6.477 2.5 12c0 2.61 1.007 4.98 2.638 6.862M15 12a3 3 0 11-6 0 3 3 0 016 0zm3 5.5a6.7 6.7 0 01-12 0" />
-                            </svg>
-                            <div>
-                                <div class="text-lg text-blue-800 font-semibold">{{ $recentComplaint->comp_location }}</div>
-                                <div class="text-xl text-blue-900 font-bold">{{ $recentComplaint->comp_desc }}</div>
+            <!-- Recent Complaints Section -->
+            <div class="mt-10">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-gray-800">Recent Complaint</h2>
+                    <a href="{{ route('supervisor.complaints.index') }}" class="text-blue-500 hover:underline text-sm">See all</a>
+                </div>
+                <div class="w-full max-w-xl mx-auto mt-4">
+                    @if(isset($recentComplaint) && $recentComplaint)
+                        <div class="bg-blue-200 rounded-lg shadow-lg p-8 flex flex-col items-start">
+                            <div class="flex justify-between items-center w-full">
+                                <div class="flex items-center space-x-5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 text-blue-900">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 16.862A9.953 9.953 0 0122.5 12c0-5.523-4.477-10-10-10S2.5 6.477 2.5 12c0 2.61 1.007 4.98 2.638 6.862M15 12a3 3 0 11-6 0 3 3 0 016 0zm3 5.5a6.7 6.7 0 01-12 0" />
+                                    </svg>
+                                    <div>
+                                        <div class="text-lg text-blue-800 font-semibold">{{ $recentComplaint->comp_location }}</div>
+                                        <div class="text-xl text-blue-900 font-bold">{{ $recentComplaint->comp_desc }}</div>
+                                    </div>
+                                </div>
+                                <div class="text-lg text-gray-600">{{ $recentComplaint->comp_time }}</div>
+                            </div>
+                            <div class="flex items-center text-lg text-blue-900 mt-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 3h-15m15 0a1.5 1.5 0 011.5 1.5v15a1.5 1.5 0 01-1.5 1.5h-15a1.5 1.5 0 01-1.5-1.5v-15A1.5 1.5 0 014.5 3m15 0V.75m-15 2.25V.75m13.5 9.75h-13.5m0 0a4.5 4.5 0 014.5-4.5h4.5a4.5 4.5 0 014.5 4.5m-13.5 0v9a4.5 4.5 0 004.5 4.5h4.5a4.5 4.5 0 004.5-4.5v-9" />
+                                </svg>
+                                <span class="font-medium">{{ $recentComplaint->comp_date }}</span>
                             </div>
                         </div>
-                        <div class="text-lg text-gray-600">{{ $recentComplaint->comp_time }}</div>
-                    </div>
-                    <div class="flex items-center text-lg text-blue-900 mt-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 3h-15m15 0a1.5 1.5 0 011.5 1.5v15a1.5 1.5 0 01-1.5 1.5h-15a1.5 1.5 0 01-1.5-1.5v-15A1.5 1.5 0 014.5 3m15 0V.75m-15 2.25V.75m13.5 9.75h-13.5m0 0a4.5 4.5 0 014.5-4.5h4.5a4.5 4.5 0 014.5 4.5m-13.5 0v9a4.5 4.5 0 004.5 4.5h4.5a4.5 4.5 0 004.5-4.5v-9" />
-                        </svg>
-                        <span class="font-medium">{{ $recentComplaint->comp_date }}</span>
-                    </div>
+                    @else
+                        <p class="text-gray-600 text-center mt-4">No recent complaints available.</p>
+                    @endif
                 </div>
-            @else
-                <p class="text-gray-600 text-center mt-4">No recent complaints available.</p>
-            @endif
-        </div>
-    </div>
+            </div>
 
-
-        </div>
-        <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Tasks Section -->
             <div class="mt-10">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Tasks</h2>
@@ -275,23 +268,23 @@
             observer.observe(element);
         });
 
-
+        // Count-up animation for stats numbers
         document.querySelectorAll('.stats-number').forEach(element => {
-        const countTo = parseInt(element.getAttribute('data-count'));
-        let count = 0;
-        const increment = Math.ceil(countTo / 100); // Adjust speed by changing this divisor
+            const countTo = parseInt(element.getAttribute('data-count'));
+            let count = 0;
+            const increment = Math.ceil(countTo / 100); // Adjust speed by changing this divisor
 
-        const updateCount = () => {
-            count += increment;
-            if (count >= countTo) {
-                element.innerText = countTo;
-            } else {
-                element.innerText = count;
-                requestAnimationFrame(updateCount);
-            }
-        };
+            const updateCount = () => {
+                count += increment;
+                if (count >= countTo) {
+                    element.innerText = countTo;
+                } else {
+                    element.innerText = count;
+                    requestAnimationFrame(updateCount);
+                }
+            };
 
-        updateCount();
-    });
+            updateCount();
+        });
     </script>
 </x-app-layout>
