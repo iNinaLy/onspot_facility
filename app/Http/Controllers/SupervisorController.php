@@ -18,14 +18,16 @@ class SupervisorController extends Controller
      */
     public function dashboard()
     {
-        // Retrieve the counts
+        // Retrieve total cleaners (adjust this query according to your logic)
         $totalCleaners = Cleaner::count();
+
+        // You can also retrieve other data like available cleaners or complaints here
         $availableCleaners = Cleaner::where('status', 'available')->count();
 
-        // Pass the data to the view
-        return view('Supervisor.dashboard', compact('totalCleaners', 'availableCleaners'));
+        // Pass the variables to the view
+        return view('supervisor.dashboard', compact('totalCleaners', 'availableCleaners'));
     }
-
+    
     public function history()
     {
         // Fetch complaints with status 'in progress' or 'completed', eager load cleaners
@@ -36,18 +38,23 @@ class SupervisorController extends Controller
 
         return view('supervisor.history', compact('complaints'));
     }
-
-    public function showComplaintsPage()
+    public function cleaners()
     {
-        // Fetch the most recent complaint based on comp_date and comp_time fields
-        $recentComplaint = Complaint::orderBy('comp_date', 'desc')
-                                    ->orderBy('comp_time', 'desc')
-                                    ->first();
+        // Fetch the total number of cleaners
+        $totalCleaners = Cleaner::count();
 
-        // Pass it to the view
-        return view('supervisor.complaints.index', compact('recentComplaint'));
+        // Fetch the count of available cleaners using the 'status' column
+        $availableCount = Cleaner::where('status', 'available')->count();
+
+        // Fetch the count of unavailable cleaners using the 'status' column
+        $unavailableCount = Cleaner::where('status', 'unavailable')->count();
+
+        // Fetch all cleaners to display in the view
+        $cleaners = Cleaner::all();
+
+        // Pass all necessary variables to the view
+        return view('supervisor.cleaners.index', compact('totalCleaners', 'availableCount', 'unavailableCount', 'cleaners'));
     }
-
     
 
 }

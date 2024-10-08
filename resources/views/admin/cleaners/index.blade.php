@@ -1,16 +1,24 @@
-@extends('layouts.admin')
+<!-- resources/views/supervisor/cleaners/index.blade.php -->
+@extends('layouts.supervisor')
 
 @section('content')
 <div class="container">
-    <h1>Manage Cleaners (Admin)</h1>
-    <a href="{{ route('admin.cleaners.create') }}" class="btn btn-primary">Add Cleaner</a>
+    <h1>Manage Cleaners (Supervisor)</h1>
+    
+    <!-- Display total, available, and unavailable cleaner counts -->
+    <div class="mt-4">
+        <p>Total Cleaners: {{ $totalCleaners }}</p>
+        <p>Available Cleaners: {{ $availableCount }}</p>
+        <p>Unavailable Cleaners: {{ $unavailableCount }}</p> <!-- Use the $unavailableCount variable -->
+    </div>
 
+    <!-- Table to list cleaners -->
     <table class="table table-bordered mt-4">
         <thead>
             <tr>
                 <th>Name</th>
                 <th>Phone Number</th>
-                <th>Availability</th>
+                <th>Status</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -20,19 +28,14 @@
                     <td>{{ $cleaner->cleaner_name }}</td>
                     <td>{{ $cleaner->cleaner_phoneNo }}</td>
                     <td>
-                        @if($cleaner->cleaner_available)
+                        @if($cleaner->status === 'available')
                             <span class="badge bg-success">Available</span>
                         @else
                             <span class="badge bg-danger">Unavailable</span>
                         @endif
                     </td>
                     <td>
-                        <a href="{{ route('admin.cleaners.edit', $cleaner->cleaner_id) }}" class="btn btn-warning btn-sm">Edit</a>
-                        <form action="{{ route('admin.cleaners.destroy', $cleaner->cleaner_id) }}" method="POST" style="display:inline-block;">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                        </form>
+                        <a href="{{ route('supervisor.cleaners.show', $cleaner->id) }}" class="btn btn-info btn-sm">View</a>
                     </td>
                 </tr>
             @endforeach

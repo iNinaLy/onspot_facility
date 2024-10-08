@@ -18,6 +18,7 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         <link href="{{ asset('css/header.css') }}" rel="stylesheet">
+
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-white-100 dark:bg-white-900">
@@ -34,7 +35,7 @@
 
             <!-- Page Content -->
             <main>
-                {{ $slot }} <!-- Use $slot for child content -->
+                {{ $slot }}
             </main>
         </div>
     </body>
