@@ -204,7 +204,8 @@
         </div>
         <p class="complaint-meta">Room, Floor</p>
         <p class="complaint-meta">{{ $complaint->comp_date }}</p>
-            <a href="{{ route('supervisor.complaints.show', $complaint->comp_id) }}" class="view-details-btn">View Details</a>
+        <a href="{{ route('supervisor.complaints.show', $complaint->id) }}" class="view-details-btn">View Details</a>
+
 
         </button>
     </div>

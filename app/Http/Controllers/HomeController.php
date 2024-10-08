@@ -8,6 +8,6 @@ class HomeController extends Controller
     public function index()
     {
         // Return the view for the home page
-        return view('home'); // Make sure this view file exists in resources/views/home.blade.php
+        return view('supervisor.dashboard'); // Make sure this view file exists in resources/views/home.blade.php
     }
 }

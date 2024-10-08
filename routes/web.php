@@ -10,6 +10,13 @@ use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\HomeController;
 
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\CleanersController;
+use App\Http\Controllers\Admin\OfficersController;
+use App\Http\Controllers\Admin\SupervisorsController;
+use App\Http\Controllers\Admin\ComplaintsController;
+use App\Http\Controllers\Admin\AdminHistoryController;
+
 Route::get('/', function () {
     return view('welcome');
 });
@@ -26,41 +33,26 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Admin routes
-Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+//Admin routes
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::resource('cleaners', AdminCleanerController::class)->names('admin.cleaners');
+    Route::resource('officers', AdminOfficerController::class)->names('admin.officers');
+    Route::resource('supervisors', AdminSupervisorController::class)->names('admin.supervisors');
+    Route::resource('complaints', AdminComplaintController::class)->names('admin.complaints');
 });
 
 
-//Supervisor Routes
+// Supervisor Routes
 Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->group(function () {
     Route::get('/dashboard', [SupervisorController::class, 'dashboard'])->name('supervisor.dashboard');
-    
-    // Complaints routes
+    Route::get('/cleaners', [SupervisorController::class, 'cleaners'])->name('supervisor.cleaners');
     Route::get('/complaints', [ComplaintController::class, 'index'])->name('supervisor.complaints.index');
     Route::get('/complaints/{id}', [ComplaintController::class, 'show'])->name('supervisor.complaints.show');
-    Route::get('/supervisor/complaints/{id}', [ComplaintController::class, 'show'])->name('supervisor.complaints.show');
-    Route::get('/supervisor/complaints', [ComplaintController::class, 'index'])->name('supervisor.complaints.index');
-     // GET route to display the assign cleaner form
-    Route::get('/supervisor/complaints/{id}/assign-cleaner', [ComplaintController::class, 'showAssignCleanerForm'])->name('assign.cleaner.form');
-
-    // POST route to assign cleaner (submit form)
-    Route::post('/supervisor/complaints/{id}/assign-cleaner', [ComplaintController::class, 'assignCleaner'])->name('assign.cleaner');
-
-
-    // Cleaners routes
-    Route::get('/cleaners', [CleanerController::class, 'index'])->name('supervisor.cleaners');
-    Route::get('/cleaners/{id}', [CleanerController::class, 'show'])->name('supervisor.cleaners.show');
-    Route::post('/cleaners/{id}/status', [CleanerController::class, 'updateStatus'])->name('supervisor.cleaners.updateStatus');
-    Route::post('/complaints/{id}/assign-cleaner', [ComplaintController::class, 'assignCleaner'])->name('assign.cleaner');
-
-    // History
     Route::get('/history', [SupervisorController::class, 'history'])->name('supervisor.history');
 });
 
-
-
-// Optional: If you need a public route to access all cleaners (not under supervisor's control)
+// Optional: If you need a public route to access all cleaners (not under supervisor's control) 
 Route::get('/cleaners', [CleanerController::class, 'index'])->name('cleaners');
 
 // Cleaner
