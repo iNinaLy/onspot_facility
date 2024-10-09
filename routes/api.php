@@ -8,6 +8,7 @@ use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskCleanerController;
+use App\Http\Controllers\AuthController;
 
 // Cleaner Routes
 Route::get('/cleaners', [CleanerController::class, 'index']);
@@ -63,6 +64,10 @@ Route::post('/tasks/assign-cleaner', [TaskCleanerController::class, 'assignClean
 Route::post('/tasks/remove-cleaner', [TaskCleanerController::class, 'removeCleanerFromTask']);
 Route::post('/tasks', [TaskController::class, 'store']);
 
+
+//authentication
+Route::post('/login-cleaner', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
 Route::get('/test', function () {
     return response()->json(['message' => 'API is working!']);

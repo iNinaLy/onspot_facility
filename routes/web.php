@@ -15,7 +15,7 @@ use App\Http\Controllers\Admin\CleanersController;
 use App\Http\Controllers\Admin\OfficersController;
 use App\Http\Controllers\Admin\SupervisorsController;
 use App\Http\Controllers\Admin\ComplaintsController;
-use App\Http\Controllers\Admin\AdminHistoryController;
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -36,10 +36,6 @@ Route::middleware('auth')->group(function () {
 //Admin routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-    Route::resource('cleaners', AdminCleanerController::class)->names('admin.cleaners');
-    Route::resource('officers', AdminOfficerController::class)->names('admin.officers');
-    Route::resource('supervisors', AdminSupervisorController::class)->names('admin.supervisors');
-    Route::resource('complaints', AdminComplaintController::class)->names('admin.complaints');
 });
 
 

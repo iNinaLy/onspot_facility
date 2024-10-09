@@ -14,20 +14,22 @@ class Cleaner extends Model
 
     // Define the fillable fields
     protected $fillable = [
-        'cleaner_id',
+        'id',
         'cleaner_name', 
         'cleaner_phoneNo', 
-        'cleaner_available'
+        'status',
+        'username',
+        'password',
     ];
 
     public function complaints()
     {
-        return $this->belongsToMany(Complaint::class, 'complaint_cleaner', 'cleaner_id', 'comp_id');
+        return $this->belongsToMany(Complaint::class, 'complaint_cleaner', 'id', 'comp_id');
     }
 
     public function tasks()
     {
-        return $this->belongsToMany(Task::class, 'task_cleaner', 'cleaner_id', 'task_id');
+        return $this->belongsToMany(Task::class, 'task_cleaner', 'id', 'task_id');
     }
 
     protected $table = 'cleaners';

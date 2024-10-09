@@ -1,10 +1,8 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
 use App\Models\Task;
-use App\Models\Complaint;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
@@ -20,19 +18,31 @@ class TaskController extends Controller
     // Store a new task
     public function store(Request $request)
     {
-        // Validate incoming data
-        $validatedData = $request->validate([
-            'no_of_cleaner' => 'required|integer',
-            'comp_id' => 'required|exists:complaints,comp_id',
-            's_id' => 'required|exists:supervisors,s_id',
-        ]);
+        try {
+            // Validate incoming data
+            $validatedData = $request->validate([
+                'no_of_cleaner' => 'required|integer',
+                'comp_id' => 'required|exists:complaints,comp_id',
+                's_id' => 'required|exists:supervisors,s_id',
+            ]);
+        
+            // Create a new task
+            $task = Task::create($validatedData);
     
-        // Create a new task
-        $task = Task::create($validatedData);
+            // Log the task creation for debugging
+            \Log::info('Task created successfully:', ['task' => $task]);
     
-        // Return the newly created task with status 201 Created
-        return response()->json($task, 201);
+            // Return the newly created task with status 201 Created
+            return response()->json($task, 201);
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('Error creating task: ' . $e->getMessage());
+    
+            // Return the actual error message for debugging
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
+    
 
     // Show a single task by ID
     public function show($id)
