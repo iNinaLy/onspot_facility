@@ -45,15 +45,14 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-<<<<<<< HEAD
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-=======
+
             'throttle:api', // Rate limiting for API routes
             \Illuminate\Routing\Middleware\SubstituteBindings::class, // Enables route model binding
             // You can add more middleware specific to API here
->>>>>>> 3e5061f (commit onspot)
+
         ],
     ];
 }

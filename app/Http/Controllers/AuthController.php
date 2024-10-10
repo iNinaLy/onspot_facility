@@ -3,19 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
-
-class AuthController extends Controller
-{
-    //
-
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash; // Import Hash for password checking
 use App\Models\User;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+  public function login(Request $request)
     {
         // Validation logic for cleaner login
         $request->validate([
@@ -64,5 +58,5 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'Logout failed.'], 500);
     }
-3e5061f (commit onspot)
+
 }

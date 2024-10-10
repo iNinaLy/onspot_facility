@@ -42,7 +42,6 @@ Route::delete('/complaints/{id}', [ComplaintController::class, 'destroy']);
 
 //attendance
 Route::get('/attendance', [AttendanceController::class, 'index']);
-Route::post('/attendance', [AttendanceController::class, 'store']);
 Route::get('/attendance/{id}', [AttendanceController::class, 'show']);
 Route::put('/attendance/{id}', [AttendanceController::class, 'update']);
 Route::delete('/attendance/{id}', [AttendanceController::class, 'destroy']);
@@ -68,6 +67,10 @@ Route::post('/tasks', [TaskController::class, 'store']);
 //authentication
 Route::post('/login-cleaner', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+
+//attendance
+Route::post('/attendance', [AttendanceController::class, 'markAttendance']);
+
 
 Route::get('/test', function () {
     return response()->json(['message' => 'API is working!']);
