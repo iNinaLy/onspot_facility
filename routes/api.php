@@ -9,6 +9,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskCleanerController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
 
 // Cleaner Routes
 Route::get('/cleaners', [CleanerController::class, 'index']);
@@ -63,11 +64,17 @@ Route::post('/tasks/assign-cleaner', [TaskCleanerController::class, 'assignClean
 Route::post('/tasks/remove-cleaner', [TaskCleanerController::class, 'removeCleanerFromTask']);
 Route::post('/tasks', [TaskController::class, 'store']);
 
+// Authentication routes
+Route::post('/flutterlogin', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/flutterlogout', [AuthController::class, 'logout']);
+});
 
-//authentication
-Route::post('/login-cleaner', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
-
+// User management routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/flutterprofile', [UserController::class, 'profile']);
+    Route::put('/flutteruser', [UserController::class, 'update']);
+});
 //attendance
 Route::post('/attendance', [AttendanceController::class, 'markAttendance']);
 
