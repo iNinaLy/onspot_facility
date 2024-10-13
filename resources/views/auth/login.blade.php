@@ -54,6 +54,12 @@
         .btn-primary:hover {
             background-color:darkslategrey; 
         }
+
+        /* Error Message Styling */
+        .error-message {
+            color: red;
+            font-size: 0.875rem;
+        }
     </style>
 </head>
 <body class="font-sans text-gray-900 antialiased">
@@ -67,23 +73,28 @@
                 <div class="col-md-7 col-lg-5 col-xl-5 offset-xl-1">
                     <div class="card p-4"> <!-- Card styling added -->
                         <form method="POST" action="{{ route('login') }}">
-                            @csrf
+                            @csrf  <!-- Ensure the CSRF token is included for protection -->
 
                             <!-- Email input -->
                             <div data-mdb-input-init class="form-outline mb-4">
-                                <input type="email" id="email" class="form-control form-control-lg" name="email" required autofocus autocomplete="username" />
+                                <input type="email" id="email" class="form-control form-control-lg" name="email" required autofocus autocomplete="username" value="{{ old('email') }}" />
                                 <label class="form-label" for="email">Email address</label>
-                                <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                                @error('email')
+                                    <span class="error-message">{{ $message }}</span>
+                                @enderror
                             </div>
 
                             <!-- Password input -->
                             <div data-mdb-input-init class="form-outline mb-4">
                                 <input type="password" id="password" class="form-control form-control-lg" name="password" required autocomplete="current-password" />
                                 <label class="form-label" for="password">Password</label>
-                                <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                                @error('password')
+                                    <span class="error-message">{{ $message }}</span>
+                                @enderror
                             </div>
 
-                            <div class="d-flex justify-content-around align-items-center mb-4">
+                            <!-- Remember Me Checkbox and Forgot Password -->
+                            <div class="d-flex justify-content-between align-items-center mb-4">
                                 <!-- Checkbox -->
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="remember_me" name="remember">
@@ -93,9 +104,14 @@
                             </div>
 
                             <!-- Submit button -->
-                            <button type="submit" class="btn btn-primary btn-lg btn-block">Sign in</button>
+                            <button type="submit" class="btn btn-primary btn-lg btn-block w-100">Sign in</button>
 
-                            
+                            <!-- Server-Side Error Handling -->
+                            @if(session('error'))
+                                <div class="alert alert-danger mt-3" role="alert">
+                                    {{ session('error') }}
+                                </div>
+                            @endif
                         </form>
                     </div>
                 </div>

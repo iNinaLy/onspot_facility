@@ -8,31 +8,38 @@
     <title>{{ config('app.name', 'Admin Dashboard') }}</title>
     <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}"> <!-- Link to your custom CSS if needed -->
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.2.4/dist/cdn.min.js"></script>
     <style>
-        /* Add your custom styles here if necessary */
-        /* Example sidebar styling */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f4f7;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .wrapper {
+            display: flex;
+            transition: all 0.5s ease-in-out;
+        }
+
+        .main-content {
+            margin-left: 250px; /* Sidebar width */
+            padding: 20px;
+            flex-grow: 1;
+        }
     </style>
 </head>
 <body>
     <div class="wrapper">
-        <!-- Include Sidebar -->
         @include('layouts.partials.admin-sidebar')
 
-        <!-- Main Content -->
-        <div class="main-content p-4">
+        <div class="main-content">
             @yield('content')
         </div>
     </div>
 
-    <script>
-        // Script to toggle sidebar expansion
-        const hamBurger = document.querySelector(".toggle-btn");
-        hamBurger.addEventListener("click", function () {
-            document.querySelector("#sidebar").classList.toggle("expand");
-        });
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

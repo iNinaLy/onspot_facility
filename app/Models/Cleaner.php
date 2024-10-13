@@ -22,13 +22,16 @@ class Cleaner extends Model
 
     public function complaints()
     {
-        return $this->belongsToMany(Complaint::class, 'complaint_cleaner', 'cleaner_id', 'comp_id');
+        return $this->belongsToMany(Complaint::class, 'complaint_cleaner', 'cleaner_id', 'comp_id')
+                    ->withPivot('no_of_cleaners', 'assigned_by', 'assigned_date')
+                    ->withTimestamps();
     }
-
+  
     public function tasks()
     {
-        return $this->belongsToMany(Task::class, 'task_cleaner', 'cleaner_id', 'task_id');
+        return $this->hasMany(Task::class);
     }
+
 
     protected $table = 'cleaners';
 }

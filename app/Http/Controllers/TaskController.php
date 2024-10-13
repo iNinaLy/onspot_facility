@@ -12,9 +12,11 @@ class TaskController extends Controller
     // List all tasks
     public function index()
     {
-        // Retrieve all tasks from the database
-        $tasks = Task::all();
-        return response()->json($tasks, 200); // Return tasks with status 200 OK
+        // Fetch tasks with related complaint data
+        $tasks = Task::with('complaint')->select('tasks.*')->get();
+
+        // Return the tasks to the view
+        return view('tasks.index', compact('tasks'));
     }
 
     // Store a new task

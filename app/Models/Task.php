@@ -24,11 +24,11 @@ class Task extends Model
     protected $table = 'tasks'; // Specify your tasks table name
 
     // Define a relationship: many tasks belong to one complaint
-    public function complaint()
-    {
-        return $this->belongsTo(Complaint::class, 'comp_id', 'comp_id'); 
-        // 'comp_id' is the foreign key in tasks, 'comp_id' is the primary key in complaints
+
+    public function complaint() {
+        return $this->belongsTo(Complaint::class, 'comp_id');
     }
+    
 }
 
 

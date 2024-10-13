@@ -15,4 +15,10 @@ class Supervisor extends Model
     protected $fillable = [
         's_email', 's_pass', 's_name', 's_phoneNo'
     ];
+
+    public function cleaners()
+    {
+        return $this->hasMany(Cleaner::class);
+    }
+
 }
