@@ -19,7 +19,7 @@ class AttendanceController extends Controller
         // Validate the request data
         $request->validate([
             'status' => 'required|string|in:present,absent',
-            'cleaner_id' => 'required|exists:cleaners,id', // Ensure cleaner_id exists in the cleaners table
+            'id' => 'required|exists:cleaners,id', // Ensure cleaner_id exists in the cleaners table
         ]);
     
         try {
@@ -31,7 +31,7 @@ class AttendanceController extends Controller
             $attendance = Attendance::updateOrCreate(
                 [
                     'attend_date' => $attend_date,
-                    'cleaner_id' => $request->cleaner_id
+                    'cleaner_id' => $request->id
                 ],
                 [
                     'attend_in' => $attend_in,
@@ -44,9 +44,13 @@ class AttendanceController extends Controller
                 'attendance' => $attendance,
             ], 200);
         } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('Error marking attendance: ' . $e->getMessage());
             return response()->json(['message' => 'Error marking attendance.'], 500);
         }
     }
+    
+    
     
 
     // Display a specific attendance record

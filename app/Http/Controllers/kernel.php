@@ -15,7 +15,6 @@ class Kernel extends HttpKernel
         // Middleware applied to all requests
         \Illuminate\Routing\Middleware\SubstituteBindings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
-        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
         // You can add more global middleware here if necessary
     ];
 
@@ -51,7 +50,10 @@ class Kernel extends HttpKernel
 
             'throttle:api', // Rate limiting for API routes
             \Illuminate\Routing\Middleware\SubstituteBindings::class, // Enables route model binding
-            // You can add more middleware specific to API here
+
+            \Fruitcake\Cors\HandleCors::class,
+            'throttle:api',
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
 
         ],
     ];
