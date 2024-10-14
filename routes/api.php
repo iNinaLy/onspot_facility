@@ -55,9 +55,6 @@ Route::get('/tasks/{id}', [TaskController::class, 'show']);
 Route::put('/tasks/{id}', [TaskController::class, 'update']);
 Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
 
-
-
-
 // TaskCleaner 
 Route::get('/tasks/{id}/cleaners', [TaskCleanerController::class, 'showCleanersForTask']);
 Route::post('/tasks/assign-cleaner', [TaskCleanerController::class, 'assignCleanerToTask']);
@@ -66,6 +63,7 @@ Route::post('/tasks', [TaskController::class, 'store']);
 
 // Authentication routes
 Route::post('/flutterlogin', [AuthController::class, 'login']);
+Route::post('/flutterregister', [AuthController::class, 'register']); 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/flutterlogout', [AuthController::class, 'logout']);
 });
@@ -75,10 +73,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/flutterprofile', [UserController::class, 'profile']);
     Route::put('/flutteruser', [UserController::class, 'update']);
 });
+
 //attendance
 Route::post('/attendance', [AttendanceController::class, 'markAttendance']);
 
 
 Route::get('/test', function () {
-    return response()->json(['message' => 'API is working!']);
+    return response()->json(['message' => 'API is working']);
 });

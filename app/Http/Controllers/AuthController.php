@@ -8,6 +8,33 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    public function register(Request $request)
+    {
+        // Validate the incoming registration data
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        // Create the user
+        $user = \App\Models\User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => bcrypt($request->password), // Hash the password
+        ]);
+
+        // Generate a token for the newly registered user
+        $token = $user->createToken('YourAppName')->plainTextToken;
+
+        // Return the user and the token in the response
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+        ], 201);
+    }
+
+    //login method
     public function login(Request $request)
     {
         // Validate that 'login' and 'password' fields are present

@@ -12,6 +12,7 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
+        \Fruitcake\Cors\HandleCors::class,
         // Middleware applied to all requests
         \Illuminate\Routing\Middleware\SubstituteBindings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
@@ -48,11 +49,6 @@ class Kernel extends HttpKernel
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-
-            'throttle:api', // Rate limiting for API routes
-            \Illuminate\Routing\Middleware\SubstituteBindings::class, // Enables route model binding
-            // You can add more middleware specific to API here
-
         ],
     ];
 }
