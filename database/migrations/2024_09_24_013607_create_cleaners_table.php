@@ -14,12 +14,15 @@ class CreateCleanersTable extends Migration
     public function up()
     {
         Schema::create('cleaners', function (Blueprint $table) {
-            $table->id('cleaner_id'); // Primary key, automatically unsignedBigInteger
+            $table->id();
             $table->string('cleaner_name');
             $table->string('cleaner_phoneNo');
-            $table->string('status'); // Assuming this holds "available" or "unavailable"
+            $table->string('username')->unique(); // Username must be unique and not nullable
+            $table->string('password');
+            $table->string('status')->default('active'); // Setting default value for status
             $table->timestamps();
         });
+        
         
     }
 

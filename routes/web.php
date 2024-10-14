@@ -9,13 +9,9 @@ use App\Http\Controllers\CleanerController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\UserController;
 
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\CleanersController;
-use App\Http\Controllers\Admin\OfficersController;
-use App\Http\Controllers\Admin\SupervisorsController;
-use App\Http\Controllers\Admin\ComplaintsController;
-use App\Http\Controllers\Admin\AdminHistoryController;
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -50,6 +46,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 
     // Officers
     Route::get('/officers', [AdminController::class, 'officers'])->name('admin.officers');
+    Route::get('/officers/search', [AdminController::class, 'searchOfficers']);
     Route::get('/officers/create', [AdminController::class, 'createOfficer'])->name('admin.officers.create');
     Route::post('/officers', [AdminController::class, 'storeOfficer'])->name('admin.officers.store');
     Route::get('/officers/{officer}', [AdminController::class, 'showOfficer'])->name('admin.officers.show');
@@ -65,6 +62,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/supervisors/{supervisor}/edit', [AdminController::class, 'editSupervisor'])->name('admin.supervisors.edit');
     Route::put('/supervisors/{supervisor}', [AdminController::class, 'updateSupervisor'])->name('admin.supervisors.update');
     Route::delete('/supervisors/{supervisor}', [AdminController::class, 'destroySupervisor'])->name('admin.supervisors.destroy');
+
+    // Users
+    // Display the list of all users
+    Route::get('/users', [UserController::class, 'create'])->name('admin.users.create');
+    Route::get('/users/create', [UserController::class, 'create'])->name('admin.users.create');
+    Route::post('/users', [UserController::class, 'store'])->name('admin.users.store');
 
     // Complaints
     Route::get('/complaints', [AdminController::class, 'complaints'])->name('admin.complaints');

@@ -1,4 +1,3 @@
-<!-- resources/views/admin/dashboard.blade.php -->
 @extends('layouts.admin')
 
 @section('content')
@@ -113,6 +112,13 @@
         color: #f5f5f5;
         border-color: #555;
     }
+    .header-image {
+        width: 100%;
+        height: 20rem;
+        margin-bottom: 20px;
+        border-radius: 25px;
+      
+    }
 </style>
 
 <div class="main-content-wrapper fade-in">
@@ -120,10 +126,12 @@
     <div class="header d-flex justify-content-between align-items-center mb-4 fixed-top" style="background-color: #fff; padding: 1rem; z-index: 1000; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
         <h1 class="h4 text-dark">Dashboard</h1>
         <div class="profile d-flex align-items-center">
-            
             <button id="darkModeToggle" class="btn btn-sm btn-outline-secondary ml-3">Dark Mode</button>
         </div>
     </div>
+
+    <!-- Image Section -->
+    <img src="/images/dashboard.png" alt="Dashboard Image" class="header-image">
 
     <div class="row">
         <!-- Left Column: Key Metrics -->
