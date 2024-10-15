@@ -35,10 +35,11 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast to native types.
      *
-     * @return array
+     * @var array
      */
+<<<<<<< HEAD
     protected function casts(): array
     {
         return [
@@ -61,4 +62,10 @@ class User extends Authenticatable
     {
         return $this->role === 'officer';
     }
+=======
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
+>>>>>>> origin/of
 }
