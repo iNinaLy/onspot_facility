@@ -53,21 +53,21 @@ class AuthController extends Controller
         ];
     
         // Attempt to log the user in
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            // Generate token for the authenticated user
-            $token = $user->createToken('YourAppName')->plainTextToken;
-    
+        if (!Auth::attempt($credentials)) {
+            // Return a 401 Unauthorized response when login fails
             return response()->json([
-                'user' => $user,
-                'token' => $token,
-            ]);
+                'message' => 'Invalid login credentials.',
+            ], 401);
         }
     
-        // If login fails, throw validation error
-        throw ValidationException::withMessages([
-            'login' => ['The provided credentials are incorrect.'],
-        ]);
+        $user = Auth::user();
+        // Generate token for the authenticated user
+        $token = $user->createToken('YourAppName')->plainTextToken;
+    
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+        ], 200);  // Status 200 OK for successful login
     }
 
     // Logout method
