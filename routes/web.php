@@ -12,15 +12,12 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\UserController;
 
 
-<<<<<<< HEAD
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\CleanersController;
 use App\Http\Controllers\Admin\OfficersController;
 use App\Http\Controllers\Admin\SupervisorsController;
 use App\Http\Controllers\Admin\ComplaintsController;
 
-=======
->>>>>>> origin/of
 
 Route::get('/', function () {
     return view('welcome');
@@ -43,8 +40,6 @@ Route::middleware('auth')->group(function () {
 // Admin routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-<<<<<<< HEAD
-=======
 
     // Cleaners
     Route::get('/cleaners', [AdminController::class, 'cleaners'])->name('admin.cleaners');
@@ -88,7 +83,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/complaints/{complaint}/edit', [AdminController::class, 'editComplaint'])->name('admin.complaints.edit');
     Route::put('/complaints/{complaint}', [AdminController::class, 'updateComplaint'])->name('admin.complaints.update');
     Route::delete('/complaints/{complaint}', [AdminController::class, 'destroyComplaint'])->name('admin.complaints.destroy');
->>>>>>> origin/of
 });
 
 

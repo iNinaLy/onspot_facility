@@ -2,22 +2,16 @@
 
 namespace App\Http\Controllers;
 
-<<<<<<< HEAD
-=======
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use App\Models\User;
 use App\Models\Supervisor;
 use App\Models\Officer;
 use App\Models\Cleaner;
->>>>>>> origin/of
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-<<<<<<< HEAD
-    //
-=======
     public function index()
     {
         $users = User::all();  // Retrieve all users
@@ -101,5 +95,4 @@ class UserController extends Controller
                 break;
         }
     }
->>>>>>> origin/of
 }

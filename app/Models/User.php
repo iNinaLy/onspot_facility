@@ -39,7 +39,6 @@ class User extends Authenticatable
      *
      * @var array
      */
-<<<<<<< HEAD
     protected function casts(): array
     {
         return [
@@ -62,10 +61,4 @@ class User extends Authenticatable
     {
         return $this->role === 'officer';
     }
-=======
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-    ];
->>>>>>> origin/of
 }
