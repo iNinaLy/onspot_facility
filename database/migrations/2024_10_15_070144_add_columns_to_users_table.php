@@ -1,0 +1,29 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up()
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('username')->nullable()->after('id');
+            $table->string('phone_no')->nullable()->after('password');
+            $table->enum('role', ['admin', 'supervisor', 'user', 'officer'])->default('user')->after('phone_no');
+            // Add other columns as necessary
+        });
+    }
+    
+    public function down()
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn(['username', 'phone_no', 'role']);
+        });
+    }
+    
+};
