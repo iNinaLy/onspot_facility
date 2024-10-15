@@ -104,4 +104,19 @@ class OfficerController extends Controller
 
         return redirect()->route('admin.officers')->with('success', 'Officer deleted successfully.');
     }
+
+    public function search(Request $request)
+    {
+        $query = $request->get('query');
+        
+        // Search officers by name, email, or phone number
+        $officers = Officer::where('officer_name', 'LIKE', "%{$query}%")
+            ->orWhere('officer_email', 'LIKE', "%{$query}%")
+            ->orWhere('officer_phoneNo', 'LIKE', "%{$query}%")
+            ->get();
+
+        return response()->json([
+            'officers' => $officers
+        ]);
+    }
 }

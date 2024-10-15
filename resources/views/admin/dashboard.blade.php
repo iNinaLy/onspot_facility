@@ -6,36 +6,46 @@
 <style>
     body {
         font-family: 'Roboto', sans-serif;
+        background: linear-gradient(252deg, #ccdfe1, #ccdfe1);
+        color: #0d0d0d;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
+
     .card {
         border: none;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        border-radius: 10px;
+        border-radius: 20px; /* Softer rounded corners */
+        background-color: rgba(255, 255, 255, 0.8); /* Slight transparency */
     }
+
     .key-metric {
         font-size: 0.9rem;
         font-weight: 700;
-        color: #6c757d;
+        color: #333;
     }
+
     .metric-value {
         font-size: 1.6rem;
         font-weight: bold;
         color: #333;
     }
+
     /* Dark mode styling */
     .dark-mode {
         background-color: #1d1f21;
         color: #f5f5f5;
     }
+
     .dark-mode .card {
-        background-color: #333;
+        background-color: rgba(50, 50, 50, 0.8);
         color: #f5f5f5;
     }
+
     .dark-mode .btn-outline-secondary {
         color: #f5f5f5;
         border-color: #f5f5f5;
     }
+
     /* Style adjustments for the donut chart */
     .chart-container {
         position: relative;
@@ -43,96 +53,120 @@
         max-width: 250px;
         margin: 0 auto;
     }
+
     .chart-legend {
         display: flex;
         justify-content: center;
         margin-top: 15px;
         font-size: 0.85rem;
     }
+
     .chart-legend div {
         margin-right: 15px;
     }
+
     .profile img {
         width: 40px;
         height: 40px;
         border-radius: 50%;
     }
+
     .profile span {
         font-weight: bold;
         color: #333;
         margin-left: 10px;
     }
+
     .dark-mode .profile span {
         color: #f5f5f5;
     }
+
     .header {
-        border-bottom: 1px solid #eaeaea;
+        background-color: rgb(255 255 255 / 70%);
+        border-bottom: 1px solid #ffffff;
+        border-radius: 16px;
+        border: 10px;
         padding: 1rem;
         margin-bottom: 2rem;
-        background-color: #fff;
         position: sticky;
         top: 0;
         z-index: 1000;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
+
     .header h1 {
         font-size: 1.5rem;
         font-weight: 700;
         color: #333;
     }
+
     .header .profile {
         display: flex;
         align-items: center;
     }
+
     .header .profile button {
         margin-left: 1rem;
         padding: 0.25rem 0.75rem;
         font-size: 0.875rem;
         border-radius: 20px;
+        background: linear-gradient(135deg, #a6c1ee, #fbc2eb); /* Gradient button */
+        border: none;
+        color: #fff;
     }
+
+    .header .profile button:hover {
+        opacity: 0.8;
+    }
+
     /* Recent Complaints Table */
     .recent-complaints-table {
         width: 100%;
         border-collapse: collapse;
+        background-color: rgba(255, 255, 255, 0.9);
     }
+
     .recent-complaints-table th, .recent-complaints-table td {
         padding: 0.75rem;
         text-align: left;
         border-bottom: 1px solid #eee;
     }
+
     .recent-complaints-table th {
         font-weight: 700;
         color: #333;
     }
+
     .recent-complaints-table td {
         font-weight: 500;
         color: #666;
     }
+
     .dark-mode .recent-complaints-table th, .dark-mode .recent-complaints-table td {
         color: #f5f5f5;
         border-color: #555;
     }
+
     .header-image {
-        width: 100%;
+        width: 80%;
         height: 20rem;
         margin-bottom: 20px;
         border-radius: 25px;
-      
+        margin-left: 9rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
 </style>
 
 <div class="main-content-wrapper fade-in">
     <!-- Header Section -->
-    <div class="header d-flex justify-content-between align-items-center mb-4 fixed-top" style="background-color: #fff; padding: 1rem; z-index: 1000; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+    <div class="header d-flex justify-content-between align-items-center mb-4 fixed-top">
         <h1 class="h4 text-dark">Dashboard</h1>
         <div class="profile d-flex align-items-center">
-            <button id="darkModeToggle" class="btn btn-sm btn-outline-secondary ml-3">Dark Mode</button>
+            <button id="darkModeToggle" class="btn btn-sm">Dark Mode</button>
         </div>
     </div>
 
-    <!-- Image Section -->
-    <img src="/images/dashboard.png" alt="Dashboard Image" class="header-image">
-
+    
     <div class="row">
         <!-- Left Column: Key Metrics -->
         <div class="col-lg-4">
@@ -144,7 +178,7 @@
             </div>
             <div class="card mb-4">
                 <div class="card-body text-center">
-                    <span class="key-metric">ACTIVE CLEANERS</span>
+                    <span class="key-metric">AVAILABLE CLEANERS</span>
                     <div class="metric-value">{{ $activeCleaners }}</div>
                 </div>
             </div>
@@ -221,7 +255,7 @@
     // Prepare data for Complaint Status Chart
     const complaintStatusLabels = @json(array_keys($complaintsByStatus->toArray()));
     const complaintStatusData = @json(array_values($complaintsByStatus->toArray()));
-    const colorPalette = ['#4a90e2', '#f5a623', '#d0021b'];
+    const colorPalette = ['#709a9e', '#ede491', '#a86060'];
 
     // Complaint Status Donut Chart
     const complaintStatusCtx = document.getElementById('complaintStatusChart').getContext('2d');

@@ -70,6 +70,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::post('/users', [UserController::class, 'store'])->name('admin.users.store');
 
     // Complaints
+
     Route::get('/complaints', [AdminController::class, 'complaints'])->name('admin.complaints');
     Route::get('/complaints/create', [AdminController::class, 'createComplaint'])->name('admin.complaints.create');
     Route::post('/complaints', [AdminController::class, 'storeComplaint'])->name('admin.complaints.store');

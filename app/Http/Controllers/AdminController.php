@@ -45,14 +45,16 @@ class AdminController extends Controller
         ));
     }
 
-
     // Complaints Methods
-
-    public function complaints()
+   public function complaints()
     {
-        $complaints = Complaint::all();
+        // Fetch all complaints with pagination
+        $complaints = Complaint::orderBy('comp_date', 'desc')->paginate(10); 
+    
+        // Pass complaints to the view
         return view('admin.complaints.index', compact('complaints'));
     }
+    
 
     public function createComplaint()
     {
@@ -101,12 +103,13 @@ class AdminController extends Controller
     }
 
     // Cleaners Methods
-
     public function cleaners()
     {
         $cleaners = Cleaner::all();
         return view('admin.cleaners.index', compact('cleaners'));
     }
+
+
 
     public function createCleaner()
     {
@@ -152,11 +155,10 @@ class AdminController extends Controller
     }
 
     // Officers Methods
-
     public function officers(Request $request)
     {
         $search = $request->query('search');
-        
+
         // Filter officers by search query if provided
         $officers = Officer::when($search, function ($query, $search) {
             return $query->where('officer_name', 'LIKE', "%{$search}%");
@@ -165,80 +167,78 @@ class AdminController extends Controller
         return view('admin.officers.index', compact('officers'));
     }
 
-    public function searchOfficers(Request $request)
-    {
-        $query = $request->query('query');
-
-        $officers = Officer::where('officer_name', 'LIKE', "%{$query}%")->get(['id', 'officer_name', 'officer_email', 'officer_phoneNo', 'created_at', 'updated_at']);
-
-        return response()->json(['officers' => $officers]);
-    }
-
-
-
     public function createOfficer()
     {
         return view('admin.officers.create');
     }
 
-
     public function storeOfficer(Request $request)
-{
-    // Validate input data
-    $request->validate([
-        'officer_name' => 'required|string|max:255',
-        'officer_email' => 'required|email|unique:users,email',
-        'officer_phoneNo' => 'required|string|max:20',
-        'officer_pass' => 'required|string|min:8'
-    ]);
-
-    // Store the officer data in both users and officers tables
-    DB::transaction(function () use ($request) {
-        // Create the user record
-        $user = User::create([
-            'name' => $request->officer_name,
-            'email' => $request->officer_email,
-            'password' => Hash::make($request->officer_pass),
-            'role' => 'officer',  // assuming you have a role column in users table
+    {
+        // Validate input data
+        $request->validate([
+            'officer_name' => 'required|string|max:255',
+            'officer_email' => 'required|email|unique:users,email',
+            'officer_phoneNo' => 'required|string|max:20',
+            'officer_pass' => 'required|string|min:8'
         ]);
 
-        // Create the officer record linked to the user ID
-        Officer::create([
-            'user_id' => $user->id,
-            'officer_name' => $request->officer_name,
-            'officer_email' => $request->officer_email,
-            'officer_phoneNo' => $request->officer_phoneNo,
-        ]);
-    });
+        // Store the officer data in both users and officers tables
+        DB::transaction(function () use ($request) {
+            // Create the user record
+            $user = User::create([
+                'name' => $request->officer_name,
+                'email' => $request->officer_email,
+                'password' => Hash::make($request->officer_pass),
+                'role' => 'officer',  // assuming you have a role column in users table
+            ]);
 
-    // Redirect back with a success message
-    return redirect()->route('admin.officers')->with('success', 'Officer added successfully.');
-}
+            // Create the officer record linked to the user ID
+            Officer::create([
+                'user_id' => $user->id,
+                'officer_name' => $request->officer_name,
+                'officer_email' => $request->officer_email,
+                'officer_phoneNo' => $request->officer_phoneNo,
+            ]);
+        });
+
+        // Redirect back with a success message
+        return redirect()->route('admin.officers')->with('success', 'Officer added successfully.');
+    }
+
+    public function search(Request $request)
+    {
+        $query = $request->get('query');
+
+        // Search officers by name, email, or phone number
+        $officers = Officer::where('officer_name', 'LIKE', "%{$query}%")
+            ->orWhere('officer_email', 'LIKE', "%{$query}%")
+            ->orWhere('officer_phoneNo', 'LIKE', "%{$query}%")
+            ->get();
+
+        return response()->json([
+            'officers' => $officers
+        ]);
+    }
 
     public function showOfficer(Officer $officer)
     {
         return view('admin.officers.show', compact('officer'));
     }
 
-    public function editOfficer($id)
+    public function editOfficer(Officer $officer)
     {
-        $officer = Officer::findOrFail($id);  // Fetch the officer by ID
         return view('admin.officers.edit', compact('officer'));
     }
 
-
-    public function updateOfficer(Request $request, $id)
+    public function updateOfficer(Request $request, Officer $officer)
     {
         // Validate input
         $request->validate([
             'officer_name' => 'required|string|max:255',
-            'officer_email' => 'required|email|unique:users,email,' . $id, // unique validation for email, excluding current officer's email
+            'officer_email' => 'required|email|unique:users,email,' . $officer->user->id, // unique validation for email
             'officer_phoneNo' => 'required|string|max:20',
             'officer_pass' => 'nullable|string|min:8'
         ]);
-
-        // Find the officer by ID
-        $officer = Officer::findOrFail($id);
 
         // Update officer data
         $officer->officer_name = $request->officer_name;
@@ -247,7 +247,8 @@ class AdminController extends Controller
 
         // Update password only if a new one is provided
         if ($request->filled('officer_pass')) {
-            $officer->officer_pass = Hash::make($request->officer_pass);
+            $officer->user->password = Hash::make($request->officer_pass);
+            $officer->user->save();
         }
 
         // Save updated officer data
@@ -256,23 +257,13 @@ class AdminController extends Controller
         return redirect()->route('admin.officers')->with('success', 'Officer updated successfully.');
     }
 
-
     public function destroyOfficer(Officer $officer)
     {
         $officer->delete();
         return redirect()->route('admin.officers')->with('success', 'Officer deleted successfully!');
     }
 
-    private function validateOfficer(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'status' => 'required|string',
-        ]);
-    }
-
     // Supervisors Methods
-
     public function supervisors()
     {
         $supervisors = Supervisor::all();
@@ -289,6 +280,26 @@ class AdminController extends Controller
         $this->validateSupervisor($request);
         Supervisor::create($request->all());
         return redirect()->route('admin.supervisors')->with('success', 'Supervisor created successfully!');
+    }
+
+    public function searchSupervisors(Request $request)
+    {
+        $query = $request->get('query');
+
+        // Validate the query
+        if (!$query) {
+            return response()->json(['supervisors' => []]);
+        }
+
+        // Search supervisors by name, email, or phone number
+        $supervisors = Supervisor::where('s_name', 'LIKE', "%{$query}%")
+            ->orWhere('s_email', 'LIKE', "%{$query}%")
+            ->orWhere('s_phoneNo', 'LIKE', "%{$query}%")
+            ->get();
+
+        return response()->json([
+            'supervisors' => $supervisors
+        ]);
     }
 
     public function showSupervisor(Supervisor $supervisor)

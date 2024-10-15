@@ -11,10 +11,13 @@ use Illuminate\Support\Facades\Log;
 class ComplaintController extends Controller
 {
     public function index()
-    {
-        $complaints = Complaint::all(); // Fetch all complaints
-        return view('supervisor.complaints.index', compact('complaints'));
-    }
+        {
+            // Fetch complaints with pagination (10 per page)
+            $complaints = Complaint::orderBy('comp_date', 'desc')->paginate(10);
+
+            return view('admin.complaints.index', compact('complaints'));
+        }
+
 
     public function showDashboard()
     {

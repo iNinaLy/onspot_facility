@@ -19,4 +19,6 @@ class Officer extends Model
         'officer_name', 
         'officer_phoneNo'
     ];
+
+    
 }

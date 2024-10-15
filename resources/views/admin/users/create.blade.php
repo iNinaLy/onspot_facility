@@ -24,61 +24,73 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.users.store') }}" method="POST" class="shadow p-4 rounded bg-white">
-        @csrf
+    <form action="{{ route('admin.users.store') }}" method="POST" class="shadow p-4 rounded bg-white" enctype="multipart/form-data">
+    @csrf
 
-        <div class="form-floating mb-3">
-            <input type="text" name="username" class="form-control" id="username" required value="{{ old('username') }}" placeholder="Username">
-            <label for="username">Username</label>
-        </div>
+    <!-- Username -->
+    <div class="form-floating mb-3">
+        <input type="text" name="username" class="form-control" id="username" required value="{{ old('username') }}" placeholder="Username">
+        <label for="username">Username</label>
+    </div>
 
-        <div class="form-floating mb-3">
-            <input type="text" name="name" class="form-control" id="name" required value="{{ old('name') }}" placeholder="Name">
-            <label for="name">Name</label>
-        </div>
+    <!-- Name -->
+    <div class="form-floating mb-3">
+        <input type="text" name="name" class="form-control" id="name" required value="{{ old('name') }}" placeholder="Name">
+        <label for="name">Name</label>
+    </div>
 
-        <div class="form-floating mb-3">
-            <input type="email" name="email" class="form-control" id="email" required value="{{ old('email') }}" placeholder="Email">
-            <label for="email">Email</label>
-        </div>
+    <!-- Email -->
+    <div class="form-floating mb-3">
+        <input type="email" name="email" class="form-control" id="email" required value="{{ old('email') }}" placeholder="Email">
+        <label for="email">Email</label>
+    </div>
 
-        <div class="form-floating mb-3">
-            <input type="text" name="phone_no" class="form-control" id="phone_no" required value="{{ old('phone_no') }}" placeholder="Phone Number">
-            <label for="phone_no">Phone Number</label>
-        </div>
+    <!-- Phone Number -->
+    <div class="form-floating mb-3">
+        <input type="text" name="phone_no" class="form-control" id="phone_no" required value="{{ old('phone_no') }}" placeholder="Phone Number">
+        <label for="phone_no">Phone Number</label>
+    </div>
 
-        <!-- Password Field with Toggle Icon -->
-        <div class="form-floating mb-3 position-relative">
-            <input type="password" name="password" class="form-control" id="password" required placeholder="Password">
-            <label for="password">Password</label>
-            <span class="toggle-password" data-target="password" style="cursor: pointer; position: absolute; top: 50%; right: 15px; transform: translateY(-50%);">
-                <i class="bi bi-eye-slash"></i>
-            </span>
-        </div>
+    <!-- Profile Picture -->
+    <div class="mb-3">
+        <label for="profile_pic" class="form-label">Profile Picture</label>
+        <input type="file" class="form-control" id="profile_pic" name="profile_pic">
+    </div>
 
-        <!-- Confirm Password Field with Toggle Icon -->
-        <div class="form-floating mb-3 position-relative">
-            <input type="password" name="password_confirmation" class="form-control" id="password_confirmation" required placeholder="Confirm Password">
-            <label for="password_confirmation">Confirm Password</label>
-            <span class="toggle-password" data-target="password_confirmation" style="cursor: pointer; position: absolute; top: 50%; right: 15px; transform: translateY(-50%);">
-                <i class="bi bi-eye-slash"></i>
-            </span>
-            <!-- Error message for mismatched passwords -->
-            <small id="passwordError" class="text-danger d-none">Passwords do not match</small>
-        </div>
+    <!-- Password Field -->
+    <div class="form-floating mb-3 position-relative">
+        <input type="password" name="password" class="form-control" id="password" required placeholder="Password">
+        <label for="password">Password</label>
+        <span class="toggle-password" data-target="password" style="cursor: pointer; position: absolute; top: 50%; right: 15px; transform: translateY(-50%);">
+            <i class="bi bi-eye-slash"></i>
+        </span>
+    </div>
 
-        <div class="form-floating mb-4">
-            <select name="role" id="role" class="form-control" required>
-                <option value="" disabled selected>Select Role</option>
-                <option value="officer" {{ old('role') == 'officer' ? 'selected' : '' }}>Officer</option>
-                <option value="supervisor" {{ old('role') == 'supervisor' ? 'selected' : '' }}>Supervisor</option>
-                <option value="cleaner" {{ old('role') == 'cleaner' ? 'selected' : '' }}>Cleaner</option>
-            </select>
-            <label for="role">Role</label>
-        </div>
+    <!-- Confirm Password Field -->
+    <div class="form-floating mb-3 position-relative">
+        <input type="password" name="password_confirmation" class="form-control" id="password_confirmation" required placeholder="Confirm Password">
+        <label for="password_confirmation">Confirm Password</label>
+        <span class="toggle-password" data-target="password_confirmation" style="cursor: pointer; position: absolute; top: 50%; right: 15px; transform: translateY(-50%);">
+            <i class="bi bi-eye-slash"></i>
+        </span>
+        <small id="passwordError" class="text-danger d-none">Passwords do not match</small>
+    </div>
 
-        <button type="submit" class="btn btn-primary" style="width: 15%;">Add User</button>
-    </form>
+    <!-- Role -->
+    <div class="form-floating mb-4">
+        <select name="role" id="role" class="form-control" required>
+            <option value="" disabled selected>Select Role</option>
+            <option value="officer" {{ old('role') == 'officer' ? 'selected' : '' }}>Officer</option>
+            <option value="supervisor" {{ old('role') == 'supervisor' ? 'selected' : '' }}>Supervisor</option>
+            <option value="cleaner" {{ old('role') == 'cleaner' ? 'selected' : '' }}>Cleaner</option>
+        </select>
+        <label for="role">Role</label>
+    </div>
+
+    <!-- Submit Button -->
+    <button type="submit" class="btn btn-primary" style="width: 15%;">Add User</button>
+</form>
+
 </div>
 
 @section('scripts')
