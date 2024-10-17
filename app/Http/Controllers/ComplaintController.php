@@ -26,29 +26,6 @@ class ComplaintController extends Controller
         return view('dashboard', compact('recentComplaint'));
     }
 
-    public function store(Request $request)
-    {
-        // Validate incoming request
-        $validated = $request->validate([
-            'comp_desc' => 'required|string|max:255',
-            'comp_location' => 'required|string|max:255',
-            'comp_date' => 'required|date',
-            'comp_time' => 'required|date_format:H:i',
-            'comp_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validate image
-        ]);
-
-        // Handle file upload
-        if ($request->hasFile('comp_image')) {
-            $filePath = $request->file('comp_image')->store('complaints', 'public'); // Store image in storage/app/public/complaints
-            $validated['comp_image'] = $filePath; // Save the file path to the database
-        }
-
-        // Create a new complaint record
-        $validated['comp_status'] = 'Pending'; // Set default status to Pending
-        Complaint::create($validated);
-        return redirect()->route('complaints')->with('success', 'Complaint submitted successfully!');
-    }
-
     public function show($comp_id)
     {
         // Fetch the complaint by its ID along with related tasks, officer, and cleaners
@@ -69,62 +46,73 @@ class ComplaintController extends Controller
 
     }
 
-    public function update(Request $request, $id)
+    public function apistore(Request $request)
     {
-        // Validation logic for updating
-        $validator = Validator::make($request->all(), [
+        // Validate incoming request
+        $request->validate([
             'comp_date' => 'required|date',
             'comp_time' => 'required|date_format:H:i',
-            'comp_desc' => 'required|string|max:255',
-            'comp_location' => 'required|string|max:255',
-            'comp_status' => 'required|string|in:Pending,Notified,Ongoing,Completed',
+            'comp_desc' => 'required|string',
+            'comp_location' => 'required|in:Floor 1,Floor 2,Floor 3,Floor 4', // Update based on your enum
+            'comp_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Adjust size if needed
         ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+        // Handle file upload
+        $imagePath = null;
+        if ($request->hasFile('comp_image')) {
+            $imagePath = $request->file('comp_image')->store('complaints', 'public');
         }
 
-        // Update the complaint
-        $complaint = Complaint::findOrFail($id);
-        $complaint->update($request->all());
-        return response()->json($complaint, 200);
-    }
-
-    public function destroy($id)
-    {
-        Complaint::destroy($id);
-        return response()->json(null, 204);
-    }
-    public function assignCleaner(Request $request, $id)
-    {
-        Log::info('Assign Cleaner called with ID: ' . $id);
-        dd('Assign cleaner function reached');
-    
-        // Validate the incoming request
-        $request->validate([
-            'number_of_cleaners' => 'required|integer|min:1|max:3', // Validate number of cleaners
-            'cleaner' => 'required|array|max:3', // Validate that cleaners is an array
-            'cleaner.*' => 'exists:cleaners,id', // Ensure that each selected cleaner exists
+        // Create a new complaint
+        $complaint = Complaint::create([
+            'comp_date' => $request->comp_date,
+            'comp_time' => $request->comp_time,
+            'comp_desc' => $request->comp_desc,
+            'comp_location' => $request->comp_location,
+            'comp_image' => $imagePath,
+            'officer_id' => Auth::id(), // Assuming you're using Auth to get the officer
+            'comp_status' => Complaint::STATUS_PENDING, // Default status
         ]);
-    
-        $complaint = Complaint::findOrFail($id);
-    
-        // Sync cleaners to the complaint and update pivot table details
-        $complaint->cleaners()->sync($request->cleaner);
-    
-        foreach ($request->cleaner as $cleaner_id) {
-            $complaint->cleaners()->updateExistingPivot($cleaner_id, [
-                'no_of_cleaners' => $request->number_of_cleaners,
-                $assignedBy = auth()->guard('supervisor')->user()->name,// Handle the logged-in user or fallback to 'System'
-                'assigned_date' => now(),
-            ]);
-        }
-    
-        // Update complaint status to Notified
-        $complaint->comp_status = 'Notified';
-        $complaint->save();
-    
-        return redirect()->route('supervisor.complaints.index')->with('success', 'Cleaners assigned successfully!');
 
+        // Return a response (you can customize this)
+        return response()->json(['message' => 'Complaint submitted successfully!', 'complaint' => $complaint], 201);
     }
+
+        public function apishow($comp_id)
+    {
+        // Fetch the complaint by its ID along with related tasks, officer, and cleaners
+        $complaint = Complaint::with(['tasks', 'officer', 'cleaners']) // Ensure these relationships exist
+                            ->where('comp_id', $comp_id)
+                            ->first();
+
+        // If the complaint doesn't exist, return a 404 error response
+        if (!$complaint) {
+            return response()->json(['error' => 'Complaint not found.'], 404);
+        }
+
+        // Fetch only available cleaners for assigning (optional)
+        $cleaners = Cleaner::where('status', 'available')->get();
+
+        // Return a JSON response with the complaint and cleaners data
+        return response()->json(['complaint' => $complaint, 'cleaners' => $cleaners], 200);
+    }
+    public function getEnumValues($column, $table)
+    {
+        // Get the enum values from the database schema
+        $type = \DB::select(\DB::raw("SHOW COLUMNS FROM $table WHERE Field = '$column'"))[0]->Type;
+        preg_match('/^enum\((.*)\)$/', $type, $matches);
+        $enum = array();
+        foreach (explode(',', $matches[1]) as $value) {
+            $enum[] = trim($value, "'");
+        }
+
+        return response()->json($enum, 200);
+    }
+
+    public function getLocationsApi() {
+        // Retrieve the enum values from the complaint table's 'comp_location' field
+        $locations = Complaint::getEnumValues('comp_location');
+        return response()->json($locations);
+    }
+    
 }    

@@ -14,9 +14,9 @@ class Complaint extends Model
     use HasFactory;
 
     protected $table = 'complaints'; // Specify the table name
-    protected $primaryKey = 'comp_id'; // Set the primary key to comp_id
-    public $incrementing = false; // Set to false if the primary key is not auto-incrementing
-    protected $keyType = 'string'; // Specify the key type if it's not an integer
+    protected $primaryKey = 'id'; // Set the primary key to 'id' as per your database
+    public $incrementing = true; // Set to true because 'id' is auto-incrementing
+    protected $keyType = 'int'; // Set the key type to integer
 
     // Allow mass assignment on these fields
     protected $fillable = [
@@ -46,15 +46,17 @@ class Complaint extends Model
 
     public function showDashboard()
     {
-        $recentComplaint = self::orderBy('created_at', 'desc')->first(); // Adjust if needed based on your timestamp field
+        $recentComplaint = self::orderBy('created_at', 'desc')->first();
         return view('dashboard', compact('recentComplaint'));
     }
 
+    // Define the officer relationship (one complaint belongs to one officer)
     public function officer()
     {
         return $this->belongsTo(Officer::class, 'officer_id');
     }
 
+    // Define the cleaners relationship (many-to-many between complaints and cleaners)
     public function cleaners()
     {
         return $this->belongsToMany(Cleaner::class, 'complaint_cleaner', 'comp_id', 'cleaner_id')

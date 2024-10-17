@@ -12,12 +12,6 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\UserController;
 
 
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\CleanersController;
-use App\Http\Controllers\Admin\OfficersController;
-use App\Http\Controllers\Admin\SupervisorsController;
-use App\Http\Controllers\Admin\ComplaintsController;
-
 
 Route::get('/', function () {
     return view('welcome');

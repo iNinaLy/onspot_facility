@@ -14,12 +14,10 @@ class Cleaner extends Model
 
     // Define the fillable fields
     protected $fillable = [
-        'id',
+        'cleaner_id',
         'cleaner_name', 
         'cleaner_phoneNo', 
-        'status',
-        'username',
-        'password',
+        'cleaner_available'
     ];
 
     public function complaints()

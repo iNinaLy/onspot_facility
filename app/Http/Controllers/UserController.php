@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB; // Import the DB facade here
 use App\Models\User;
 use App\Models\Supervisor;
 use App\Models\Officer;
@@ -26,73 +27,74 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        // Validate input
+        // Validate the request data
         $request->validate([
             'username' => 'required|string|max:255|unique:users,username',
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email|max:255|unique:users,email',
             'phone_no' => 'required|string|max:20',
-            'password' => 'required|string|min:8',
-            'role' => 'required|in:officer,supervisor,cleaner',
-            'profile_pic' => 'nullable|image|max:2048',  // Optional profile picture
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'required|string|in:officer,supervisor,cleaner',
+            'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
-        // Handle profile picture upload if provided
-        $profilePicPath = null;
+        // Handle profile picture if uploaded
+        $profilePicPath = nul             l;
         if ($request->hasFile('profile_pic')) {
             $profilePicPath = $request->file('profile_pic')->store('profile_pics', 'public');
         }
 
-        // Create user in 'users' table
+        // Create new user with fillable properties (stored in 'users' table)
         $user = User::create([
             'username' => $request->username,
             'name' => $request->name,
             'email' => $request->email,
             'phone_no' => $request->phone_no,
-            'password' => Hash::make($request->password),  // Hash the password for security
+            'password' => Hash::make($request->password),
             'role' => $request->role,
             'profile_pic' => $profilePicPath,
+            'email_verified_at' => now(),
         ]);
 
-        // Store user data in the corresponding role table
-        $this->storeRoleSpecificData($request, $user);
-
-        // Redirect to the user list page with a success message
-        return redirect()->route('admin.users.create')->with('success', 'User added successfully.');
-    }
-
-    // Handle role-specific data storage
-    protected function storeRoleSpecificData($request, $user)
-    {
-        $hashedPassword = Hash::make($request->password);
-        switch ($request->role) {
-            case 'officer':
-                Officer::create([
-                    'officer_name' => $request->name,
-                    'officer_email' => $request->email,
-                    'officer_phoneNo' => $request->phone_no,
-                    'officer_pass' => $hashedPassword, // Use hashed password
-                ]);
-                break;
-
-            case 'supervisor':
-                Supervisor::create([
-                    's_name' => $request->name,
-                    's_email' => $request->email,
-                    's_phoneNo' => $request->phone_no,
-                    's_pass' => $hashedPassword, // Use hashed password
-                ]);
-                break;
-
-            case 'cleaner':
-                Cleaner::create([
-                    'cleaner_name' => $request->name,
-                    'cleaner_phoneNo' => $request->phone_no,
-                    'username' => $request->username,  // Ensure that username is provided
-                    'password' => $hashedPassword, // Use hashed password for security
-                    'status' => 'active', // Default status
-                ]);
-                break;
+        // Store the role-specific information in their corresponding table
+        if ($user->role == 'supervisor') {
+            DB::table('supervisors')->insert([
+                's_id' => $user->id,
+                's_email' => $user->email,
+                's_pass' => $user->password,
+                's_name' => $user->name,
+                's_phoneNo' => $user->phone_no,
+                's_username' => $user->username,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } elseif ($user->role == 'officer') {
+            DB::table('officers')->insert([
+                'id' => $user->id,
+                'officer_email' => $user->email,
+                'officer_pass' => $user->password,
+                'officer_name' => $user->name,
+                'officer_phoneNo' => $user->phone_no,
+                'officer_username' => $user->username,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } elseif ($user->role == 'cleaner') {
+            DB::table('cleaners')->insert([
+                'id' => $user->id,
+                'cleaner_name' => $user->name,
+                'cleaner_phoneNo' => $user->phone_no,
+                'cleaner_username' => $user->username,
+                'cleaner_password' => $user->password,
+                'status' => 'Active', // Default status, you can modify this as needed
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
+
+        // Redirect back with success message
+        return redirect()->route('admin.users.create')->with('success', 'User added successfully!');
     }
+
+    
 }

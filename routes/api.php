@@ -36,7 +36,6 @@ Route::delete('/supervisors/{id}', [SupervisorController::class, 'destroy']);
 
 //complaints
 Route::get('/complaints', [ComplaintController::class, 'index']);
-Route::post('/complaints', [ComplaintController::class, 'store']);
 Route::get('/complaints/{id}', [ComplaintController::class, 'show']);
 Route::put('/complaints/{id}', [ComplaintController::class, 'update']);
 Route::delete('/complaints/{id}', [ComplaintController::class, 'destroy']);
@@ -72,6 +71,14 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/flutterprofile', [UserController::class, 'profile']);
     Route::put('/flutteruser', [UserController::class, 'update']);
+});
+
+// Officer routes
+Route::middleware('auth:sanctum')->group(function () {
+    //Complaint page
+    Route::post('/complaints', [ComplaintController::class, 'apistore']);
+    Route::get('/complaints/locations', [ComplaintController::class, 'getEnumValues'])->defaults('column', 'comp_location')->defaults('table', 'complaints');
+    Route::get('/locations', [ComplaintController::class, 'getLocationsApi']);
 });
 
 //attendance
