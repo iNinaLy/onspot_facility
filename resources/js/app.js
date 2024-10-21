@@ -1,5 +1,7 @@
-// Import CSS file
-import '../css/app.css';
+import './bootstrap';
 
-// Import any JavaScript libraries you need (like Alpine.js)
-import 'alpinejs';
+import Alpine from 'alpinejs';
+
+window.Alpine = Alpine;
+
+Alpine.start();

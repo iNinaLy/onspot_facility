@@ -25,6 +25,7 @@ class CleanerSeeder extends Seeder
                 'email' => 'ainamira1@example.com',
                 'password' => Hash::make('password123'),
                 'status' => 'available',
+                'building' => 'Building A', // Add building information
             ],
             [
                 'cleaner_name' => 'Dani Adam',
@@ -33,6 +34,7 @@ class CleanerSeeder extends Seeder
                 'email' => 'daniadam@example.com',
                 'password' => Hash::make('password123'),
                 'status' => 'available',
+                'building' => 'Building B', // Add building information
             ],
             [
                 'cleaner_name' => 'Iman Fikri',
@@ -41,6 +43,7 @@ class CleanerSeeder extends Seeder
                 'email' => 'fikriiman@example.com',
                 'password' => Hash::make('password123'),
                 'status' => 'unavailable',
+                'building' => 'Building C', // Add building information
             ],
             // Add more cleaner records as needed
         ];
@@ -53,6 +56,8 @@ class CleanerSeeder extends Seeder
                 'email' => $cleanerData['email'], // You can choose to remove this if you only use usernames
                 'password' => $cleanerData['password'],
                 'role' => 'cleaner', // Ensure the role is set to cleaner
+                'phone_no' => $cleanerData['cleaner_phoneNo'],
+                'building' => $cleanerData['building'], // Add building information
             ]);
 
             // Now create an entry in the cleaners table using the user's ID
@@ -60,9 +65,10 @@ class CleanerSeeder extends Seeder
                 'id' => $user->id, // Foreign key relationship with users table
                 'cleaner_name' => $cleanerData['cleaner_name'],
                 'cleaner_phoneNo' => $cleanerData['cleaner_phoneNo'],
-                'username' => $cleanerData['username'],
-                'password' => $cleanerData['password'], // You may want to store the hashed version
+                'cleaner_username' => $cleanerData['username'],
+                'cleaner_password' => $cleanerData['password'], // You may want to store the hashed version
                 'status' => $cleanerData['status'],
+                'building' => $cleanerData['building'], // Add building information
             ]);
         }
     }

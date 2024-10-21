@@ -57,8 +57,7 @@ class SupervisorController extends Controller
     }
     
 
-}
-    /* Display a listing of all supervisors
+    // Display a listing of all supervisors
     public function index()
     {
         $supervisors = Supervisor::all();
@@ -107,7 +106,7 @@ class SupervisorController extends Controller
         }
 
         $request->validate([
-            's_email' => 'required|email|unique:supervisors,s_email,' . $supervisor->s_id,
+            's_email' => 'required|email|unique:supervisors,s_email,' . $supervisor->id,
             's_name' => 'required|string|max:255',
             's_phoneNo' => 'required|string|max:15',
         ]);
@@ -130,4 +129,4 @@ class SupervisorController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Supervisor deleted successfully'], 200);
     }
-}*/
+}

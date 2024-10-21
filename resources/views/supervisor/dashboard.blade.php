@@ -109,11 +109,11 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Complaints Management Card -->
-            <div class="flex bg-white dark:bg-white-800 overflow-hidden shadow-sm sm:rounded-lg mt-6 card-hover fade-in" id="complaints-card">
+            <div class="flex bg-white overflow-hidden shadow-sm sm:rounded-lg mt-6 card-hover fade-in" id="complaints-card">
                 <div class="p-6 w-1/2">
                     <h1 class="text-2xl font-bold">Received Complaints?</h1>
                     <h2 class="text-xl mt-2">Start Assigning Cleaners</h2>
-                    <p class="mt-4 text-gray-600 dark:text-gray-400">
+                    <p class="mt-4 text-gray-600">
                         Lorem ipsum dolor sit amet. A illum impedit qui quia repudiandae vel dolorem
                         voluptate qui corrupti consequatur nam voluptatem iste?
                     </p>
@@ -130,7 +130,7 @@
             <!-- End of Complaints Management Card -->
 
             <!-- Check Cleaners On Duty Section -->
-            <div class="flex items-center bg-white dark:bg-white-800 overflow-hidden shadow-sm sm:rounded-lg mt-6 card-hover fade-in" id="cleaners-card">
+            <div class="flex items-center bg-white overflow-hidden shadow-sm sm:rounded-lg mt-6 card-hover fade-in" id="cleaners-card">
                 <!-- Image Section -->
                 <div class="w-1/2">
                     <img src="{{ asset('/images/cleaner.png') }}" alt="Cleaner Image" class="w-full h-auto transition duration-300 ease-in-out transform hover:scale-105">
@@ -140,7 +140,7 @@
                 <div class="w-1/2 p-6">
                     <h1 class="text-2xl font-bold">But Who’s Available?</h1>
                     <h2 class="text-xl mb-2">Check Cleaners On Duty</h2>
-                    <p class="text-gray-600 dark:text-gray-400 mb-4">
+                    <p class="text-gray-600 mb-4">
                         Lorem ipsum dolor sit amet. A illum impedit qui quia repudiandae vel dolorem
                         voluptate qui corrupti consequatur nam voluptatem iste?
                     </p>

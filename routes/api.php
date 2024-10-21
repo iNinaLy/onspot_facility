@@ -9,6 +9,10 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskCleanerController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProfileController;
+use Illuminate\Http\Request;
+
 
 // Cleaner Routes
 Route::get('/cleaners', [CleanerController::class, 'index']);
@@ -40,12 +44,6 @@ Route::get('/complaints/{id}', [ComplaintController::class, 'show']);
 Route::put('/complaints/{id}', [ComplaintController::class, 'update']);
 Route::delete('/complaints/{id}', [ComplaintController::class, 'destroy']);
 
-//attendance
-Route::get('/attendance', [AttendanceController::class, 'index']);
-Route::get('/attendance/{id}', [AttendanceController::class, 'show']);
-Route::put('/attendance/{id}', [AttendanceController::class, 'update']);
-Route::delete('/attendance/{id}', [AttendanceController::class, 'destroy']);
-
 
 //Task
 Route::get('/tasks', [TaskController::class, 'index']);
@@ -55,23 +53,39 @@ Route::put('/tasks/{id}', [TaskController::class, 'update']);
 Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
 
 
-
-
 // TaskCleaner 
 Route::get('/tasks/{id}/cleaners', [TaskCleanerController::class, 'showCleanersForTask']);
 Route::post('/tasks/assign-cleaner', [TaskCleanerController::class, 'assignCleanerToTask']);
 Route::post('/tasks/remove-cleaner', [TaskCleanerController::class, 'removeCleanerFromTask']);
 Route::post('/tasks', [TaskController::class, 'store']);
 
+// Authentication routes
+Route::post('/flutterregister', [AuthController::class, 'register']);
+Route::post('/flutterlogin', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/flutterlogout', [AuthController::class, 'logout']);
+});
 
-//authentication
-Route::post('/login-cleaner', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+// User management routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::put('/flutteruser', [UserController::class, 'update']);
+});
+//profile
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'getProfile']); // Fetch user profile
+    Route::put('/profile', [ProfileController::class, 'update']); // Update user profile
+});
+
+
 
 //attendance
-Route::post('/attendance', [AttendanceController::class, 'markAttendance']);
+ Route::get('/attendance', [AttendanceController::class, 'index']); // For retrieving attendance records
+ Route::post('/attendance', [AttendanceController::class, 'store']); // For storing attendance records
 
 
-Route::get('/test', function () {
-    return response()->json(['message' => 'API is working!']);
+Route::post('/test', function (Request $request) {
+    return response()->json([
+        'data' => $request->all(),
+        'files' => $request->file('profile_pic'),
+    ]);
 });

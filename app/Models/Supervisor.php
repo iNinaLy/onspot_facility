@@ -9,7 +9,7 @@ class Supervisor extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 's_id';
+    protected $primaryKey = 'id';
 
     // Allow mass assignment on these fields
     protected $fillable = [

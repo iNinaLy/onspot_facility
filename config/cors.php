@@ -1,21 +1,21 @@
 <?php
 
 return [
+    'paths' => ['api/*'],
+    'allowed_methods' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', '*'],
 
-    'paths' => ['api/*'], // The paths you want to apply CORS to
-
-    'allowed_methods' => ['*'], // Allows all HTTP methods (GET, POST, PUT, DELETE, etc.)
-
-    'allowed_origins' => ['*'], // Allows requests from any origin (for testing purposes)
-
-    'allowed_origins_patterns' => [],
-
-    'allowed_headers' => ['*'], // Allows all headers
-
-    'exposed_headers' => [],
-
-    'max_age' => 0,
-
-    'supports_credentials' => true, // Set to true if you need to include cookies in requests
-
+    'allowed_origins' => [
+        'http://localhost',
+        'http://127.0.0.1',
+        'http://10.0.2.2',
+        'http://localhost:54195', // Add frontend origin
+        'http://127.0.0.1:54195',
+        'https://*.example.com',
+        '*'
+    ],
+    'allowed_origins_patterns' => ['/localhost:\d+/', '/127\.0\.0\.1:\d+/', '/10\.0\.2\.2:\d+/'],
+    'allowed_headers' => ['Authorization', 'Content-Type', 'Accept', '*'], // Include 'Accept'
+    'exposed_headers' => ['Authorization', 'Content-Encoding', 'Content-Type'], // Expose headers as needed
+    'max_age' => 3  ,
+    'supports_credentials' => true,
 ];
