@@ -1,45 +1,55 @@
-<!-- resources/views/supervisor/cleaners/index.blade.php -->
-@extends('layouts.supervisor')
+@extends('layouts.admin')
 
 @section('content')
-<div class="container">
-    <h1>Manage Cleaners (Supervisor)</h1>
-    
-    <!-- Display total, available, and unavailable cleaner counts -->
-    <div class="mt-4">
-        <p>Total Cleaners: {{ $totalCleaners }}</p>
-        <p>Available Cleaners: {{ $availableCount }}</p>
-        <p>Unavailable Cleaners: {{ $unavailableCount }}</p> <!-- Use the $unavailableCount variable -->
-    </div>
+<div class="container my-5">
+    <h1 class="mb-4 text-center">Manage Cleaners</h1>
+
+    <!-- Success Message -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
 
     <!-- Table to list cleaners -->
-    <table class="table table-bordered mt-4">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Phone Number</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($cleaners as $cleaner)
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
                 <tr>
-                    <td>{{ $cleaner->cleaner_name }}</td>
-                    <td>{{ $cleaner->cleaner_phoneNo }}</td>
-                    <td>
-                        @if($cleaner->status === 'available')
-                            <span class="badge bg-success">Available</span>
-                        @else
-                            <span class="badge bg-danger">Unavailable</span>
-                        @endif
-                    </td>
-                    <td>
-                        <a href="{{ route('supervisor.cleaners.show', $cleaner->id) }}" class="btn btn-info btn-sm">View</a>
-                    </td>
+                    <th>Name</th>
+                    <th>Phone Number</th>
+                    <th>Username</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach($cleaners as $cleaner)
+                    <tr>
+                        <td>{{ $cleaner->cleaner_name }}</td>
+                        <td>{{ $cleaner->cleaner_phoneNo }}</td>
+                        <td>{{ $cleaner->username }}</td>
+                        <td>
+                            <span class="badge {{ $cleaner->status == 'Active' ? 'bg-success' : 'bg-secondary' }}">
+                                {{ $cleaner->status }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ route('admin.cleaners.edit', $cleaner->id) }}" class="btn btn-outline-warning btn-sm">Edit</a>
+                                <form action="{{ route('admin.cleaners.destroy', $cleaner->id) }}" method="POST" style="display:inline-block;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to delete this cleaner?')">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
 </div>
 @endsection

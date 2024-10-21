@@ -5,19 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ComplaintCleaner; // Import ComplaintCleaner
+use App\Models\Officer;          // Import Officer model
+use App\Models\Cleaner;          // Import Cleaner model
+use App\Models\Task;             // Import Task model
 
 class Complaint extends Model
-
 {
     use HasFactory;
 
     protected $table = 'complaints'; // Specify the table name
-
-    protected $primaryKey = 'comp_id'; // Set the primary key to comp_id
-
-    public $incrementing = false; // Set to false if the primary key is not auto-incrementing
-
-    protected $keyType = 'string'; // Specify the key type if it's not an integer
+    protected $primaryKey = 'id'; // Set the primary key to 'id' as per your database
+    public $incrementing = true; // Set to true because 'id' is auto-incrementing
+    protected $keyType = 'int'; // Set the key type to integer
 
     // Allow mass assignment on these fields
     protected $fillable = [
@@ -30,16 +29,34 @@ class Complaint extends Model
         'officer_id',
     ];
 
-    public function showDashboard()
+    // Define status constants
+    const STATUS_PENDING = 'pending';
+    const STATUS_ON_GOING = 'on going';
+    const STATUS_COMPLETED = 'completed';
+
+    // Method to retrieve available statuses
+    public static function getStatuses()
     {
-        $recentComplaint = Complaint::orderBy('created_at', 'desc')->first(); // Adjust if needed based on your timestamp field
-        return view('dashboard', compact('recentComplaint'));
-    }
-    public function officer()
-    {
-        return $this->belongsTo(Officer::class, 'officer_id'); // Replace 'officer_id' with the actual foreign key if different
+        return [
+            self::STATUS_PENDING,
+            self::STATUS_ON_GOING,
+            self::STATUS_COMPLETED,
+        ];
     }
 
+    public function showDashboard()
+    {
+        $recentComplaint = self::orderBy('created_at', 'desc')->first();
+        return view('dashboard', compact('recentComplaint'));
+    }
+
+    // Define the officer relationship (one complaint belongs to one officer)
+    public function officer()
+    {
+        return $this->belongsTo(Officer::class, 'officer_id');
+    }
+
+    // Define the cleaners relationship (many-to-many between complaints and cleaners)
     public function cleaners()
     {
         return $this->belongsToMany(Cleaner::class, 'complaint_cleaner', 'comp_id', 'cleaner_id')
@@ -47,31 +64,26 @@ class Complaint extends Model
                     ->withTimestamps();
     }
 
-
-    public function cleanerAssignments()
-    {
-        return $this->hasMany(ComplaintCleaner::class, 'comp_id');
-    }
-    
     // Define a relationship: one complaint has many tasks
     public function tasks()
     {
-        return $this->hasMany(Task::class, 'comp_id', 'comp_id'); 
-        // 'comp_id' is the foreign key in tasks table, 'comp_id' is the primary key in complaints table
+        return $this->hasMany(Task::class, 'comp_id');
     }
 
-
-    // In Complaint.php model
-
+    /**
+     * Update the status of the complaint.
+     * Throws an exception if the status is invalid.
+     *
+     * @param string $status
+     * @throws \Exception
+     */
     public function updateStatus($status)
     {
-        if (in_array($status, ['Pending', 'Notified', 'Ongoing', 'Completed'])) {
+        if (in_array($status, self::getStatuses())) {
             $this->comp_status = $status;
             $this->save();
         } else {
-            throw new \Exception("Invalid status");
+            throw new \Exception("Invalid status: $status");
         }
     }
-
 }
-

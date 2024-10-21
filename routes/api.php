@@ -39,7 +39,6 @@ Route::delete('/supervisors/{id}', [SupervisorController::class, 'destroy']);
 
 //complaints
 Route::get('/complaints', [ComplaintController::class, 'index']);
-Route::post('/complaints', [ComplaintController::class, 'store']);
 Route::get('/complaints/{id}', [ComplaintController::class, 'show']);
 Route::put('/complaints/{id}', [ComplaintController::class, 'update']);
 Route::delete('/complaints/{id}', [ComplaintController::class, 'destroy']);
@@ -53,6 +52,8 @@ Route::put('/tasks/{id}', [TaskController::class, 'update']);
 Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
 
 
+
+
 // TaskCleaner 
 Route::get('/tasks/{id}/cleaners', [TaskCleanerController::class, 'showCleanersForTask']);
 Route::post('/tasks/assign-cleaner', [TaskCleanerController::class, 'assignCleanerToTask']);
@@ -62,6 +63,7 @@ Route::post('/tasks', [TaskController::class, 'store']);
 // Authentication routes
 Route::post('/flutterregister', [AuthController::class, 'register']);
 Route::post('/flutterlogin', [AuthController::class, 'login']);
+Route::post('/flutterregister', [AuthController::class, 'register']); 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/flutterlogout', [AuthController::class, 'logout']);
 });
@@ -70,22 +72,11 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::put('/flutteruser', [UserController::class, 'update']);
 });
-//profile
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'getProfile']); // Fetch user profile
-    Route::put('/profile', [ProfileController::class, 'update']); // Update user profile
-});
-
-
-
 //attendance
  Route::get('/attendance', [AttendanceController::class, 'index']); // For retrieving attendance records
  Route::post('/attendance', [AttendanceController::class, 'store']); // For storing attendance records
 
 
-Route::post('/test', function (Request $request) {
-    return response()->json([
-        'data' => $request->all(),
-        'files' => $request->file('profile_pic'),
-    ]);
+Route::get('/test', function () {
+    return response()->json(['message' => 'API is working!']);
 });

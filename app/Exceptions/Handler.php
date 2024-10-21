@@ -66,4 +66,7 @@ class Handler extends ExceptionHandler
     }
 
     // Add any additional methods or custom handling if needed
+
 }
+
+
