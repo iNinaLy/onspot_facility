@@ -49,46 +49,55 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/officers/search', [AdminController::class, 'searchOfficers']);
     Route::get('/officers/create', [AdminController::class, 'createOfficer'])->name('admin.officers.create');
     Route::post('/officers', [AdminController::class, 'storeOfficer'])->name('admin.officers.store');
-    Route::get('/officers/{officer}', [AdminController::class, 'showOfficer'])->name('admin.officers.show');
     Route::get('/officers/{officer}/edit', [AdminController::class, 'editOfficer'])->name('admin.officers.edit');
     Route::put('/officers/{officer}', [AdminController::class, 'updateOfficer'])->name('admin.officers.update');
     Route::delete('/officers/{officer}', [AdminController::class, 'destroyOfficer'])->name('admin.officers.destroy');
+    Route::get('/officers/{officer}', [AdminController::class, 'showOfficer'])->name('admin.officers.show');
 
-    // Supervisors
-    Route::get('/supervisors', [AdminController::class, 'supervisors'])->name('admin.supervisors');
+    // Supervisors Routes
+    Route::get('/supervisors', [AdminController::class, 'supervisors'])->name('admin.supervisors.index');
     Route::get('/supervisors/create', [AdminController::class, 'createSupervisor'])->name('admin.supervisors.create');
     Route::post('/supervisors', [AdminController::class, 'storeSupervisor'])->name('admin.supervisors.store');
-    Route::get('/supervisors/{supervisor}', [AdminController::class, 'showSupervisor'])->name('admin.supervisors.show');
     Route::get('/supervisors/{supervisor}/edit', [AdminController::class, 'editSupervisor'])->name('admin.supervisors.edit');
     Route::put('/supervisors/{supervisor}', [AdminController::class, 'updateSupervisor'])->name('admin.supervisors.update');
     Route::delete('/supervisors/{supervisor}', [AdminController::class, 'destroySupervisor'])->name('admin.supervisors.destroy');
 
+
     // Users
-    // Display the list of all users
     Route::get('/users', [UserController::class, 'create'])->name('admin.users.create');
     Route::get('/users/create', [UserController::class, 'create'])->name('admin.users.create');
     Route::post('/users', [UserController::class, 'store'])->name('admin.users.store');
 
     // Complaints
-
     Route::get('/complaints', [AdminController::class, 'complaints'])->name('admin.complaints');
-    Route::get('/complaints/create', [AdminController::class, 'createComplaint'])->name('admin.complaints.create');
-    Route::post('/complaints', [AdminController::class, 'storeComplaint'])->name('admin.complaints.store');
-    Route::get('/complaints/{complaint}', [AdminController::class, 'showComplaint'])->name('admin.complaints.show');
+    Route::post('admin/complaints/batch-update', [ComplaintController::class, 'batchUpdate'])->name('admin.complaints.batchUpdate');
+    Route::get('/complaints/search', [AdminController::class, 'searchComplaints'])->name('admin.complaints.search'); // Search route
     Route::get('/complaints/{complaint}/edit', [AdminController::class, 'editComplaint'])->name('admin.complaints.edit');
     Route::put('/complaints/{complaint}', [AdminController::class, 'updateComplaint'])->name('admin.complaints.update');
     Route::delete('/complaints/{complaint}', [AdminController::class, 'destroyComplaint'])->name('admin.complaints.destroy');
 });
 
-
 // Supervisor Routes
 Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->group(function () {
     Route::get('/dashboard', [SupervisorController::class, 'dashboard'])->name('supervisor.dashboard');
-    Route::get('/cleaners', [SupervisorController::class, 'cleaners'])->name('supervisor.cleaners');
-    Route::get('/complaints', [ComplaintController::class, 'index'])->name('supervisor.complaints.index');
+    
+    // Route for showing cleaner management or list page
+    Route::get('/cleaners', [SupervisorController::class, 'cleaners'])->name('supervisor.cleaners'); // Changed here
+
+    // API route for fetching available cleaners (used by AJAX requests)
+    Route::get('/api/cleaners', [CleanerController::class, 'getAvailableCleaners']);
+
+    // Routes related to complaints
+    Route::get('/complaints', [ComplaintController::class, 'supervisorIndex'])->name('supervisor.complaints.index');
     Route::get('/complaints/{id}', [ComplaintController::class, 'show'])->name('supervisor.complaints.show');
+    Route::post('/complaints/{id}/assign-cleaner', [ComplaintController::class, 'assignCleaner'])->name('assign.cleaner');
+
+    // History page
     Route::get('/history', [SupervisorController::class, 'history'])->name('supervisor.history');
 });
+
+
+
 
 // Optional: If you need a public route to access all cleaners (not under supervisor's control) 
 Route::get('/cleaners', [CleanerController::class, 'index'])->name('cleaners');

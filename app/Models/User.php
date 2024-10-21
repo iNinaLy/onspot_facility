@@ -46,4 +46,26 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+
+    public function showCleaners()
+    {
+        // Fetch users with the role 'cleaner'
+        $cleaners = User::where('role', 'cleaner')->get();
+
+        // Count total cleaners and categorize them by availability
+        $totalCleaners = $cleaners->count();
+        $availableCount = $cleaners->where('status', 'available')->count();
+        $unavailableCount = $totalCleaners - $availableCount;
+
+        // Return the view with the cleaner data
+        return view('cleaners.index', compact('cleaners', 'totalCleaners', 'availableCount', 'unavailableCount'));
+    }
+
+    // Define the relationship with the Officer model
+    public function officer()
+    {
+        return $this->hasOne(Officer::class, 'user_id');
+    }
+    
 }

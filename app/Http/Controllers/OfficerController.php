@@ -2,33 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Officer;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
-use App\Models\User;
-use App\Models\Officer;
-use Illuminate\Http\Request;
 
 class OfficerController extends Controller
 {
-    // Get all officers
+    // Fetch officers from the users table
     public function index(Request $request)
     {
-        $letter = $request->input('filter', null);
-
-        // Filter officers by the starting letter if a letter is selected
-        if ($letter) {
-            $officers = Officer::where('officer_name', 'LIKE', "$letter%")->get();
-        } else {
-            $officers = Officer::all();
-        }
+        $search = $request->query('search');
+        $officers = Officer::with('user')->when($search, function ($query, $search) {
+            return $query->where('officer_name', 'LIKE', "%{$search}%");
+        })->paginate(10);
 
         return view('admin.officers.index', compact('officers'));
     }
 
-    // Store a new officer
-    public function storeOfficer(Request $request)
+    public function create()
     {
-        // Validate incoming request
+        return view('admin.officers.create');
+    }
+
+    // Store a new officer
+    public function store(Request $request)
+    {
         $request->validate([
             'officer_name' => 'required|string|max:255',
             'officer_email' => 'required|email|unique:users,email',
@@ -36,87 +36,84 @@ class OfficerController extends Controller
             'officer_pass' => 'required|string|min:8'
         ]);
 
-        // Use a transaction to ensure that both records are stored correctly
         DB::transaction(function () use ($request) {
-            // Create user entry in users table
             $user = User::create([
                 'name' => $request->officer_name,
                 'email' => $request->officer_email,
                 'password' => Hash::make($request->officer_pass),
-                'role' => 'officer',  // assuming there’s a role column in users table
+                'role' => 'officer',
             ]);
 
-            // Create officer entry in officers table, linked to user_id
             Officer::create([
                 'user_id' => $user->id,
                 'officer_name' => $request->officer_name,
                 'officer_email' => $request->officer_email,
                 'officer_phoneNo' => $request->officer_phoneNo,
-                'officer_pass' => Hash::make($request->officer_pass),  // Provide a hashed password
             ]);
-            
         });
 
-        // Redirect back with success message
         return redirect()->route('admin.officers')->with('success', 'Officer added successfully.');
     }
 
-    // Show a single officer
-    public function show($id)
+
+
+    // Method to display the officer edit form
+    public function editOfficer($id)
     {
-        $officer = Officer::findOrFail($id);
-        return view('admin.officers.show', compact('officer'));
+        // Fetch the officer by ID from the users table where role is 'officer'
+        $officer = User::where('id', $id)->where('role', 'officer')->firstOrFail();
+        
+        // Return the view with officer data
+        return view('admin.officers.edit', compact('officer'));
     }
 
-    // Update an officer
-    public function update(Request $request, $id)
+    // Method to update the officer
+    public function updateOfficer(Request $request, $id)
     {
-        // Validate the request
+        // Validate the incoming data
         $request->validate([
-            'officer_name' => 'required|string|max:255',
-            'officer_email' => 'required|email|unique:officers,officer_email,' . $id,
-            'officer_phoneNo' => 'required|string|max:20',
-            'officer_pass' => 'nullable|string|min:8'  // Optional password update
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id, // Ensure unique email except the current user
+            'phone_no' => 'required|string|max:20',
+            'password' => 'nullable|string|min:8',
+            'profile_pic' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // Find the officer and update fields
-        $officer = Officer::findOrFail($id);
-        $officer->officer_name = $request->officer_name;
-        $officer->officer_email = $request->officer_email;
-        $officer->officer_phoneNo = $request->officer_phoneNo;
+        // Find the officer (user) by ID
+        $officer = User::where('id', $id)->where('role', 'officer')->firstOrFail();
 
-        // Update password if provided
-        if ($request->filled('officer_pass')) {
-            $officer->officer_pass = Hash::make($request->officer_pass);
+        // Update officer data in the `users` table
+        $officer->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone_no' => $request->phone_no,
+        ]);
+
+        // If a password is provided, hash it and update the officer's password
+        if ($request->filled('password')) {
+            $officer->update([
+                'password' => Hash::make($request->password),
+            ]);
         }
 
-        $officer->save();
+        // Handle profile picture upload if provided
+        if ($request->hasFile('profile_pic')) {
+            $file = $request->file('profile_pic');
+            $path = $file->store('profile_pics', 'public');
+            $officer->update(['profile_pic' => $path]);
+        }
 
-        return redirect()->route('admin.officers')->with('success', 'Officer updated successfully.');
+        // Redirect back to the officers index with a success message
+        return redirect()->route('admin.officers')->with('success', 'Officer updated successfully!');
     }
-
-    // Delete an officer
+    
+  // Delete an officer
     public function destroy($id)
     {
-        // Find the officer and delete
-        $officer = Officer::findOrFail($id);
+        // Find and delete the officer
+        $officer = User::where('role', 'officer')->findOrFail($id);
         $officer->delete();
 
         return redirect()->route('admin.officers')->with('success', 'Officer deleted successfully.');
-    }
-
-    public function search(Request $request)
-    {
-        $query = $request->get('query');
-        
-        // Search officers by name, email, or phone number
-        $officers = Officer::where('officer_name', 'LIKE', "%{$query}%")
-            ->orWhere('officer_email', 'LIKE', "%{$query}%")
-            ->orWhere('officer_phoneNo', 'LIKE', "%{$query}%")
-            ->get();
-
-        return response()->json([
-            'officers' => $officers
-        ]);
     }
 }

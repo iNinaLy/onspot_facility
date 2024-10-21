@@ -14,12 +14,13 @@ class Cleaner extends Model
 
     // Define the fillable fields
     protected $fillable = [
-        'cleaner_id',
-        'cleaner_name', 
-        'cleaner_phoneNo', 
-        'cleaner_available'
+        'cleaner_username',
+        'cleaner_name',
+        'cleaner_phoneNo',
+        'profile_pic',
+        'status',
+        'user_id',
     ];
-
     public function complaints()
     {
         return $this->belongsToMany(Complaint::class, 'complaint_cleaner', 'cleaner_id', 'comp_id')

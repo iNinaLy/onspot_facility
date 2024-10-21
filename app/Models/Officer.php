@@ -1,6 +1,5 @@
 <?php
 
-// app/Models/Officer.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,8 +16,14 @@ class Officer extends Model
         'officer_email', 
         'officer_pass', 
         'officer_name', 
-        'officer_phoneNo'
+        'officer_phoneNo',
+        'officer_username', // Added based on your schema
+        'profile_pic',
     ];
 
-    
+    // Define the relationship with the User model if applicable
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id'); // Ensure this is correct if you have a user_id field
+    }
 }

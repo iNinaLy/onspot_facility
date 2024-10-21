@@ -31,6 +31,7 @@
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
+      transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
     }
 
     .complaint-card:hover {
@@ -46,7 +47,7 @@
       border: none;
       border-radius: 10px;
       cursor: pointer;
-      transition: background-color 0.3s;
+      transition: background-color 0.3s ease-in-out;
       font-size: 85%;
       margin-top: 34px;
       text-decoration: none; /* To remove underline from <a> */
@@ -115,10 +116,6 @@
       color: #0c5460;
     }
 
-    .mb-6 {
-      margin-bottom: 1.5rem;
-    }
-
     /* List display style */
     .complaint-list {
       display: flex;
@@ -146,18 +143,19 @@
       border: 1px solid #e2e8f0;
     }
 
-    /* Heading fix */
-    h1 {
-      font-size: 1.5rem; /* Larger font size */
-      font-weight: 900; /* Bolder font */
-      margin-top: 0;
-      padding-top: 1rem;
-      margin-left: 2.0rem;
+    /* Heading styles */
+    .heading {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-align: left;
+      color: #374151;
     }
   </style>
 
   <div class="container px-4 py-12">
-    <h1 class="text-5xl font-bold text-gray-900 mb-6">Recent Complaints</h1>
+    <!-- Use .heading class for the "Recent Complaints" -->
+    <h1 class="heading">Recent Complaints</h1>
 
     <!-- Filter Form -->
     <div class="filter-container mb-6">
@@ -177,85 +175,86 @@
       </form>
     </div>
 
-    
     <!-- Display Complaints -->
-@foreach($complaints as $complaint)
-<div class="complaint-card" data-complaint-id="{{ $complaint->comp_id }}">
-    <div class="complaint-image">
-        @if ($complaint->comp_image)
-            <img src="data:image/jpeg;base64,{{ base64_encode($complaint->comp_image) }}" alt="Complaint Image" class="complaint-image">
-        @else
-            <div class="h-full flex items-center justify-center">
-                <span class="text-gray-400">No Image</span>
+    @foreach($complaints as $complaint)
+        <div class="complaint-card" data-complaint-id="{{ $complaint->id }}">
+            <div class="complaint-image">
+                @if ($complaint->comp_image)
+                    <!-- Convert the blob data to base64 -->
+                    <img src="data:image/jpeg;base64,{{ base64_encode($complaint->comp_image) }}" alt="Complaint Image" class="complaint-image">
+                @else
+                    <div class="h-full flex items-center justify-center">
+                        <span class="text-gray-400">No Image</span>
+                    </div>
+                @endif
             </div>
-        @endif
-    </div>
 
-    <div class="complaint-details">
-        <div class="complaint-title-status">
-            <h3 class="complaint-title">{{ $complaint->comp_desc }}</h3>
-            <span class="complaint-status
-                @if($complaint->comp_status == 'pending') status-pending
-                @elseif($complaint->comp_status == 'resolved') status-resolved
-                @elseif($complaint->comp_status == 'in progress') status-in-progress
-                @endif">
-                {{ ucfirst($complaint->comp_status) }}
-            </span>
+            <div class="complaint-details">
+                <div class="complaint-title-status">
+                    <h3 class="complaint-title">{{ $complaint->comp_desc }}</h3>
+                    <span class="complaint-status
+                        @if($complaint->comp_status == 'pending') status-pending
+                        @elseif($complaint->comp_status == 'resolved') status-resolved
+                        @elseif($complaint->comp_status == 'in progress') status-in-progress
+                        @endif">
+                        {{ ucfirst($complaint->comp_status) }}
+                    </span>
+                </div>
+                <p class="complaint-meta">Location: {{ $complaint->comp_location }}</p>
+                <p class="complaint-meta">Date: {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}</p>
+                <a href="{{ route('supervisor.complaints.show', $complaint->id) }}" class="view-details-btn">View Details</a>
+            </div>
         </div>
-        <p class="complaint-meta">Room, Floor</p>
-        <p class="complaint-meta">{{ $complaint->comp_date }}</p>
-        <a href="{{ route('supervisor.complaints.show', $complaint->id) }}" class="view-details-btn">View Details</a>
+    @endforeach
 
 
-        </button>
+
+    <!-- Pagination Links -->
+    <div class="mt-6">
+      {{ $complaints->links() }}
     </div>
-</div>
-@endforeach
+  </div>
 
-<!-- Full-Screen Modal -->
-<div class="modal fade" id="complaintModal" tabindex="-1" role="dialog" aria-labelledby="complaintModalLabel" aria-hidden="true" style="z-index: 1050;">
+  <!-- Full-Screen Modal -->
+  <div class="modal fade" id="complaintModal" tabindex="-1" role="dialog" aria-labelledby="complaintModalLabel" aria-hidden="true" style="z-index: 1050;">
     <div class="modal-dialog modal-fullscreen" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="complaintModalLabel">Complaint Details</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p><strong>Description:</strong> <span id="complaint-desc"></span></p>
-                <p><strong>Status:</strong> <span id="complaint-status"></span></p>
-                <p><strong>Date:</strong> <span id="complaint-date"></span></p>
-                <p><strong>Image:</strong></p>
-                <img id="complaint-image" src="" alt="Complaint Image" class="complaint-image" style="max-width: 100%;">
-            </div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="complaintModalLabel">Complaint Details</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
+        <div class="modal-body">
+          <p><strong>Description:</strong> <span id="complaint-desc"></span></p>
+          <p><strong>Status:</strong> <span id="complaint-status"></span></p>
+          <p><strong>Date:</strong> <span id="complaint-date"></span></p>
+          <p><strong>Image:</strong></p>
+          <img id="complaint-image" src="" alt="Complaint Image" class="complaint-image" style="max-width: 100%;">
+        </div>
+      </div>
     </div>
-</div>
+  </div>
 
-
-<script>
+  <!-- JavaScript for Modal and Filtering -->
+  <script>
     // jQuery to handle the modal data population
     $('#complaintModal').on('show.bs.modal', function (event) {
-        var button = $(event.relatedTarget); // Button that triggered the modal
-        var id = button.data('id');
-        var desc = button.data('desc');
-        var status = button.data('status');
-        var date = button.data('date');
-        var image = button.siblings('.complaint-image').find('img').attr('src'); // Get the image source
+      var button = $(event.relatedTarget); // Button that triggered the modal
+      var id = button.data('id');
+      var desc = button.data('desc');
+      var status = button.data('status');
+      var date = button.data('date');
+      var image = button.siblings('.complaint-image').find('img').attr('src'); // Get the image source
 
-        var modal = $(this);
-        modal.find('#complaint-desc').text(desc);
-        modal.find('#complaint-status').text(status);
-        modal.find('#complaint-date').text(date);
-        modal.find('#complaint-image').attr('src', image || ''); // Set image source
+      var modal = $(this);
+      modal.find('#complaint-desc').text(desc);
+      modal.find('#complaint-status').text(status);
+      modal.find('#complaint-date').text(date);
+      modal.find('#complaint-image').attr('src', image || ''); // Set image source
     });
-</script>
 
-
-
-  <!-- JavaScript for filtering complaints -->
-  <script>
+    // JavaScript for filtering complaints
     document.getElementById('filter-form').addEventListener('submit', function (event) {
       event.preventDefault(); // Prevent the form from submitting
 

@@ -10,21 +10,22 @@
         }
 
         .card {
-            background-color: #f0f4f8; /* Softer grey background for the card */
+            background-color: #ffffff; /* White background for the card */
             border-radius: 10px; /* Rounded corners for a modern feel */
             border: none; /* Remove card border */
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); /* Subtle shadow for depth */
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth transitions */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out; /* Smooth transitions */
         }
 
         .card:hover {
-            transform: translateY(-3px); /* Slight lift effect on hover */
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* More shadow on hover */
+            transform: translateY(-4px); /* Slight lift effect on hover */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* More shadow on hover */
         }
 
         .btn-outline-primary {
             color: #2E5675; /* Darker blue for button */
             border-color: #2E5675; /* Matching border color */
+            transition: background-color 0.3s, color 0.3s; /* Transition for hover effect */
         }
 
         .btn-outline-primary:hover {
@@ -51,7 +52,7 @@
         }
 
         .badge-warning {
-            background-color: #ceb8f5; /* Yellow for in-progress */
+            background-color: #ffc107; /* Yellow for in-progress */
         }
 
         .badge-secondary {
@@ -60,10 +61,10 @@
 
         h1 {
             color: #343a40;
-            font-size: 1.5rem;
-            margin-bottom: 3rem;
+            font-size: 2rem; /* Increased size for emphasis */
+            margin-bottom: 2rem; /* Space below heading */
             margin-top: 4rem;
-            padding-top: 20px;
+            text-align: center; /* Centered heading */
         }
 
         .container {
@@ -104,6 +105,36 @@
             display: block;
             width: 100%;
         }
+
+        /* Modal styles */
+        .modal-header {
+            background-color: #e3f2fd; /* Light pastel blue for the modal header */
+            color: #000; /* Dark text for contrast */
+            border-bottom: none; /* No border for a cleaner look */
+        }
+
+        .modal-content {
+            border-radius: 10px; /* Rounded corners for the modal */
+            background-color: #f9f9f9; /* Soft pastel background for modal */
+        }
+
+        .modal-body {
+            padding: 20px; /* Increased padding for better spacing */
+        }
+
+        .modal-body p {
+            margin-bottom: 15px; /* Space below each paragraph in modal */
+            color: #555; /* Softer text color */
+        }
+
+        .modal-body h6 {
+            margin-top: 20px; /* Space above assigned cleaners heading */
+            font-weight: bold; /* Bold for emphasis */
+        }
+
+        .modal-body ul {
+            padding-left: 20px; /* Indent for cleaner list */
+        }
     </style>
 
     <div class="container">
@@ -129,7 +160,15 @@
                                 <strong>Status:</strong> 
                                 <span class="badge badge-{{ $complaint->comp_status == 'completed' ? 'success' : ($complaint->comp_status == 'in progress' ? 'warning' : 'secondary') }}">{{ ucfirst($complaint->comp_status) }}</span>
                             </p>
-                            <a href="#" class="btn btn-outline-primary btn-block">View Details</a>
+                            <a href="#" class="btn btn-outline-primary btn-block" 
+                               data-toggle="modal" 
+                               data-target="#complaintModal"
+                               data-floor="{{ $complaint->location ?? 'N/A' }}"
+                               data-date="{{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}"
+                               data-officer="{{ $complaint->officer->officer_name ?? 'Unknown Officer' }}"
+                               data-status="{{ ucfirst($complaint->comp_status) }}"
+                               data-description="{{ $complaint->comp_desc }}"
+                               data-cleaners="{{ json_encode($complaint->cleaners) }}">View Details</a>
                         </div>
                     </div>
                 </div>
@@ -140,4 +179,64 @@
             @endforelse
         </div>
     </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="complaintModal" tabindex="-1" role="dialog" aria-labelledby="complaintModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="complaintModalLabel">Complaint Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Floor:</strong> <span id="modal-floor"></span></p>
+                    <p><strong>Date:</strong> <span id="modal-date"></span></p>
+                    <p><strong>Complaint by:</strong> <span id="modal-officer"></span></p>
+                    <p><strong>Status:</strong> <span id="modal-status" class="badge"></span></p>
+                    <p><strong>Description:</strong> <span id="modal-description"></span></p>
+                    <h6>Assigned Cleaners:</h6>
+                    <ul id="modal-cleaners-list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript to handle cleaner selection -->
+    <script>
+        $('#complaintModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget); // Button that triggered the modal
+            var floor = button.data('floor'); // Extract info from data-* attributes
+            var date = button.data('date');
+            var officer = button.data('officer');
+            var status = button.data('status');
+            var description = button.data('description');
+            var cleaners = button.data('cleaners'); // Extract cleaners data
+
+            // Populate the modal fields
+            var modal = $(this);
+            modal.find('#modal-floor').text(floor);
+            modal.find('#modal-date').text(date);
+            modal.find('#modal-officer').text(officer);
+            modal.find('#modal-status').text(status);
+
+            // Set the badge class based on status
+            var statusClass = status.toLowerCase() === 'completed' ? 'badge-success' : (status.toLowerCase() === 'in progress' ? 'badge-warning' : 'badge-secondary');
+            modal.find('#modal-status').addClass(statusClass).removeClass('badge-success badge-warning badge-secondary');
+
+            modal.find('#modal-description').text(description);
+
+            // Populate the assigned cleaners list
+            var cleanersList = modal.find('#modal-cleaners-list');
+            cleanersList.empty(); // Clear existing entries
+            if (cleaners.length) {
+                cleaners.forEach(function(cleaner) {
+                    cleanersList.append('<li>' + cleaner.cleaner_name + ' (' + cleaner.cleaner_phoneNo + ')</li>');
+                });
+            } else {
+                cleanersList.append('<li>No cleaners assigned.</li>');
+            }
+        });
+    </script>
 </x-app-layout>

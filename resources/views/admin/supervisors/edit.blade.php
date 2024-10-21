@@ -1,42 +1,63 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="max-w-lg mx-auto my-10 p-8 bg-white rounded-lg shadow-md">
-    <h1 class="text-2xl font-bold text-center mb-6 text-gray-800">Edit Supervisor Information</h1>
+<div class="container my-5" style="max-width: 900px;">
+    <div class="text-center mb-4">
+        <h1 style="font-weight: 600; font-size: 2.5rem; color: #333;">Edit Supervisor Information</h1>
+    </div>
 
-    <!-- Display validation errors -->
     @if ($errors->any())
-        <div class="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4" role="alert">
-            <ul class="list-disc pl-5">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" style="background-color: #f8d7da; border-color: #f5c6cb;">
+            <ul>
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
-    <!-- Form to edit a supervisor -->
-    <form action="{{ route('admin.supervisors.update', ['supervisor' => $supervisor->id]) }}" method="POST" enctype="multipart/form-data" class="space-y-5">
-
+    <form action="{{ route('admin.supervisors.update', $supervisor->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 
-        <div class="flex flex-col">
-            <label for="s_name" class="font-semibold text-sm text-gray-700 mb-1">Name</label>
-            <input type="text" name="s_name" id="s_name" value="{{ old('s_name', $supervisor->s_name) }}" class="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
-        </div>
-        
-        <div class="flex flex-col">
-            <label for="s_email" class="font-semibold text-sm text-gray-700 mb-1">Email</label>
-            <input type="email" name="s_email" id="s_email" value="{{ old('s_email', $supervisor->s_email) }}" class="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+        <!-- Supervisor Name -->
+        <div class="mb-4">
+            <label for="name" class="form-label">Supervisor Name</label>
+            <input type="text" name="name" class="form-control" value="{{ old('name', $supervisor->name) }}" style="border-radius: 8px;" required>
         </div>
 
-        <div class="flex flex-col">
-            <label for="s_phoneNo" class="font-semibold text-sm text-gray-700 mb-1">Phone Number</label>
-            <input type="text" name="s_phoneNo" id="s_phoneNo" value="{{ old('s_phoneNo', $supervisor->s_phoneNo) }}" class="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+        <!-- Supervisor Email -->
+        <div class="mb-4">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" value="{{ old('email', $supervisor->email) }}" style="border-radius: 8px;" required>
         </div>
 
-        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-md shadow-md hover:bg-blue-700 transition-all duration-200 font-semibold">Save</button>
+        <!-- Supervisor Phone Number -->
+        <div class="mb-4">
+            <label for="phone_no" class="form-label">Phone Number</label>
+            <input type="text" name="phone_no" class="form-control" value="{{ old('phone_no', $supervisor->phone_no) }}" style="border-radius: 8px;" required>
+        </div>
+
+        <!-- Profile Picture -->
+        <div class="mb-4">
+            <label for="profile_pic" class="form-label">Profile Picture</label>
+            <input type="file" class="form-control" name="profile_pic" style="border-radius: 8px;">
+            @if ($supervisor->profile_pic)
+                <img src="{{ asset('storage/' . $supervisor->profile_pic) }}" alt="Profile Picture" width="100" class="img-thumbnail mt-2">
+                <div class="mt-2">
+                    <label class="form-label">Current Profile Picture</label>
+                </div>
+            @endif
+        </div>
+
+        <!-- New Password -->
+        <div class="mb-4">
+            <label for="password" class="form-label">New Password (optional)</label>
+            <input type="password" name="password" class="form-control" placeholder="Enter New Password" style="border-radius: 8px;">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="border-radius: 8px; padding: 0.75rem 1.5rem;">Save</button>
     </form>
 </div>
 @endsection

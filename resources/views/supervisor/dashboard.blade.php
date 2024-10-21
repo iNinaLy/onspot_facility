@@ -1,4 +1,8 @@
 <x-app-layout>
+    <x-slot name="header">
+        
+    </x-slot>
+
     <style>
         /* Additional custom styles */
         html {
@@ -104,6 +108,28 @@
             font-weight: bold;
             color: #374151;
         }
+
+        .recent-complaint-card {
+            background-color: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .recent-complaint-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .recent-complaint-card .info {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+        }
     </style>
 
     <div class="py-12">
@@ -118,7 +144,7 @@
                         voluptate qui corrupti consequatur nam voluptatem iste?
                     </p>
                     <!-- Assign Tasks Button -->
-                    <button onclick="window.location.href='/supervisor/complaints/index'" 
+                    <button onclick="window.location.href='/supervisor/complaints'" 
                             class="mt-4 bg-[#2e5675] text-white rounded-lg px-6 py-2 hover:bg-[#1d3e55] transition duration-200 button-transition">
                         Assign Tasks
                     </button>
@@ -175,24 +201,17 @@
                 </div>
                 <div class="w-full max-w-xl mx-auto mt-4">
                     @if(isset($recentComplaint) && $recentComplaint)
-                        <div class="bg-blue-200 rounded-lg shadow-lg p-8 flex flex-col items-start">
-                            <div class="flex justify-between items-center w-full">
-                                <div class="flex items-center space-x-5">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 text-blue-900">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 16.862A9.953 9.953 0 0122.5 12c0-5.523-4.477-10-10-10S2.5 6.477 2.5 12c0 2.61 1.007 4.98 2.638 6.862M15 12a3 3 0 11-6 0 3 3 0 016 0zm3 5.5a6.7 6.7 0 01-12 0" />
-                                    </svg>
-                                    <div>
-                                        <div class="text-lg text-blue-800 font-semibold">{{ $recentComplaint->comp_location }}</div>
-                                        <div class="text-xl text-blue-900 font-bold">{{ $recentComplaint->comp_desc }}</div>
-                                    </div>
-                                </div>
-                                <div class="text-lg text-gray-600">{{ $recentComplaint->comp_time }}</div>
+                        <div class="recent-complaint-card">
+                            <div class="info">
+                                <div class="text-lg text-blue-800 font-semibold">{{ $recentComplaint->comp_location }}</div>
+                                <div class="text-xl text-blue-900 font-bold">{{ $recentComplaint->comp_desc }}</div>
+                                <div class="text-gray-600 mt-2">{{ $recentComplaint->comp_date }} at {{ $recentComplaint->comp_time }}</div>
                             </div>
-                            <div class="flex items-center text-lg text-blue-900 mt-4">
+                            <div class="flex items-center text-lg text-blue-900">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 3h-15m15 0a1.5 1.5 0 011.5 1.5v15a1.5 1.5 0 01-1.5 1.5h-15a1.5 1.5 0 01-1.5-1.5v-15A1.5 1.5 0 014.5 3m15 0V.75m-15 2.25V.75m13.5 9.75h-13.5m0 0a4.5 4.5 0 014.5-4.5h4.5a4.5 4.5 0 014.5 4.5m-13.5 0v9a4.5 4.5 0 004.5 4.5h4.5a4.5 4.5 0 004.5-4.5v-9" />
                                 </svg>
-                                <span class="font-medium">{{ $recentComplaint->comp_date }}</span>
+                                <span class="font-medium">{{ $recentComplaint->comp_time }}</span>
                             </div>
                         </div>
                     @else

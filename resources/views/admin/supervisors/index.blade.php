@@ -1,261 +1,118 @@
-<!-- resources/views/admin/supervisors/index.blade.php -->
-
 @extends('layouts.admin')
 
 @section('content')
-<style>
-    /* Search Bar Styling */
-    .search-bar {
-        position: relative;
-        margin-bottom: 30px;
-    }
-
-    .search-bar input {
-        padding: 10px 40px 10px 20px; /* Added padding-right for the icon */
-        width: 100%;
-        border: 2px solid #ced4da;
-        border-radius: 30px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        font-size: 16px;
-        transition: all 0.3s ease-in-out;
-    }
-
-    .search-bar input:focus {
-        outline: none;
-        border-color: #276678;
-        box-shadow: 0 0 10px rgba(39, 102, 120, 0.5);
-    }
-
-    .search-bar .fa-search {
-        position: absolute;
-        right: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #276678;
-        cursor: pointer;
-        font-size: 18px;
-        transition: color 0.3s ease;
-    }
-
-    .search-bar .fa-search:hover {
-        color: #1e5161;
-    }
-
-    /* Table Styling */
-    .table thead {
-        background-color: #f7f7f7;
-        font-weight: bold;
-    }
-
-    .table tbody tr:hover {
-        background-color: #f1f1f1;
-    }
-
-    /* Button Styling */
-    .btn-edit, .btn-delete {
-        padding: 5px 10px;
-        font-size: 14px;
-        border-radius: 5px;
-    }
-
-    .btn-edit {
-        background-color: white;
-        color: #276678;
-        border: 1px solid #276678;
-    }
-
-    .btn-edit:hover {
-        background-color: #276678;
-        color: white;
-    }
-
-    .btn-delete {
-        background-color: black;
-        color: white;
-        border: none;
-    }
-
-    .btn-delete:hover {
-        background-color: #555;
-    }
-
-    .no-results {
-        text-align: center;
-        color: #888;
-        font-size: 16px;
-        padding: 20px 0;
-    }
-
-    /* Responsive Adjustments */
-    @media (max-width: 576px) {
-        .search-bar input {
-            font-size: 14px;
-        }
-
-        .search-bar .fa-search {
-            font-size: 16px;
-        }
-    }
-</style>
-
-<div class="container my-5 px-5">
-    <h1 class="mb-4 text-center">Manage Supervisors</h1>
+<div class="container my-5" style="max-width: 1200px;">
+    <!-- Page Title -->
+    <div class="text-center mb-4">
+        <h1 style="font-weight: 600; font-size: 2.5rem; color: #333;">Manage Supervisors</h1>
+    </div>
 
     <!-- Success Message -->
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert" style="background-color: #EBF5E1; border-color: #A6D785; padding: 1rem; font-weight: 400;">
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
     <!-- Search Bar -->
-    <div class="search-bar">
-        <input type="text" id="search" class="form-control" placeholder="Search by name, email, or phone number" autocomplete="off">
-        <i class="fas fa-search"></i>
+    <div class="mb-4">
+        <form method="GET" action="{{ route('admin.supervisors.index') }}"> 
+            <div class="input-group">
+                <input type="text" name="search" class="form-control" value="{{ request()->query('search') }}" placeholder="Search by name, phone number, or email" aria-label="Search" style="border-radius: 8px; border: 1px solid #ced4da;">
+                <button class="btn btn-primary" type="submit" style="border-radius: 8px;">Search</button>
+            </div>
+        </form>
     </div>
 
-    <!-- Table to list supervisors -->
-    <div class="table-responsive" id="supervisorTable">
-        <table class="table table-hover align-middle">
-            <thead class="table-light">
+    <!-- Supervisors Table -->
+    <div class="table-responsive">
+        @if($supervisors->isEmpty())
+            <div class="alert alert-info text-center">
+                No supervisors found.
+            </div>
+        @else
+        <table class="table align-middle text-center">
+            <thead>
                 <tr>
-                    <th>ID</th>
+                    <th>Profile Picture</th>
                     <th>Name</th>
                     <th>Email</th>
                     <th>Phone Number</th>
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody id="supervisorResults">
-                <!-- Initially display all supervisors -->
-                @foreach($supervisors as $supervisor)
-                    <tr>
-                        <td>{{ $supervisor->s_id }}</td>
-                        <td>{{ $supervisor->s_name }}</td>
-                        <td>{{ $supervisor->s_email }}</td>
-                        <td>{{ $supervisor->s_phoneNo }}</td>
-                        <td>
-                            <div class="btn-group" role="group">
-                                <a href="{{ route('admin.supervisors.edit', $supervisor->s_id) }}" class="btn btn-edit btn-sm">Edit</a>
-                                <form action="{{ route('admin.supervisors.destroy', $supervisor->s_id) }}" method="POST" style="display:inline-block;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-delete btn-sm" onclick="return confirm('Are you sure you want to delete this supervisor?')">Delete</button>
-                                </form>
+            <tbody>
+            @foreach($supervisors as $supervisor)
+                <tr>
+                    <!-- Profile Picture Column -->
+                    <td>
+                        @if ($supervisor->profile_pic)
+                            <img src="{{ asset('storage/' . $supervisor->profile_pic) }}" alt="Profile Picture" class="profile-img">
+                        @else
+                            <span>No Image</span>
+                        @endif
+                    </td>
+
+                    <!-- Supervisor Details -->
+                    <td>{{ $supervisor->name ?? 'Not Available' }}</td>
+                    <td>{{ $supervisor->email ?? 'Not Available' }}</td>
+                    <td>{{ $supervisor->phone_no ?? 'Not Available' }}</td>
+                    <td>
+                        <div class="btn-group" role="group" style="gap: 0.75rem;">
+                            <a href="{{ route('admin.supervisors.edit', $supervisor->id) }}" class="btn btn-sm" style="background-color: #fff; color: #000; border-radius: 8px; border: 1px solid #000; padding: 0.5rem 1.5rem; font-weight: 400;">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </a>
+                            <button type="button" class="btn btn-sm" style="background-color: #000; color: #fff; border-radius: 8px; border: none;" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $supervisor->id }}">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </div>
+
+                        <!-- Delete Confirmation Modal -->
+                        <div class="modal fade" id="deleteModal{{ $supervisor->id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ $supervisor->id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="deleteModalLabel{{ $supervisor->id }}">Confirm Deletion</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Are you sure you want to delete {{ $supervisor->name }}?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <form action="{{ route('admin.supervisors.destroy', $supervisor->id) }}" method="POST">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger">Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
-                        </td>
-                    </tr>
-                @endforeach
+                        </div>
+                    </td>
+                </tr>
+            @endforeach
             </tbody>
         </table>
-
-        <!-- Optional: Display a message when no supervisors are available initially -->
-        @if($supervisors->isEmpty())
-            <div class="no-results">No supervisors available.</div>
+        
+        <!-- Pagination Links -->
+        <div class="d-flex justify-content-center">
+            {{ $supervisors->appends(request()->query())->links() }}
+        </div>
         @endif
     </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const searchInput = document.getElementById('search');
-        const supervisorResults = document.getElementById('supervisorResults');
-
-        searchInput.addEventListener('input', function () {
-            const query = this.value.trim();
-
-            if (query.length > 2) { // Start search after typing 3 characters
-                fetch(`/admin/supervisors/search?query=${encodeURIComponent(query)}`, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    supervisorResults.innerHTML = ''; // Clear existing results
-
-                    if (data.supervisors.length > 0) {
-                        data.supervisors.forEach(supervisor => {
-                            const row = document.createElement('tr');
-
-                            row.innerHTML = `
-                                <td>${supervisor.s_id}</td>
-                                <td>${supervisor.s_name}</td>
-                                <td>${supervisor.s_email}</td>
-                                <td>${supervisor.s_phoneNo}</td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <a href="/admin/supervisors/${supervisor.s_id}/edit" class="btn btn-edit btn-sm">Edit</a>
-                                        <form action="/admin/supervisors/${supervisor.s_id}" method="POST" style="display:inline-block;">
-                                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                                            <input type="hidden" name="_method" value="DELETE">
-                                            <button type="submit" class="btn btn-delete btn-sm" onclick="return confirm('Are you sure you want to delete this supervisor?')">Delete</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            `;
-                            supervisorResults.appendChild(row);
-                        });
-                    } else {
-                        // If no results, show message
-                        supervisorResults.innerHTML = '<tr><td colspan="5" class="no-results">No supervisors found.</td></tr>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching search results:', error);
-                    supervisorResults.innerHTML = '<tr><td colspan="5" class="no-results">An error occurred while searching.</td></tr>';
-                });
-            } else {
-                // If query is too short, optionally display all supervisors or clear the table
-                if (query.length === 0) {
-                    // Optionally, you can reset the table to show all supervisors
-                    // Uncomment the following lines if you want to fetch all supervisors when the search input is cleared
-
-                    /*
-                    fetch(`/admin/supervisors/search?query=`)
-                        .then(response => response.json())
-                        .then(data => {
-                            supervisorResults.innerHTML = ''; // Clear existing results
-
-                            if (data.supervisors.length > 0) {
-                                data.supervisors.forEach(supervisor => {
-                                    const row = document.createElement('tr');
-
-                                    row.innerHTML = `
-                                        <td>${supervisor.s_id}</td>
-                                        <td>${supervisor.s_name}</td>
-                                        <td>${supervisor.s_email}</td>
-                                        <td>${supervisor.s_phoneNo}</td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="/admin/supervisors/${supervisor.s_id}/edit" class="btn btn-edit btn-sm">Edit</a>
-                                                <form action="/admin/supervisors/${supervisor.s_id}" method="POST" style="display:inline-block;">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                                                    <input type="hidden" name="_method" value="DELETE">
-                                                    <button type="submit" class="btn btn-delete btn-sm" onclick="return confirm('Are you sure you want to delete this supervisor?')">Delete</button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    `;
-                                    supervisorResults.appendChild(row);
-                                });
-                            } else {
-                                supervisorResults.innerHTML = '<tr><td colspan="5" class="no-results">No supervisors available.</td></tr>';
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error fetching supervisors:', error);
-                            supervisorResults.innerHTML = '<tr><td colspan="5" class="no-results">An error occurred while fetching supervisors.</td></tr>';
-                        });
-                    */
-                } else {
-                    // Clear the results if query is too short
-                    supervisorResults.innerHTML = '';
-                }
-            }
-        });
-    });
-</script>
+<!-- CSS for Image Styling -->
+<style>
+    /* Profile Image Styling */
+    .profile-img {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid #ddd;
+    }
+</style>
 @endsection
