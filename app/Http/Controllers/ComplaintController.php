@@ -121,20 +121,23 @@ class ComplaintController extends Controller
         }
     }
 
-        public function recentComplaint()
+    public function recentComplaint()
     {
-        // Fetch the most recent complaint based on comp_date and comp_time
-        $recentComplaint = Complaint::orderBy('comp_date', 'desc')
-                                    ->orderBy('comp_time', 'desc')
+        $officerId = auth()->user()->id; // Get the logged-in officer's ID
+    
+        // Fetch the most recent complaint for the logged-in officer
+        $recentComplaint = Complaint::where('officer_id', $officerId)
+                                    ->orderBy('created_at', 'desc')
                                     ->first();
-
-        // If a complaint is found, return it as JSON
+    
         if ($recentComplaint) {
             return response()->json($recentComplaint, 200);
         }
-
+    
         // If no complaint is found, return a default message
         return response()->json(['message' => 'No recent complaints found'], 404);
     }
+    
+    
 
 }
