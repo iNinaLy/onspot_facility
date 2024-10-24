@@ -10,7 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory,  HasApiTokens, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -18,23 +18,14 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-<<<<<<< HEAD
         'username',  // Add username
-=======
-        'username',
->>>>>>> origin/of
         'name',
         'email',
-        'profile_pic',
+        'profile_pic', // Profile picture for web
         'password',
-<<<<<<< HEAD
-        'phone_no',  // Add phone_no
-        'role'  
-=======
-        'phone_no',
+        'phone_no', // Phone number for web
         'role',
         'email_verified_at',
->>>>>>> origin/of
     ];
 
     /**
@@ -57,7 +48,27 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    /**
+     * Role checking methods
+     */
+    public function isCleaner()
+    {
+        return $this->role === 'cleaner';
+    }
 
+    public function isSupervisor()
+    {
+        return $this->role === 'supervisor';
+    }
+
+    public function isOfficer()
+    {
+        return $this->role === 'officer';
+    }
+
+    /**
+     * Method to fetch and categorize cleaners (for web usage)
+     */
     public function showCleaners()
     {
         // Fetch users with the role 'cleaner'
@@ -68,14 +79,15 @@ class User extends Authenticatable
         $availableCount = $cleaners->where('status', 'available')->count();
         $unavailableCount = $totalCleaners - $availableCount;
 
-        // Return the view with the cleaner data
+        // Return the view with the cleaner data (web functionality)
         return view('cleaners.index', compact('cleaners', 'totalCleaners', 'availableCount', 'unavailableCount'));
     }
 
-    // Define the relationship with the Officer model
+    /**
+     * Relationship with Officer model (for web usage)
+     */
     public function officer()
     {
         return $this->hasOne(Officer::class, 'user_id');
     }
-    
 }

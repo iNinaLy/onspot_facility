@@ -27,21 +27,6 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-<<<<<<< HEAD
-        // Validate the request data
-        $request->validate([
-            'username' => 'required|string|max:255|unique:users,username',
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email',
-            'phone_no' => 'required|string|max:20',
-            'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|string|in:officer,supervisor,cleaner',
-            'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        ]);
-
-        // Handle profile picture if uploaded
-        $profilePicPath = null;
-=======
         // Validation rules
         $validatedData = $request->validate([
             'username' => 'required|string|max:255|unique:users,username',
@@ -68,12 +53,10 @@ class UserController extends Controller
         $user->building = $validatedData['building'];
 
         // Handle file upload for profile picture
->>>>>>> origin/of
         if ($request->hasFile('profile_pic')) {
             $user->profile_pic = $request->file('profile_pic')->store('profile_pics', 'public');
         }
 
-<<<<<<< HEAD
         // Create new user with fillable properties (stored in 'users' table)
         $user = User::create([
             'username' => $request->username,
@@ -87,29 +70,7 @@ class UserController extends Controller
         ]);
 
         // Store the role-specific information in their corresponding table
-        if ($user->role == 'supervisor') {
-            DB::table('supervisors')->insert([
-                's_id' => $user->id,
-                's_email' => $user->email,
-                's_pass' => $user->password,
-                's_name' => $user->name,
-                's_phoneNo' => $user->phone_no,
-                's_username' => $user->username,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        } elseif ($user->role == 'officer') {
-            DB::table('officers')->insert([
-                'id' => $user->id,
-                'officer_email' => $user->email,
-                'officer_pass' => $user->password,
-                'officer_name' => $user->name,
-                'officer_phoneNo' => $user->phone_no,
-                'officer_username' => $user->username,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        } elseif ($user->role == 'cleaner') {
+        if ($user->role == 'cleaner') {
             DB::table('cleaners')->insert([
                 'id' => $user->id,
                 'cleaner_name' => $user->name,
@@ -128,12 +89,3 @@ class UserController extends Controller
 
     
 }
-=======
-        $user->save(); // Save the user to the database
-
-        return redirect()->route('admin.users.index')->with('success', 'User added successfully!');
-    }
-
-    
-}
->>>>>>> origin/of

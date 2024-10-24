@@ -4,31 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-<<<<<<< HEAD
-use App\Models\ComplaintCleaner;
-use App\Models\Officer;
 use App\Models\Cleaner;
 use App\Models\Task;
+use App\Models\User; // For officer and supervisor roles
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-=======
-use Illuminate\Support\Facades\Storage;
->>>>>>> origin/of
 
 class Complaint extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
 
-<<<<<<< HEAD
-    protected $table = 'complaints';
-    protected $primaryKey = 'id';
-    public $incrementing = true;
-    protected $keyType = 'int';
-=======
     protected $table = 'complaints'; // Specify the table name
     protected $primaryKey = 'id'; // Primary key (auto-increment)
->>>>>>> origin/of
+    public $incrementing = true; // Ensure it's auto-incrementing
+    protected $keyType = 'int'; // Primary key type
 
+    // Allow mass assignment on these fields
     protected $fillable = [
         'comp_date',
         'comp_time',
@@ -39,25 +30,19 @@ class Complaint extends Model implements HasMedia
         'assigned_by',
         'assigned_date',
         'no_of_cleaners',
-<<<<<<< HEAD
-        'cleaner_id',
         'comp_image', // Add comp_image to fillable fields
-=======
->>>>>>> origin/of
     ];
 
+    // Define status constants
     const STATUS_PENDING = 'pending';
     const STATUS_ON_GOING = 'on going';
     const STATUS_COMPLETED = 'completed';
 
-<<<<<<< HEAD
-=======
     /**
-     * Retrieve available statuses
+     * Retrieve available statuses.
      *
      * @return array
      */
->>>>>>> origin/of
     public static function getStatuses()
     {
         return [
@@ -67,89 +52,8 @@ class Complaint extends Model implements HasMedia
         ];
     }
 
-<<<<<<< HEAD
-=======
-    public function registerMediaCollections(): void
-    {
-        $this->addMediaCollection('complaint_images')
-             ->useDisk('public'); // Explicitly use the public disk
-    }
-
     /**
-     * Accessor to retrieve the binary image as a Base64-encoded string.
-     * 
-     * @return string|null
-     */
-    public function getCompImageAttribute($value)
-    {
-        // Check if there's media associated with 'complaint_images'
-        if ($this->hasMedia('complaint_images')) {
-            return $this->getFirstMediaUrl('complaint_images');
-        }
-
-        // If no media is present, fall back to the stored value or default image
-        return $value ?: asset('default-image.png');
-    }
-
-    public function getAllImagesUrlsAttribute()
-    {
-        $mediaItems = $this->getMedia('complaint_images');
-        $imageUrls = [];
-    
-        foreach ($mediaItems as $media) {
-            $imageUrls[] = $media->getUrl(); // Collect URLs of all images
-        }
-    
-        return $imageUrls; // Return an array of image URLs
-    }
-
-    /**
-     * Define relationship with Officer model
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
->>>>>>> origin/of
-    public function officer()
-    {
-        return $this->belongsTo(User::class, 'officer_id')->where('role', 'officer');
-    }
-
-    /**
-     * Define relationship with Supervisor (user who assigned the cleaners)
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function supervisor()
-    {
-        return $this->belongsTo(User::class, 'assigned_by')->where('role', 'supervisor');
-    }
-
-    /**
-     * Define many-to-many relationship with Cleaner model
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
-     */
-    public function cleaners()
-    {
-<<<<<<< HEAD
-        return $this->belongsToMany(Cleaner::class, 'complaint_cleaner', 'comp_id', 'cleaner_id')
-                    ->withPivot('no_of_cleaners', 'assigned_by', 'assigned_date')
-                    ->withTimestamps();
-    }
-
-    public function tasks()
-    {
-        return $this->hasMany(Task::class, 'comp_id');
-=======
-        return $this->belongsToMany(Cleaner::class, 'complaint_cleaner')
-            ->withPivot('no_of_cleaners', 'assigned_by', 'assigned_date')
-            ->withTimestamps();
->>>>>>> origin/of
-    }
-
-    /**
-     * Register media collections for the complaint.
-     * Ensure we're using the 'public' disk so images are accessible via URL.
+     * Register media collections for the complaint images.
      */
     public function registerMediaCollections(): void
     {
@@ -163,26 +67,72 @@ class Complaint extends Model implements HasMedia
      */
     public function getCompImageAttribute()
     {
+        // Check if there's media associated with 'complaint_images'
+        if ($this->hasMedia('complaint_images')) {
+            return $this->getFirstMediaUrl('complaint_images');
+        }
+
+        // Fall back to stored value or default image
         return $this->attributes['comp_image'] ?: asset('default-image.png');
     }
 
     /**
-     * Retrieve all complaint images.
+     * Retrieve all complaint images URLs.
+     *
+     * @return array
      */
     public function getAllImagesUrlsAttribute()
     {
         $mediaItems = $this->getMedia('complaint_images');
         $imageUrls = [];
-    
+
         foreach ($mediaItems as $media) {
             $imageUrls[] = $media->getUrl(); // Collect URLs of all images
         }
-    
+
         return $imageUrls; // Return an array of image URLs
     }
 
     /**
-     * Update complaint status.
+     * Define relationship with Officer (User model with officer role).
+     */
+    public function officer()
+    {
+        return $this->belongsTo(User::class, 'officer_id')->where('role', 'officer');
+    }
+
+    /**
+     * Define relationship with Supervisor (user who assigned the cleaners).
+     */
+    public function supervisor()
+    {
+        return $this->belongsTo(User::class, 'assigned_by')->where('role', 'supervisor');
+    }
+
+    /**
+     * Define many-to-many relationship with Cleaner model.
+     */
+    public function cleaners()
+    {
+        return $this->belongsToMany(Cleaner::class, 'complaint_cleaner')
+            ->withPivot('no_of_cleaners', 'assigned_by', 'assigned_date')
+            ->withTimestamps();
+    }
+
+    /**
+     * Define one-to-many relationship with Task model.
+     */
+    public function tasks()
+    {
+        return $this->hasMany(Task::class, 'comp_id');
+    }
+
+    /**
+     * Update the status of the complaint.
+     * Throws an exception if the status is invalid.
+     *
+     * @param string $status
+     * @throws \Exception
      */
     public function updateStatus($status)
     {
@@ -195,7 +145,7 @@ class Complaint extends Model implements HasMedia
     }
 
     /**
-     * Assign cleaners to the complaint and update relevant details
+     * Assign cleaners to the complaint and update relevant details.
      *
      * @param array $cleanerIds
      * @param string $assignedBy

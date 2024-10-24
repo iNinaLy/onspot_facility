@@ -30,13 +30,12 @@
             <!-- Image Section -->
             <div class="col-lg-6">
                 <div class="image-section p-3 text-center bg-light rounded">
-                @if($complaint->comp_image)
-                    <img src="data:image/jpeg;base64,{{ base64_encode($complaint->comp_image) }}" 
+                @if($complaint->getFirstMediaUrl('complaint_images'))
+                    <img src="{{ $complaint->getFirstMediaUrl('complaint_images') }}" 
                         alt="Complaint Image" class="img-fluid rounded">
                 @else
                     <div class="placeholder-image p-5">No Image Available</div>
                 @endif
-
                 </div>
             </div>
 
@@ -92,8 +91,8 @@
                             <div class="d-flex flex-wrap gap-3">
                                 @foreach ($availableCleaners as $cleaner)
                                     <div class="cleaner-item">
-                                        @if($cleaner->profile_pic)
-                                            <img src="data:image/jpeg;base64,{{ base64_encode($cleaner->profile_pic) }}" 
+                                        @if($cleaner->getFirstMediaUrl('profile_pictures'))
+                                            <img src="{{ $cleaner->getFirstMediaUrl('profile_pictures') }}" 
                                                  alt="Profile Picture" class="rounded-circle" width="40" height="40">
                                         @else
                                             <span>No Image</span>

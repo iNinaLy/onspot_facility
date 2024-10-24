@@ -7,23 +7,16 @@ use App\Models\Cleaner;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-<<<<<<< HEAD
-use Illuminate\Support\Facades\Log;
-=======
-use Illuminate\Support\Facades\Notification;  // Correct import for Notification
+use Illuminate\Support\Facades\Notification;
 use App\Notifications\NewCleaningComplaint;
 use Illuminate\Support\Facades\DB;
->>>>>>> origin/of
+use Illuminate\Support\Facades\Log;
 
 class ComplaintController extends Controller
 {
-    // Admin: Fetch complaints with optional filtering and sorting
+    // Admin: Fetch complaints with optional filtering and sorting (Web)
     public function index(Request $request)
     {
-<<<<<<< HEAD
-        // Fetch all complaints
-        $complaints = Complaint::all();
-=======
         // Start building the query
         $query = Complaint::query();
 
@@ -38,163 +31,7 @@ class ComplaintController extends Controller
         return view('admin.complaints.index', compact('complaints'));
     }
 
-
-    // Batch update complaint statuses
-    public function batchUpdate(Request $request)
-    {
-        $request->validate([
-            'complaints' => 'required|array',
-            'new_status' => 'required|string',
-        ]);
-
-        Complaint::whereIn('id', $request->complaints)->update([
-            'comp_status' => $request->new_status,
-        ]);
-
-        return redirect()->route('admin.complaints.index')->with('success', 'Status updated successfully!');
-    }
-
-    // Search complaints by description
-    public function search(Request $request)
-    {
-        $query = $request->input('query');
-        $complaints = Complaint::where('comp_desc', 'LIKE', "%{$query}%")->paginate(10);
-
-        return view('admin.complaints.index', compact('complaints'));
-    }
-
-    // Supervisor: List complaints
-    public function supervisorIndex()
-    {
-        $complaints = Complaint::orderBy('comp_date', 'desc')->paginate(10);
->>>>>>> origin/of
-        return view('supervisor.complaints.index', compact('complaints'));
-    }
-
-    // Admin: Show recent complaint on the dashboard
-    public function showDashboard()
-    {
-        $recentComplaint = Complaint::latest('comp_date')->latest('comp_time')->first();
-        return view('dashboard', compact('recentComplaint'));
-    }
-
-<<<<<<< HEAD
-    public function show($id)
-    {
-        // Fetch the complaint by its ID along with related tasks, officer, and cleaners
-        $complaint = Complaint::with(['tasks', 'officer', 'cleaners'])
-                              ->where('id', $id)
-                              ->first();
-    
-        // If the complaint doesn't exist, redirect back with an error
-        if (!$complaint) {
-            return redirect()->route('supervisor.complaints.index')->with('error', 'Complaint not found.');
-        }
-    
-        // Fetch only available cleaners for assigning (when the status is pending)
-        $cleaners = Cleaner::where('status', 'available')->get();
-    
-        // Return the view with the complaint data and available cleaners
-        return view('supervisor.complaints.show', compact('complaint', 'cleaners'));
-    }
-
-    public function apistore(Request $request)
-    {
-        // Validate the incoming request
-        $request->validate([
-            'comp_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validate a single image file
-            'comp_date' => 'required|date',
-            'comp_time' => 'required',
-            'comp_desc' => 'required|string',
-            'comp_location' => 'required|string',
-        ]);
-    
-        // Create a new complaint record in the database
-        $complaint = Complaint::create([
-            'comp_date' => $request->comp_date,
-            'comp_time' => $request->comp_time,
-            'comp_desc' => $request->comp_desc,
-            'comp_location' => $request->comp_location,
-            'officer_id' => Auth::id(),
-            'assigned_by' => null,
-            'cleaner_id' => null,
-            'comp_status' => Complaint::STATUS_PENDING,
-            'comp_image' => null, // Initialize as null, we'll update this later if an image is uploaded
-        ]);
-    
-        // Check if an image is uploaded and attach it using the media library
-        if ($request->hasFile('comp_image')) {
-            $media = $complaint->addMediaFromRequest('comp_image')
-                        ->toMediaCollection('complaint_images', 'public'); // Explicitly use the 'public' disk
-    
-            // Log the media object for debugging
-            Log::info('Media uploaded:', ['media' => $media]);
-    
-            // Store the image URL in the 'comp_image' field
-            $complaint->update([
-                'comp_image' => $media->getUrl() // Save the image URL in the 'comp_image' column
-            ]);
-        } else {
-            Log::info('No image was uploaded');
-        }
-    
-        // Return the response in JSON format with the complaint data
-        return response()->json([
-            'message' => 'Complaint submitted successfully!',
-            'complaint' => $complaint, // The 'comp_image' field now contains the URL of the image
-        ], 201);
-    }
-    
-    
-    
-    public function getOfficerComplaints()
-    {
-        // Get the logged-in officer's ID
-        $officerId = Auth::id();
-        
-        // Check if the officer is authenticated
-        if (!$officerId) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-    
-        try {
-            // Fetch complaints for the officer
-            $complaints = Complaint::where('officer_id', $officerId)
-                ->orderBy('comp_date', 'desc')
-                ->orderBy('comp_time', 'desc')
-                ->get();
-    
-            // Return the complaints in JSON format
-            return response()->json($complaints, 200);
-            
-        } catch (\Exception $e) {
-            // Catch any unexpected errors and return a 500 response
-            return response()->json(['error' => 'Server error: ' . $e->getMessage()], 500);
-        }
-    }
-
-    public function recentComplaint()
-    {
-        $officerId = auth()->user()->id; // Get the logged-in officer's ID
-    
-        // Fetch the most recent complaint for the logged-in officer
-        $recentComplaint = Complaint::where('officer_id', $officerId)
-                                    ->orderBy('created_at', 'desc')
-                                    ->first();
-    
-        if ($recentComplaint) {
-            return response()->json($recentComplaint, 200);
-        }
-    
-        // If no complaint is found, return a default message
-        return response()->json(['message' => 'No recent complaints found'], 404);
-    }
-    
-    
-
-=======
-    // Store a new complaint
-
+    // Store a new complaint (Web)
     public function store(Request $request)
     {
         $request->validate([
@@ -213,36 +50,23 @@ class ComplaintController extends Controller
         $complaint->comp_status = 'pending';
         $complaint->officer_id = $request->input('officer_id');
         $complaint->cleaner_id = $request->input('cleaner_id');
-
-        // Check if there's an uploaded image
-        if ($request->hasFile('comp_image')) {
-            $image = file_get_contents($request->file('comp_image')->getRealPath());
-            $complaint->comp_image = $image; // Store the binary image data
-        }
-
-        // Save the complaint record
         $complaint->save();
 
-        $complaintData = [
-            'id' => $complaint->id,
-            'comp_date' => $complaint->comp_date,
-            'comp_desc' => $complaint->comp_desc,
-            'comp_location' => $complaint->comp_location,
-            'officer_id' => $complaint->officer_id,
-            'cleaner_id' => $complaint->cleaner_id,
-        ];
+        // Handle the image upload using Spatie MediaLibrary
+        if ($request->hasFile('comp_image')) {
+            $complaint->addMedia($request->file('comp_image'))
+                      ->toMediaCollection('complaint_images');
+        }
 
-        // Get all admin users to notify
+        // Send notifications
         $adminUsers = User::where('is_admin', true)->get();
-
-        // Send the notification
-        Notification::send($adminUsers, new NewCleaningComplaint($complaintData));
+        Notification::send($adminUsers, new NewCleaningComplaint($complaint));
 
         return redirect()->route('supervisor.complaints.index')
-            ->with('success', 'Complaint created and notification sent successfully.');
+                         ->with('success', 'Complaint created and notification sent successfully.');
     }
 
-    // Supervisor: Show complaint details with available cleaners
+    // Supervisor: Show complaint details with available cleaners (Web)
     public function show($id)
     {
         $complaint = Complaint::with('cleaners')->findOrFail($id);
@@ -251,19 +75,7 @@ class ComplaintController extends Controller
         return view('supervisor.complaints.show', compact('complaint', 'availableCleaners'));
     }
 
-    // Fetch image for display
-    public function showImage($id)
-    {
-        $complaint = Complaint::findOrFail($id);
-
-        if ($complaint->comp_image) {
-            $mimeType = finfo_buffer(finfo_open(), $complaint->comp_image, FILEINFO_MIME_TYPE);
-            return response($complaint->comp_image)->header('Content-Type', $mimeType);
-        } else {
-            return response()->json(['message' => 'No image available'], 404);
-        }
-    }
-
+    // Assign cleaners to the complaint (Web)
     public function assignCleaner(Request $request, $id)
     {
         $request->validate([
@@ -274,10 +86,9 @@ class ComplaintController extends Controller
 
         $complaint = Complaint::findOrFail($id);
 
-        // Check if cleaners are already assigned
         if ($complaint->cleaners()->exists()) {
             return redirect()->route('supervisor.complaints.show', $id)
-                            ->withErrors('Cleaners have already been assigned for this complaint.');
+                             ->withErrors('Cleaners have already been assigned for this complaint.');
         }
 
         DB::transaction(function () use ($request, $complaint) {
@@ -296,17 +107,31 @@ class ComplaintController extends Controller
             // Update the complaint status to 'ongoing'
             $complaint->update([
                 'comp_status' => 'ongoing',
-                'no_of_cleaners' => $request->no_of_cleaners, // Update complaint table as well
+                'no_of_cleaners' => $request->no_of_cleaners,
                 'assigned_by' => Auth::id(),
                 'assigned_date' => now(),
             ]);
         });
 
         return redirect()->route('supervisor.complaints.show', $id)
-                        ->with('success', 'Cleaners assigned successfully.');
+                         ->with('success', 'Cleaners assigned successfully.');
     }
 
-    // Update complaint details
+    // Supervisor: List complaints (Web)
+    public function supervisorIndex()
+    {
+        $complaints = Complaint::orderBy('comp_date', 'desc')->paginate(10);
+        return view('supervisor.complaints.index', compact('complaints'));
+    }
+
+    // Admin: Show recent complaint on the dashboard (Web)
+    public function showDashboard()
+    {
+        $recentComplaint = Complaint::latest('comp_date')->latest('comp_time')->first();
+        return view('dashboard', compact('recentComplaint'));
+    }
+
+    // Update complaint details (Web)
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -323,14 +148,14 @@ class ComplaintController extends Controller
         return response()->json($complaint, 200);
     }
 
-    // Delete a complaint by ID
+    // Delete a complaint by ID (Web)
     public function destroy($id)
     {
         Complaint::findOrFail($id)->delete();
         return response()->json(null, 204);
     }
 
-    // Update cleaner assignment
+    // Update cleaner assignment (Web)
     public function updateAssignment(Request $request, $complaintId)
     {
         $complaint = Complaint::findOrFail($complaintId);
@@ -356,5 +181,68 @@ class ComplaintController extends Controller
         return redirect()->route('supervisor.complaints.show', $complaintId)
                          ->with('success', 'Cleaners assigned successfully.');
     }
->>>>>>> origin/of
+
+    // **API Functions (From Current Version)**
+
+    // Store a new complaint (API)
+    public function apistore(Request $request)
+    {
+        $request->validate([
+            'comp_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'comp_date' => 'required|date',
+            'comp_time' => 'required',
+            'comp_desc' => 'required|string',
+            'comp_location' => 'required|string',
+        ]);
+
+        $complaint = Complaint::create([
+            'comp_date' => $request->comp_date,
+            'comp_time' => $request->comp_time,
+            'comp_desc' => $request->comp_desc,
+            'comp_location' => $request->comp_location,
+            'officer_id' => Auth::id(),
+            'assigned_by' => null,
+            'cleaner_id' => null,
+            'comp_status' => Complaint::STATUS_PENDING,
+            'comp_image' => null,
+        ]);
+
+        // Check if an image is uploaded and attach it using the media library
+        if ($request->hasFile('comp_image')) {
+            $media = $complaint->addMediaFromRequest('comp_image')
+                        ->toMediaCollection('complaint_images', 'public');
+
+            Log::info('Media uploaded:', ['media' => $media]);
+
+            $complaint->update(['comp_image' => $media->getUrl()]);
+        } else {
+            Log::info('No image was uploaded');
+        }
+
+        return response()->json([
+            'message' => 'Complaint submitted successfully!',
+            'complaint' => $complaint,
+        ], 201);
+    }
+
+    // Get officer complaints (API)
+    public function getOfficerComplaints()
+    {
+        $officerId = Auth::id();
+
+        if (!$officerId) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        try {
+            $complaints = Complaint::where('officer_id', $officerId)
+                ->orderBy('comp_date', 'desc')
+                ->orderBy('comp_time', 'desc')
+                ->get();
+
+            return response()->json($complaints, 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Server error: ' . $e->getMessage()], 500);
+        }
+    }
 }
