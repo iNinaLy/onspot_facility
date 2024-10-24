@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="container my-5">
+<div class="container my-5" style="max-width: 1200px;">
     <h1 class="mb-4 text-center">Add New User</h1>
 
     @if (session('success'))
@@ -24,49 +24,63 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.users.store') }}" method="POST" class="shadow p-4 rounded bg-white">
+    <form action="{{ route('admin.users.store') }}" method="POST" class="shadow p-4 rounded bg-white" enctype="multipart/form-data">
         @csrf
 
+        <!-- Username -->
         <div class="form-floating mb-3">
             <input type="text" name="username" class="form-control" id="username" required value="{{ old('username') }}" placeholder="Username">
             <label for="username">Username</label>
         </div>
 
+        <!-- Name -->
         <div class="form-floating mb-3">
             <input type="text" name="name" class="form-control" id="name" required value="{{ old('name') }}" placeholder="Name">
             <label for="name">Name</label>
         </div>
 
+        <!-- Email -->
         <div class="form-floating mb-3">
             <input type="email" name="email" class="form-control" id="email" required value="{{ old('email') }}" placeholder="Email">
             <label for="email">Email</label>
         </div>
 
+        <!-- Phone Number -->
         <div class="form-floating mb-3">
             <input type="text" name="phone_no" class="form-control" id="phone_no" required value="{{ old('phone_no') }}" placeholder="Phone Number">
             <label for="phone_no">Phone Number</label>
         </div>
 
-        <!-- Password Field with Toggle Icon -->
+        <!-- Profile Picture -->
+        <div class="mb-3">
+            <label for="profile_pic" class="form-label">Profile Picture</label>
+            <input type="file" class="form-control" id="profile_pic" name="profile_pic">
+        </div>
+
+        <!-- Password Field -->
         <div class="form-floating mb-3 position-relative">
             <input type="password" name="password" class="form-control" id="password" required placeholder="Password">
             <label for="password">Password</label>
             <span class="toggle-password" data-target="password" style="cursor: pointer; position: absolute; top: 50%; right: 15px; transform: translateY(-50%);">
                 <i class="bi bi-eye-slash"></i>
             </span>
+            <small id="passwordRequirements" class="form-text text-muted">
+                Password must be at least 8 characters long and contain one uppercase letter, one lowercase letter, one digit, and one special character.
+            </small>
+            <small id="passwordFeedback" class="form-text text-danger d-none">Your password does not meet the requirements.</small>
         </div>
 
-        <!-- Confirm Password Field with Toggle Icon -->
+        <!-- Confirm Password Field -->
         <div class="form-floating mb-3 position-relative">
             <input type="password" name="password_confirmation" class="form-control" id="password_confirmation" required placeholder="Confirm Password">
             <label for="password_confirmation">Confirm Password</label>
             <span class="toggle-password" data-target="password_confirmation" style="cursor: pointer; position: absolute; top: 50%; right: 15px; transform: translateY(-50%);">
                 <i class="bi bi-eye-slash"></i>
             </span>
-            <!-- Error message for mismatched passwords -->
             <small id="passwordError" class="text-danger d-none">Passwords do not match</small>
         </div>
 
+        <!-- Role -->
         <div class="form-floating mb-4">
             <select name="role" id="role" class="form-control" required>
                 <option value="" disabled selected>Select Role</option>
@@ -77,13 +91,24 @@
             <label for="role">Role</label>
         </div>
 
+        <!-- Building -->
+        <div class="form-floating mb-4">
+            <select name="building" id="building" class="form-control" required>
+                <option value="" disabled selected>Select Building</option>
+                <option value="Building A" {{ old('building') == 'Building A' ? 'selected' : '' }}>Building A</option>
+                <option value="Building B" {{ old('building') == 'Building B' ? 'selected' : '' }}>Building B</option>
+                <option value="Building C" {{ old('building') == 'Building C' ? 'selected' : '' }}>Building C</option>
+            </select>
+            <label for="building">Building</label>
+        </div>
+
+        <!-- Submit Button -->
         <button type="submit" class="btn btn-primary" style="width: 15%;">Add User</button>
     </form>
 </div>
 
 @section('scripts')
 <script>
-    // Ensure script runs after DOM content is fully loaded
     document.addEventListener("DOMContentLoaded", function () {
         // Add click event listener to all elements with class .toggle-password
         document.querySelectorAll('.toggle-password').forEach(item => {
@@ -116,49 +141,31 @@
                 error.classList.add('d-none');
             }
         });
+
+        // Password requirement validation
+        const passwordInput = document.getElementById('password');
+        const passwordFeedback = document.getElementById('passwordFeedback');
+        const passwordRequirements = document.getElementById('passwordRequirements');
+
+        passwordInput.addEventListener('input', function () {
+            const password = passwordInput.value;
+
+            // Regular expression for password validation
+            const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+
+            if (!regex.test(password)) {
+                passwordFeedback.classList.remove('d-none');
+                passwordRequirements.classList.add('text-danger');
+            } else {
+                passwordFeedback.classList.add('d-none');
+                passwordRequirements.classList.remove('text-danger');
+                passwordRequirements.classList.add('text-muted');
+            }
+        });
     });
 </script>
 @endsection
 
-<style>
-    .form-floating label {
-        padding: 0.5rem 1rem;
-    }
-
-    .alert {
-        border-radius: 0.5rem;
-    }
-
-    .form-control {
-        border: 1px solid #ced4da;
-        border-radius: 0.5rem;
-    }
-
-    .btn-primary {
-        background-color: #2E5675;
-        border-color: #007bff;
-        transition: background-color 0.3s, border-color 0.3s;
-    }
-
-    .btn-primary:hover {
-        background-color: #2e5679;
-        border-color: #0056b3;
-    }
-
-    .shadow {
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .rounded {
-        border-radius: 0.5rem;
-    }
-
-    #passwordError {
-        margin-top: 0.25rem;
-        font-size: 0.875rem;
-    }
-</style>
-@endsection
-
 <!-- Include Bootstrap Icons in the head section -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+@endsection

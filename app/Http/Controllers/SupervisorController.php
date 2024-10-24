@@ -2,70 +2,76 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-
 use App\Models\Supervisor;
 use App\Models\Complaint;
 use App\Models\Cleaner;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class SupervisorController extends Controller
 {
     /**
-     * Write code on Method
-     *
-     * @return \Illuminate\View\View
+     * Display the supervisor dashboard.
      */
     public function dashboard()
     {
-        // Retrieve total cleaners (adjust this query according to your logic)
+        // Retrieve cleaner stats
         $totalCleaners = Cleaner::count();
-
-        // You can also retrieve other data like available cleaners or complaints here
         $availableCleaners = Cleaner::where('status', 'available')->count();
+        $unavailableCleaners = Cleaner::where('status', 'unavailable')->count();
 
-        // Pass the variables to the view
-        return view('supervisor.dashboard', compact('totalCleaners', 'availableCleaners'));
+        // Fetch the total number of supervisors
+        $totalSupervisors = Supervisor::count();
+
+        return view('supervisor.dashboard', compact('totalCleaners', 'availableCleaners', 'unavailableCleaners', 'totalSupervisors'));
     }
-    
+
+    /**
+     * Show the history of complaints.
+     */
     public function history()
     {
-        // Fetch complaints with status 'in progress' or 'completed', eager load cleaners
+        // Fetch complaints with status 'in progress' or 'completed'
         $complaints = Complaint::with('cleaners')
-            ->whereIn('comp_status', ['in progress', 'completed']) // Filter by the desired statuses
-            ->orderBy('updated_at', 'desc') // Order by the latest updates
+            ->whereIn('comp_status', ['in progress', 'completed'])
+            ->orderBy('updated_at', 'desc')
             ->get();
 
         return view('supervisor.history', compact('complaints'));
     }
-    public function cleaners()
+
+    /**
+     * Show all cleaners, with optional search filtering.
+     */
+    public function cleaners(Request $request)
     {
-        // Fetch the total number of cleaners
+        // Fetch cleaners with optional search and pagination
+        $search = $request->input('search');
+        $cleaners = Cleaner::when($search, function ($query, $search) {
+                return $query->where('cleaner_name', 'LIKE', "%{$search}%");
+            })
+            ->paginate(10);
+
+        // Cleaner statistics
         $totalCleaners = Cleaner::count();
-
-        // Fetch the count of available cleaners using the 'status' column
         $availableCount = Cleaner::where('status', 'available')->count();
-
-        // Fetch the count of unavailable cleaners using the 'status' column
         $unavailableCount = Cleaner::where('status', 'unavailable')->count();
 
-        // Fetch all cleaners to display in the view
-        $cleaners = Cleaner::all();
-
-        // Pass all necessary variables to the view
         return view('supervisor.cleaners.index', compact('totalCleaners', 'availableCount', 'unavailableCount', 'cleaners'));
     }
-    
 
-}
-    /* Display a listing of all supervisors
+    /**
+     * List all supervisors (API).
+     */
     public function index()
     {
         $supervisors = Supervisor::all();
         return response()->json(['success' => true, 'data' => $supervisors], 200);
     }
 
-    // Store a newly created supervisor
+    /**
+     * Store a newly created supervisor.
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -85,7 +91,9 @@ class SupervisorController extends Controller
         return response()->json(['success' => true, 'data' => $supervisor], 201);
     }
 
-    // Display the specified supervisor
+    /**
+     * Display the specified supervisor.
+     */
     public function show($id)
     {
         $supervisor = Supervisor::find($id);
@@ -94,40 +102,82 @@ class SupervisorController extends Controller
             return response()->json(['success' => false, 'message' => 'Supervisor not found'], 404);
         }
 
-        return response()->json(['success' => true, 'data' => $supervisor], 200);
+        // Fetch available cleaners
+        $cleaners = Cleaner::where('status', 'available')->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'supervisor' => $supervisor,
+                'cleaners' => $cleaners
+            ]
+        ], 200);
     }
 
-    // Update the specified supervisor
+    /**
+     * Show the form for editing the specified supervisor.
+     */
+    public function edit(Supervisor $supervisor)
+    {
+        return view('admin.supervisors.edit', compact('supervisor'));
+    }
+
+    /**
+     * Update the specified supervisor.
+     */
     public function update(Request $request, $id)
     {
-        $supervisor = Supervisor::find($id);
-
-        if (!$supervisor) {
-            return response()->json(['success' => false, 'message' => 'Supervisor not found'], 404);
-        }
+        $supervisor = Supervisor::findOrFail($id);
 
         $request->validate([
-            's_email' => 'required|email|unique:supervisors,s_email,' . $supervisor->s_id,
             's_name' => 'required|string|max:255',
+            's_email' => 'required|email|max:255|unique:supervisors,s_email,' . $id,
             's_phoneNo' => 'required|string|max:15',
+            'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            's_pass' => 'nullable|string|min:8|confirmed',
         ]);
 
-        $supervisor->update($request->all());
+        // Update supervisor data
+        $supervisor->update([
+            's_name' => $request->s_name,
+            's_email' => $request->s_email,
+            's_phoneNo' => $request->s_phoneNo,
+        ]);
 
-        return response()->json(['success' => true, 'data' => $supervisor], 200);
+        // Handle profile picture upload
+        if ($request->hasFile('profile_pic')) {
+            // Delete the old picture if it exists
+            if ($supervisor->profile_pic && Storage::exists('public/' . $supervisor->profile_pic)) {
+                Storage::delete('public/' . $supervisor->profile_pic);
+            }
+
+            $path = $request->file('profile_pic')->store('profile_pics', 'public');
+            $supervisor->profile_pic = $path;
+        }
+
+        // Update password if provided
+        if ($request->filled('s_pass')) {
+            $supervisor->s_pass = bcrypt($request->s_pass);
+        }
+
+        $supervisor->save();
+
+        return redirect()->route('admin.supervisors.index')->with('success', 'Supervisor updated successfully.');
     }
 
-    // Remove the specified supervisor
+    /**
+     * Remove the specified supervisor.
+     */
     public function destroy($id)
     {
-        $supervisor = Supervisor::find($id);
+        $supervisor = Supervisor::findOrFail($id);
 
-        if (!$supervisor) {
-            return response()->json(['success' => false, 'message' => 'Supervisor not found'], 404);
+        if ($supervisor->profile_pic && Storage::exists('public/' . $supervisor->profile_pic)) {
+            Storage::delete('public/' . $supervisor->profile_pic);
         }
 
         $supervisor->delete();
 
         return response()->json(['success' => true, 'message' => 'Supervisor deleted successfully'], 200);
     }
-}*/
+}
