@@ -12,14 +12,21 @@ class OfficerController extends Controller
 {
     // Fetch officers from the users table
     public function index(Request $request)
-    {
-        $search = $request->query('search');
-        $officers = Officer::with('user')->when($search, function ($query, $search) {
-            return $query->where('officer_name', 'LIKE', "%{$search}%");
-        })->paginate(10);
+{
+    $search = $request->query('search');
 
-        return view('admin.officers.index', compact('officers'));
-    }
+    // Apply search query to paginate officers
+    $officers = Officer::when($search, function ($query, $search) {
+            return $query->where('name', 'LIKE', "%{$search}%")
+                         ->orWhere('phone_no', 'LIKE', "%{$search}%")
+                         ->orWhere('email', 'LIKE', "%{$search}%");
+        })
+        ->paginate(10); // This ensures pagination is used
+
+    return view('admin.officers.index', compact('officers'));
+}
+
+
 
     public function create()
     {

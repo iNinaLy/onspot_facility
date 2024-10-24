@@ -2,39 +2,60 @@
 <head>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Base Styling */
-        html, body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7fc;
-            color: #333;
-            scroll-behavior: smooth;
-        }
-
-        /* Navbar adjustments */
-        nav {
-            background-color: #1f2937;
-            color: white;
-            padding: 10px 0;
-        }
-
-        /* Main Heading */
-        .heading {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #1f2937;
-            text-align: left;
-            margin-top: 80px;
-            margin-bottom: 20px;
-            padding-left: 20px;
-        }
-
-        /* Container */
+        /* General Container Styles */
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Header with Filters on the Right */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .heading {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2E5675;
+        }
+
+        /* Filter Form Styles */
+        .filter-container {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-container select,
+        .filter-container input {
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            font-size: 0.875rem;
+            width: 150px;
+        }
+
+        .view-details-btn {
+            background-color: #2E5675;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .view-details-btn:hover {
+            background-color: #1f3c52;
         }
 
         /* Cleaner Overview Section */
@@ -42,7 +63,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
             gap: 15px;
         }
 
@@ -86,53 +106,6 @@
             color: #f44336;
         }
 
-        /* Search Bar and Sort */
-        .top-bar {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            margin-bottom: 20px;
-            gap: 15px;
-        }
-
-        .search-bar {
-            position: relative;
-        }
-
-        .search-input {
-            width: 250px;
-            padding: 8px 15px;
-            border-radius: 20px;
-            border: 1px solid #d1d5db;
-            outline: none;
-            transition: border-color 0.3s;
-            font-size: 1rem;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .search-input:focus {
-            border-color: #3b82f6;
-        }
-
-        .search-icon-container {
-            position: absolute;
-            right: 10px;
-            top: 8px;
-            cursor: pointer;
-            color: #6b7280;
-            transition: color 0.3s;
-        }
-
-        .sort-select {
-            padding: 8px 15px;
-            border-radius: 20px;
-            border: 1px solid #d1d5db;
-            outline: none;
-            transition: border-color 0.3s;
-            font-size: 1rem;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-        }
-
         /* Cleaner Card Styling */
         .cleaner-card {
             width: 220px;
@@ -144,7 +117,6 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             cursor: pointer;
             overflow: hidden;
-            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -199,7 +171,7 @@
         }
 
         /* Modal Styling */
-        .modal, .task-modal {
+        .modal {
             display: none;
             position: fixed;
             top: 0;
@@ -212,7 +184,7 @@
             z-index: 100;
         }
 
-        .modal-content, .task-modal-content {
+        .modal-content {
             background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(15px);
             padding: 25px;
@@ -224,7 +196,7 @@
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
         }
 
-        .modal-close, .task-modal-close {
+        .modal-close {
             position: absolute;
             top: 10px;
             right: 15px;
@@ -234,7 +206,7 @@
             transition: color 0.3s;
         }
 
-        .modal-close:hover, .task-modal-close:hover {
+        .modal-close:hover {
             color: #f44336;
         }
 
@@ -259,30 +231,32 @@
 </head>
 
 <div class="container">
-    <h2 class="heading">Cleaners</h2>
-
-    <!-- Top Bar with Search and Sort -->
-    <div class="top-bar">
-        <div class="search-bar">
-            <input 
-                type="search" 
-                class="search-input" 
-                placeholder="Search for cleaners..." 
-                aria-label="Search" 
-                id="search-input" 
-            />
-            <span class="search-icon-container">
-                <i class="fas fa-search"></i>
-            </span>
-        </div>
-        <select id="sort-status" class="sort-select">
-            <option value="all">All Status</option>
-            <option value="available">Available</option>
-            <option value="unavailable">Unavailable</option>
-        </select>
+    <!-- Header with Filters on the Right -->
+    <div class="header-container">
+        <h1 class="heading">Cleaners</h1>
+        <!-- Filter Form -->
+        <form id="filter-form" class="filter-container">
+            <div class="search-bar">
+                <input 
+                    type="search" 
+                    class="search-input" 
+                    placeholder="Search for cleaners..." 
+                    aria-label="Search" 
+                    id="search-input" 
+                />
+                <span class="search-icon-container">
+                    <i class="fas fa-search"></i>
+                </span>
+            </div>
+            <select id="sort-status" class="sort-select">
+                <option value="all">All Status</option>
+                <option value="available">Available</option>
+                <option value="unavailable">Unavailable</option>
+            </select>
+        </form>
     </div>
 
-    <!-- Cleaner Overview and Cards -->
+    <!-- Cleaner Overview -->
     <div class="cleaner-overview">
         <div class="overview-box overview-total">
             <div class="overview-number">{{ $totalCleaners }}</div>
@@ -297,7 +271,6 @@
             <div class="overview-label">Unavailable</div>
         </div>
     </div>
-
 
     <!-- Cleaner Cards -->
     <div class="grid" id="cleaner-grid">
@@ -327,14 +300,14 @@
                 <p><strong>Building:</strong> <span id="modalCleanerBuilding"></span></p>
                 <p><strong>Status:</strong> <span id="modalCleanerStatus"></span></p>
             </div>
-            <button class="assign-button">Assign Task</button>
+            <button class="assign-button" onclick="openTaskModal()">Assign Task</button>
         </div>
     </div>
 
     <!-- Modal for Assign Task -->
-    <div class="task-modal" id="taskModal">
-        <div class="task-modal-content">
-            <span class="task-modal-close" onclick="closeTaskModal()">&times;</span>
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeTaskModal()">&times;</span>
             <h2 class="modal-header">Assign Task to Cleaner</h2>
             <form class="task-form" id="assignTaskForm">
                 <label for="taskTitle">Task Title:</label>
@@ -349,7 +322,7 @@
                 <label for="taskInstructions">Special Instructions:</label>
                 <textarea id="taskInstructions" name="taskInstructions"></textarea>
 
-                <button type="submit">Assign Task</button>
+                <button type="submit" class="assign-button">Assign Task</button>
             </form>
         </div>
     </div>
@@ -394,7 +367,6 @@
         }
 
         document.querySelector('.modal-close').addEventListener('click', closeModal);
-        document.querySelector('.task-modal-close').addEventListener('click', closeTaskModal);
 
         // Sort Functionality
         document.getElementById('sort-status').addEventListener('change', function() {
@@ -405,5 +377,10 @@
             });
         });
     });
+
+    function openTaskModal() {
+        document.getElementById('cleanerModal').style.display = 'none';
+        document.getElementById('taskModal').style.display = 'flex';
+    }
 </script>
 </x-app-layout>

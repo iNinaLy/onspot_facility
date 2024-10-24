@@ -40,6 +40,22 @@ class CleanerController extends Controller
         return view('supervisor.cleaners.index', compact('totalCleaners', 'availableCount', 'unavailableCount', 'cleaners'));
     }
 
+    // Search cleaner
+    public function searchCleaners(Request $request)
+    {
+        $query = $request->query('q');
+        
+        if ($query) {
+            $cleaners = Cleaner::where('cleaner_name', 'like', '%' . $query . '%')
+                                ->orWhere('cleaner_username', 'like', '%' . $query . '%')
+                                ->limit(10)
+                                ->get();
+        } else {
+            $cleaners = Cleaner::all();  // Return all cleaners if no query
+        }
+
+        return response()->json($cleaners);
+    }
 
 
     // Store a new cleaner

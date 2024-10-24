@@ -86,11 +86,13 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->group(func
 
     // API route for fetching available cleaners (used by AJAX requests)
     Route::get('/api/cleaners', [CleanerController::class, 'getAvailableCleaners']);
+    Route::get('/api/cleaners', [CleanerController::class, 'searchCleaners']);
 
     // Routes related to complaints
     Route::get('/complaints', [ComplaintController::class, 'supervisorIndex'])->name('supervisor.complaints.index');
     Route::get('/complaints/{id}', [ComplaintController::class, 'show'])->name('supervisor.complaints.show');
     Route::post('/complaints/{id}/assign-cleaner', [ComplaintController::class, 'assignCleaner'])->name('assign.cleaner');
+    Route::post('/complaints/{id}/update-assignment', [ComplaintController::class, 'updateAssignment'])->name('complaints.updateAssignment');
 
     // History page
     Route::get('/history', [SupervisorController::class, 'history'])->name('supervisor.history');

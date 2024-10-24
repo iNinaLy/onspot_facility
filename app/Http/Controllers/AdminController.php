@@ -18,16 +18,19 @@ class AdminController extends Controller
      */
     public function dashboard()
     {
+        // Fetch the overall counts
         $totalComplaints = Complaint::count();
         $activeCleaners = Cleaner::where('status', 'available')->count();
         $totalOfficers = User::where('role', 'officer')->count();
-        $totalSupervisors = User::where('role', 'supervisor')->count(); // Fetch total supervisors
+        $totalSupervisors = User::where('role', 'supervisor')->count();
+
+        // Fetch the recent 5 complaints
         $recentComplaints = Complaint::select('id', 'comp_date', 'comp_time', 'comp_desc', 'comp_location', 'comp_status')
             ->latest()
             ->take(5)
             ->get();
 
-        // Prepare data for charts
+        // Fetch data for charts
         $monthlyComplaints = Complaint::selectRaw("MONTH(comp_date) as month, COUNT(*) as count")
             ->groupBy('month')
             ->pluck('count', 'month');
@@ -47,137 +50,145 @@ class AdminController extends Controller
     }
 
     /**
- * Complaints Methods
- */
+     * List and filter complaints.
+     */
     public function complaints(Request $request)
     {
-        // Handle sorting by status if provided, default sorting by date (descending)
         $status = $request->input('status');
         $query = Complaint::query();
 
+        // Apply filter by status if provided
         if ($status) {
             $query->where('comp_status', $status);
         }
 
+        // Order complaints by date descending
         $complaints = $query->orderBy('comp_date', 'desc')->paginate(10);
+
         return view('admin.complaints.index', compact('complaints', 'status'));
     }
 
-
+    /**
+     * Display form to create a complaint.
+     */
     public function createComplaint()
     {
         return view('admin.complaints.create');
     }
 
+    /**
+     * Store a newly created complaint.
+     */
     public function storeComplaint(Request $request)
     {
-        // Use the validateComplaint function to validate the incoming request
         $this->validateComplaint($request);
 
-        // Create a new complaint from the validated data
         Complaint::create($request->all());
 
-        // Redirect back to the complaints list with a success message
         return redirect()->route('admin.complaints')->with('success', 'Complaint created successfully!');
     }
 
+    /**
+     * Edit a complaint.
+     */
     public function editComplaint($id)
     {
-        $complaint = Complaint::findOrFail($id);  // Fetch the complaint using the ID from the route
-        return view('admin.complaints.edit', compact('complaint'));  // Pass the complaint to the edit view
+        $complaint = Complaint::findOrFail($id);
+        return view('admin.complaints.edit', compact('complaint'));
     }
 
-
+    /**
+     * Update a complaint.
+     */
     public function updateComplaint(Request $request, $id)
     {
-        // Validate the incoming data
-        $request->validate([
-            'comp_status' => 'required|in:pending,on going,completed',
-            'comp_location' => 'required|string',
-            'comp_date' => 'required|date',
-            'comp_time' => 'required'
-        ]);
+        $this->validateComplaint($request);
 
-        // Find the complaint by ID
         $complaint = Complaint::findOrFail($id);
-
-        // Update the complaint with the new data
         $complaint->update($request->all());
 
-        // Redirect with a success message
         return redirect()->route('admin.complaints')->with('success', 'Complaint updated successfully!');
     }
 
-
+    /**
+     * Delete a complaint.
+     */
     public function destroyComplaint($id)
     {
-        $complaint = Complaint::findOrFail($id);  // Find the complaint by ID
-        $complaint->delete();  // Delete the complaint
+        $complaint = Complaint::findOrFail($id);
+        $complaint->delete();
 
         return redirect()->route('admin.complaints')->with('success', 'Complaint deleted successfully!');
     }
 
-
+    /**
+     * Search complaints by description, location, or ID.
+     */
     public function searchComplaints(Request $request)
     {
-        // Handle the search query input
         $query = $request->input('query');
-        
-        // Perform the search based on description, location, or ID
+
         $complaints = Complaint::where('comp_desc', 'like', "%{$query}%")
             ->orWhere('comp_location', 'like', "%{$query}%")
-            ->orWhere('id', 'like', "%{$query}%") // Use 'id' instead of 'comp_id' since Laravel uses 'id'
+            ->orWhere('id', 'like', "%{$query}%")
             ->paginate(10);
 
-        // Pass the results to the index view
         return view('admin.complaints.index', compact('complaints', 'query'));
     }
 
+    /**
+     * Validate complaint data.
+     */
     private function validateComplaint(Request $request)
     {
-        // Validate the incoming complaint data
         $request->validate([
-            'comp_desc' => 'required|string',
+            'comp_desc' => 'required|string|max:255',
             'comp_status' => 'required|in:pending,on going,completed',
-            'comp_location' => 'required|string',
+            'comp_location' => 'required|string|max:255',
             'comp_date' => 'required|date',
-            'comp_time' => 'required|date_format:H:i', // Ensuring time is in a proper format
+            'comp_time' => 'required|date_format:H:i',
         ]);
     }
 
     /**
-     * Cleaners Methods
+     * List and search cleaners.
      */
     public function cleaners(Request $request)
-    {
-        $search = $request->query('search');
-        
-        // Fetch data from the cleaners table, applying the search filter
-        $cleaners = Cleaner::when($search, function ($query, $search) {
-                return $query->where('cleaner_name', 'LIKE', "%{$search}%")
-                            ->orWhere('cleaner_phoneNo', 'LIKE', "%{$search}%")
-                            ->orWhere('cleaner_username', 'LIKE', "%{$search}%");
-            })
-            ->paginate(10); // Adjust the pagination limit as necessary
+{
+    // Retrieve the search query and status filter from the request
+    $search = $request->query('search');
+    $status = $request->query('status');
 
-        return view('admin.cleaners.index', compact('cleaners'));
-    }
+    // Query the cleaners table with optional search and status filtering
+    $cleaners = Cleaner::when($search, function ($query, $search) {
+            return $query->where('cleaner_name', 'LIKE', "%{$search}%")
+                         ->orWhere('cleaner_phoneNo', 'LIKE', "%{$search}%")
+                         ->orWhere('cleaner_username', 'LIKE', "%{$search}%");
+        })
+        ->when($status, function ($query, $status) {
+            return $query->where('status', strtolower($status)); // Ensure it works with 'available' and 'unavailable'
+        })
+        ->paginate(10); // Adjust the pagination as needed
 
+    // Return the view with the filtered cleaners
+    return view('admin.cleaners.index', compact('cleaners', 'search', 'status'));
+}
+
+
+    /**
+     * Display form to create a cleaner.
+     */
     public function createCleaner()
     {
         return view('admin.cleaners.create');
     }
 
+    /**
+     * Store a newly created cleaner.
+     */
     public function storeCleaner(Request $request)
     {
-        $request->validate([
-            'username' => 'required|unique:users,username',
-            'name' => 'required',
-            'phone_no' => 'required',
-            'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'status' => 'required',
-            'password' => 'required|confirmed|min:6',
-        ]);
+        $this->validateCleaner($request);
 
         // Handle profile picture as binary data (BLOB)
         $profilePicData = null;
@@ -185,34 +196,38 @@ class AdminController extends Controller
             $profilePicData = file_get_contents($request->file('profile_pic')->getRealPath());
         }
 
-        // Store the cleaner in the users table
+        // Create user and cleaner records
         $user = User::create([
             'name' => $request->name,
             'username' => $request->username,
             'phone_no' => $request->phone_no,
             'password' => bcrypt($request->password),
-            'role' => 'cleaner', // Ensure the role is set to cleaner
+            'role' => 'cleaner',
         ]);
 
-        // Store the cleaner in the cleaners table
         Cleaner::create([
             'cleaner_username' => $user->username,
             'cleaner_name' => $user->name,
             'cleaner_phoneNo' => $user->phone_no,
             'profile_pic' => $profilePicData,
             'status' => $request->status,
-            'user_id' => $user->id, // Store the user id
+            'user_id' => $user->id,
         ]);
 
         return redirect()->route('admin.cleaners.index')->with('success', 'Cleaner created successfully!');
     }
 
-
+    /**
+     * Edit a cleaner.
+     */
     public function editCleaner(Cleaner $cleaner)
     {
         return view('admin.cleaners.edit', compact('cleaner'));
     }
 
+    /**
+     * Update a cleaner.
+     */
     public function updateCleaner(Request $request, Cleaner $cleaner)
     {
         $this->validateCleaner($request);
@@ -229,59 +244,68 @@ class AdminController extends Controller
         }
 
         if ($request->hasFile('profile_pic')) {
-            $path = $request->file('profile_pic')->store('profile_pics', 'public');
-            $cleaner->update(['profile_pic' => $path]);
+            $cleaner->update(['profile_pic' => file_get_contents($request->file('profile_pic')->getRealPath())]);
         }
 
         return redirect()->route('admin.cleaners')->with('success', 'Cleaner updated successfully!');
     }
 
+    /**
+     * Delete a cleaner.
+     */
     public function destroyCleaner($id)
     {
         $cleaner = Cleaner::findOrFail($id);
         $user = User::findOrFail($cleaner->user_id);
-    
-        // Delete cleaner and associated user
+
         $cleaner->delete();
         $user->delete();
-    
-        return redirect()->route('admin.cleaners.index')->with('success', 'Cleaner deleted successfully!');
-    }
-    
 
-    private function validateCleaner(Request $request)
-    {
-        $request->validate([
-            'username' => 'required|string|max:255',
-            'name' => 'required|string|max:255',
-            'phone_no' => 'required|string|max:20',
-            'status' => 'required|string|in:Available,Unavailable',
-            'password' => 'nullable|confirmed|min:8',
-        ]);
+        return redirect()->route('admin.cleaners.index')->with('success', 'Cleaner deleted successfully!');
     }
 
     /**
-     * Officers Methods
+     * Validate cleaner data.
      */
+    private function validateCleaner(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string|max:255|unique:users,username',
+            'name' => 'required|string|max:255',
+            'phone_no' => 'required|string|max:20',
+            'status' => 'required|in:Available,Unavailable',
+            'password' => 'nullable|confirmed|min:8',
+            'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+    }
+
     public function officers(Request $request)
     {
         $search = $request->query('search');
+
+        // Apply search query to paginate officers
         $officers = User::where('role', 'officer')
             ->when($search, function ($query, $search) {
                 return $query->where('name', 'LIKE', "%{$search}%")
-                            ->orWhere('username', 'LIKE', "%{$search}%")
+                            ->orWhere('phone_no', 'LIKE', "%{$search}%")
                             ->orWhere('email', 'LIKE', "%{$search}%");
             })
-            ->get();
+            ->paginate(10); // This ensures pagination is used
 
         return view('admin.officers.index', compact('officers'));
     }
 
+    /**
+     * Show the form for creating a new officer.
+     */
     public function createOfficer()
     {
         return view('admin.officers.create');
     }
 
+    /**
+     * Store a newly created officer in storage.
+     */
     public function storeOfficer(Request $request)
     {
         $request->validate([
@@ -310,17 +334,23 @@ class AdminController extends Controller
         return redirect()->route('admin.officers')->with('success', 'Officer added successfully.');
     }
 
+    /**
+     * Show the form for editing the specified officer.
+     */
     public function editOfficer($id)
     {
         $officer = User::where('id', $id)->where('role', 'officer')->firstOrFail();
         return view('admin.officers.edit', compact('officer'));
     }
 
+    /**
+     * Update the specified officer in storage.
+     */
     public function updateOfficer(Request $request, $id)
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $id,
+            'email' => 'required|email|unique:users,email,' . $id, // Ensure unique email except the current user
             'phone_no' => 'required|string|max:20',
             'password' => 'nullable|string|min:8',
             'profile_pic' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
@@ -328,16 +358,21 @@ class AdminController extends Controller
 
         $officer = User::where('id', $id)->where('role', 'officer')->firstOrFail();
 
+        // Update officer data
         $officer->update([
             'name' => $request->name,
             'email' => $request->email,
             'phone_no' => $request->phone_no,
         ]);
 
+        // If password is provided, update it
         if ($request->filled('password')) {
-            $officer->update(['password' => Hash::make($request->password)]);
+            $officer->update([
+                'password' => Hash::make($request->password),
+            ]);
         }
 
+        // Handle profile picture upload
         if ($request->hasFile('profile_pic')) {
             $path = $request->file('profile_pic')->store('profile_pics', 'public');
             $officer->update(['profile_pic' => $path]);
@@ -346,12 +381,16 @@ class AdminController extends Controller
         return redirect()->route('admin.officers')->with('success', 'Officer updated successfully!');
     }
 
-    public function destroyOfficer(User $officer)
+    /**
+     * Remove the specified officer from storage.
+     */
+    public function destroyOfficer($id)
     {
+        $officer = User::where('id', $id)->where('role', 'officer')->firstOrFail();
         $officer->delete();
-        return redirect()->route('admin.officers')->with('success', 'Officer deleted successfully!');
-    }
 
+        return redirect()->route('admin.officers')->with('success', 'Officer deleted successfully.');
+    }
     public function supervisors(Request $request)
     {
         $search = $request->query('search');

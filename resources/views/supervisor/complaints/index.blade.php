@@ -1,171 +1,179 @@
 <x-app-layout>
   <style>
-    /* Navbar fix */
-    nav {
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Overall container adjustments */
+    /* General Container Styles */
     .container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 0 20px;
-      padding-top: 5rem;
-    }
-
-    /* Card styles */
-    .complaint-card {
+      padding: 2rem;
       display: flex;
-      border-radius: 0.5rem;
-      border: 1px solid #e2e8f0;
-      background-color: #fbfbfb;
-      padding: 5px;
-      gap: 20px;
-      height: auto;
-      width: 100%;
-      max-width: 1050px;
-      margin-bottom: 20px;
-      align-content: center;
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-items: center;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    /* Header with Filters on the Right */
+    .header-container {
+      display: flex;
       justify-content: space-between;
-      transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
-    .complaint-card:hover {
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-      transform: translateY(-3px);
+    .heading {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #2E5675;
     }
 
-    /* Button styles */
+    /* Filter Form Styles */
+    .filter-container {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-container select,
+    .filter-container input {
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid #d1d5db;
+      font-size: 0.875rem;
+      width: 150px;
+    }
+
     .view-details-btn {
-      background-color: #2e5675;
+      background-color: #2E5675;
       color: white;
-      padding: 3px 15px;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
       border: none;
-      border-radius: 10px;
       cursor: pointer;
-      transition: background-color 0.3s ease-in-out;
-      font-size: 85%;
-      margin-top: 34px;
-      text-decoration: none; /* To remove underline from <a> */
     }
 
     .view-details-btn:hover {
       background-color: #1f3c52;
     }
 
-    /* Image styles */
-    .complaint-image {
-      width: 220px;
-      height: 220px;
-      object-fit: cover;
+    /* Complaint Card Styles */
+    .complaint-card {
+      display: flex;
+      background-color: white;
       border-radius: 1rem;
-      background-color: #f0f4f8;
-      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+      margin-bottom: 1.5rem;
     }
 
-    /* Additional spacing for elements */
+    .complaint-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .complaint-image-container {
+      flex: 0 0 220px;
+      height: 220px;
+      background-color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .complaint-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
     .complaint-details {
       flex-grow: 1;
-    }
-
-    .complaint-title-status {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      padding: 1.5rem;
     }
 
     .complaint-title {
-      margin: 0 0 5px 0;
-      font-size: 1.125rem;
+      font-size: 1.25rem;
       font-weight: bold;
-      color: #3c4858;
+      margin-bottom: 0.5rem;
+      color: #1f2937;
     }
 
     .complaint-meta {
-      margin: 2px 0;
-      color: #6c757d;
+      color: #6b7280;
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
     }
 
-    /* Status styles */
     .complaint-status {
-      margin-top: 2px;
-      padding: 1px 20px;
-      border-radius: 20px;
       display: inline-block;
-      font-size: 1rem;
-      margin-bottom: 5px;
-      margin-right: 15px;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      border-radius: 9999px;
+      margin-top: 0.5rem;
     }
 
+    /* Updated Status Styles */
     .status-pending {
-      background-color: #facdcd;
-      color: #ae0c0c;
+      background-color: #fee2e2;
+      color: #b91c1c;
     }
 
-    .status-resolved {
-      background-color: #c3e6cb;
-      color: #155724;
+    .status-ongoing {
+      background-color: #fef3c7;
+      color: #ca8a04;
     }
 
-    .status-in-progress {
-      background-color: #b8e3f8;
-      color: #0c5460;
+    .status-completed {
+      background-color: #d1fae5;
+      color: #065f46;
     }
 
-    /* List display style */
-    .complaint-list {
+    /* Pagination Styles */
+    .pagination {
       display: flex;
-      flex-direction: column;
-      gap: 20px;
+      justify-content: center;
+      list-style: none;
+      padding: 0;
     }
 
-    /* Filter container styles */
-    .filter-container {
-      display: flex;
-      gap: 20px;
-      align-items: center;
-      margin-bottom: 20px;
-      margin-right: 8.5rem;
-      flex-direction: row-reverse;
+    .pagination li {
+      margin: 0 5px;
     }
 
-    .filter-container label {
-      font-weight: bold;
-    }
-
-    #date-filter {
-      padding: 5px;
+    .pagination a,
+    .pagination span {
+      color: #2E5675;
+      padding: 8px 12px;
+      text-decoration: none;
+      border: 1px solid #d1d5db;
       border-radius: 5px;
-      border: 1px solid #e2e8f0;
     }
 
-    /* Heading styles */
-    .heading {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: 10px;
-      text-align: left;
-      color: #374151;
+    .pagination .active span {
+      background-color: #2E5675;
+      color: white;
+      border-color: #2E5675;
+    }
+
+    .pagination a:hover {
+      background-color: #f0f0f0;
     }
   </style>
 
-  <div class="container px-4 py-12">
-    <!-- Use .heading class for the "Recent Complaints" -->
-    <h1 class="heading">Recent Complaints</h1>
+  <div class="container">
+    <!-- Header with Filters on the Right -->
+    <div class="header-container">
+      <h1 class="heading">Recent Complaints</h1>
 
-    <!-- Filter Form -->
-    <div class="filter-container mb-6">
-      <form id="filter-form">
+      <!-- Filter Form -->
+      <form id="filter-form" class="filter-container">
         <label for="status-filter">Status:</label>
         <select id="status-filter">
           <option value="">All</option>
           <option value="pending">Pending</option>
-          <option value="resolved">Resolved</option>
-          <option value="in progress">In Progress</option>
+          <option value="ongoing">Ongoing</option>
+          <option value="completed">Completed</option>
         </select>
 
         <label for="date-filter">Date:</label>
@@ -175,39 +183,38 @@
       </form>
     </div>
 
-    <!-- Display Complaints -->
+    <!-- Complaints List -->
     @foreach($complaints as $complaint)
-        <div class="complaint-card" data-complaint-id="{{ $complaint->id }}">
-            <div class="complaint-image">
-                @if ($complaint->comp_image)
-                    <!-- Convert the blob data to base64 -->
-                    <img src="data:image/jpeg;base64,{{ base64_encode($complaint->comp_image) }}" alt="Complaint Image" class="complaint-image">
-                @else
-                    <div class="h-full flex items-center justify-center">
-                        <span class="text-gray-400">No Image</span>
-                    </div>
-                @endif
-            </div>
+      <div class="complaint-card"
+           data-complaint-id="{{ $complaint->id }}"
+           data-status="{{ strtolower($complaint->comp_status) }}"
+           data-date="{{ $complaint->comp_date }}">
 
-            <div class="complaint-details">
-                <div class="complaint-title-status">
-                    <h3 class="complaint-title">{{ $complaint->comp_desc }}</h3>
-                    <span class="complaint-status
-                        @if($complaint->comp_status == 'pending') status-pending
-                        @elseif($complaint->comp_status == 'resolved') status-resolved
-                        @elseif($complaint->comp_status == 'in progress') status-in-progress
-                        @endif">
-                        {{ ucfirst($complaint->comp_status) }}
-                    </span>
-                </div>
-                <p class="complaint-meta">Location: {{ $complaint->comp_location }}</p>
-                <p class="complaint-meta">Date: {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}</p>
-                <a href="{{ route('supervisor.complaints.show', $complaint->id) }}" class="view-details-btn">View Details</a>
-            </div>
+        <div class="complaint-image-container">
+            @if ($complaint->comp_image)
+              <img src="data:image/jpeg;base64,{{ base64_encode($complaint->comp_image) }}" alt="Complaint Image" class="complaint-image" />
+            @else
+              <span>No Image Available</span>
+            @endif
         </div>
+
+        <div class="complaint-details">
+          <h3 class="complaint-title">{{ $complaint->comp_desc }}</h3>
+          <p class="complaint-meta">Location: {{ $complaint->comp_location }}</p>
+          <p class="complaint-meta">Date: {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}</p>
+
+          <span class="complaint-status
+            @if(strtolower($complaint->comp_status) == 'pending') status-pending
+            @elseif(strtolower($complaint->comp_status) == 'ongoing') status-ongoing
+            @elseif(strtolower($complaint->comp_status) == 'completed') status-completed
+            @endif">
+            {{ ucfirst($complaint->comp_status) }}
+          </span>
+
+          <a href="{{ route('supervisor.complaints.show', $complaint->id) }}" class="view-details-btn">View Details</a>
+        </div>
+      </div>
     @endforeach
-
-
 
     <!-- Pagination Links -->
     <div class="mt-6">
@@ -215,67 +222,25 @@
     </div>
   </div>
 
-  <!-- Full-Screen Modal -->
-  <div class="modal fade" id="complaintModal" tabindex="-1" role="dialog" aria-labelledby="complaintModalLabel" aria-hidden="true" style="z-index: 1050;">
-    <div class="modal-dialog modal-fullscreen" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="complaintModalLabel">Complaint Details</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <p><strong>Description:</strong> <span id="complaint-desc"></span></p>
-          <p><strong>Status:</strong> <span id="complaint-status"></span></p>
-          <p><strong>Date:</strong> <span id="complaint-date"></span></p>
-          <p><strong>Image:</strong></p>
-          <img id="complaint-image" src="" alt="Complaint Image" class="complaint-image" style="max-width: 100%;">
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- JavaScript for Modal and Filtering -->
   <script>
-    // jQuery to handle the modal data population
-    $('#complaintModal').on('show.bs.modal', function (event) {
-      var button = $(event.relatedTarget); // Button that triggered the modal
-      var id = button.data('id');
-      var desc = button.data('desc');
-      var status = button.data('status');
-      var date = button.data('date');
-      var image = button.siblings('.complaint-image').find('img').attr('src'); // Get the image source
-
-      var modal = $(this);
-      modal.find('#complaint-desc').text(desc);
-      modal.find('#complaint-status').text(status);
-      modal.find('#complaint-date').text(date);
-      modal.find('#complaint-image').attr('src', image || ''); // Set image source
-    });
-
-    // JavaScript for filtering complaints
+    // Filter Complaints
     document.getElementById('filter-form').addEventListener('submit', function (event) {
-      event.preventDefault(); // Prevent the form from submitting
+      event.preventDefault();
 
       const statusFilter = document.getElementById('status-filter').value.toLowerCase();
-      const dateFilter = document.getElementById('date-filter').value; // Get the selected date
+      const dateFilter = document.getElementById('date-filter').value; // Format: YYYY-MM-DD
       const complaintCards = document.querySelectorAll('.complaint-card');
 
       complaintCards.forEach(card => {
-        const status = card.querySelector('.complaint-status').textContent.toLowerCase(); // Get the status
-        const date = card.querySelector('.complaint-meta:nth-child(3)').textContent; // Get the date
+        const status = card.getAttribute('data-status'); // Get status from data attribute
+        const date = card.getAttribute('data-date');     // Get date from data attribute
 
-        // Check filters
-        const statusMatch = !statusFilter || status === statusFilter; // Check status match
-        const dateMatch = !dateFilter || date === dateFilter; // Check date match
+        // Compare the status and date with the filters
+        const statusMatch = !statusFilter || status === statusFilter;
+        const dateMatch = !dateFilter || date === dateFilter;
 
-        // Show or hide the card based on the filters
-        if (statusMatch && dateMatch) {
-          card.style.display = 'flex'; // Show card
-        } else {
-          card.style.display = 'none'; // Hide card
-        }
+        // Show or hide the card based on the match results
+        card.style.display = statusMatch && dateMatch ? 'flex' : 'none';
       });
     });
   </script>

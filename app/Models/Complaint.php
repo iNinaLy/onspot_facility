@@ -4,8 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Officer; // Import Officer model
-use App\Models\Cleaner; // Import Cleaner model
+use Illuminate\Support\Facades\Storage;
 
 class Complaint extends Model
 {
@@ -23,15 +22,13 @@ class Complaint extends Model
         'comp_status',
         'comp_image',
         'officer_id',
-        'assigned_by', // New column for supervisor name
-        'assigned_date', // The date when the complaint was assigned
-        'no_of_cleaners', // Number of assigned cleaners
-        'cleaner_id', // Foreign key for the cleaner in charge
+        'assigned_by',
+        'assigned_date',
+        'no_of_cleaners',
     ];
 
     // Define status constants
     const STATUS_PENDING = 'pending';
-    const STATUS_NOTIFIED = 'notified';
     const STATUS_ON_GOING = 'on going';
     const STATUS_COMPLETED = 'completed';
 
@@ -44,21 +41,43 @@ class Complaint extends Model
     {
         return [
             self::STATUS_PENDING,
-            self::STATUS_NOTIFIED,
             self::STATUS_ON_GOING,
             self::STATUS_COMPLETED,
         ];
     }
 
-    /**
-     * Show dashboard with the most recent complaint
-     *
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
-     */
-    public function showDashboard()
+    public function registerMediaCollections(): void
     {
-        $recentComplaint = self::orderBy('created_at', 'desc')->first();
-        return view('dashboard', compact('recentComplaint'));
+        $this->addMediaCollection('complaint_images')
+             ->useDisk('public'); // Explicitly use the public disk
+    }
+
+    /**
+     * Accessor to retrieve the binary image as a Base64-encoded string.
+     * 
+     * @return string|null
+     */
+    public function getCompImageAttribute($value)
+    {
+        // Check if there's media associated with 'complaint_images'
+        if ($this->hasMedia('complaint_images')) {
+            return $this->getFirstMediaUrl('complaint_images');
+        }
+
+        // If no media is present, fall back to the stored value or default image
+        return $value ?: asset('default-image.png');
+    }
+
+    public function getAllImagesUrlsAttribute()
+    {
+        $mediaItems = $this->getMedia('complaint_images');
+        $imageUrls = [];
+    
+        foreach ($mediaItems as $media) {
+            $imageUrls[] = $media->getUrl(); // Collect URLs of all images
+        }
+    
+        return $imageUrls; // Return an array of image URLs
     }
 
     /**
@@ -71,10 +90,16 @@ class Complaint extends Model
         return $this->belongsTo(User::class, 'officer_id')->where('role', 'officer');
     }
 
+    /**
+     * Define relationship with Supervisor (user who assigned the cleaners)
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
     public function supervisor()
     {
         return $this->belongsTo(User::class, 'assigned_by')->where('role', 'supervisor');
     }
+
     /**
      * Define many-to-many relationship with Cleaner model
      *
@@ -82,19 +107,9 @@ class Complaint extends Model
      */
     public function cleaners()
     {
-        return $this->belongsToMany(Cleaner::class, 'complaint_cleaner', 'comp_id', 'cleaner_id')
-                    ->withPivot('no_of_cleaners', 'assigned_by', 'assigned_date')
-                    ->withTimestamps();
-    }
-
-    /**
-     * Define relationship with Cleaner model (for assigned cleaner)
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function cleaner()
-    {
-        return $this->belongsTo(Cleaner::class, 'cleaner_id');
+        return $this->belongsToMany(Cleaner::class, 'complaint_cleaner')
+            ->withPivot('no_of_cleaners', 'assigned_by', 'assigned_date')
+            ->withTimestamps();
     }
 
     /**
