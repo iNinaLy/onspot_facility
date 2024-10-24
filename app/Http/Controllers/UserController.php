@@ -39,7 +39,7 @@ class UserController extends Controller
         ]);
 
         // Handle profile picture if uploaded
-        $profilePicPath = nul             l;
+        $profilePicPath = null;
         if ($request->hasFile('profile_pic')) {
             $profilePicPath = $request->file('profile_pic')->store('profile_pics', 'public');
         }

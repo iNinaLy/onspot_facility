@@ -4,37 +4,40 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\ComplaintCleaner; // Import ComplaintCleaner
-use App\Models\Officer;          // Import Officer model
-use App\Models\Cleaner;          // Import Cleaner model
-use App\Models\Task;             // Import Task model
+use App\Models\ComplaintCleaner;
+use App\Models\Officer;
+use App\Models\Cleaner;
+use App\Models\Task;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Complaint extends Model
+class Complaint extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
-    protected $table = 'complaints'; // Specify the table name
-    protected $primaryKey = 'id'; // Set the primary key to 'id' as per your database
-    public $incrementing = true; // Set to true because 'id' is auto-incrementing
-    protected $keyType = 'int'; // Set the key type to integer
+    protected $table = 'complaints';
+    protected $primaryKey = 'id';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
-    // Allow mass assignment on these fields
     protected $fillable = [
         'comp_date',
         'comp_time',
         'comp_desc',
         'comp_location',
         'comp_status',
-        'comp_image',
         'officer_id',
+        'assigned_by',
+        'assigned_date',
+        'no_of_cleaners',
+        'cleaner_id',
+        'comp_image', // Add comp_image to fillable fields
     ];
 
-    // Define status constants
     const STATUS_PENDING = 'pending';
     const STATUS_ON_GOING = 'on going';
     const STATUS_COMPLETED = 'completed';
 
-    // Method to retrieve available statuses
     public static function getStatuses()
     {
         return [
@@ -44,19 +47,11 @@ class Complaint extends Model
         ];
     }
 
-    public function showDashboard()
-    {
-        $recentComplaint = self::orderBy('created_at', 'desc')->first();
-        return view('dashboard', compact('recentComplaint'));
-    }
-
-    // Define the officer relationship (one complaint belongs to one officer)
     public function officer()
     {
         return $this->belongsTo(Officer::class, 'officer_id');
     }
 
-    // Define the cleaners relationship (many-to-many between complaints and cleaners)
     public function cleaners()
     {
         return $this->belongsToMany(Cleaner::class, 'complaint_cleaner', 'comp_id', 'cleaner_id')
@@ -64,18 +59,47 @@ class Complaint extends Model
                     ->withTimestamps();
     }
 
-    // Define a relationship: one complaint has many tasks
     public function tasks()
     {
         return $this->hasMany(Task::class, 'comp_id');
     }
 
     /**
-     * Update the status of the complaint.
-     * Throws an exception if the status is invalid.
-     *
-     * @param string $status
-     * @throws \Exception
+     * Register media collections for the complaint.
+     * Ensure we're using the 'public' disk so images are accessible via URL.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('complaint_images')
+             ->useDisk('public'); // Explicitly use the public disk
+    }
+
+    /**
+     * Accessor for the first complaint image URL.
+     * Returns a default image if no media exists for this complaint.
+     */
+    public function getCompImageAttribute()
+    {
+        return $this->attributes['comp_image'] ?: asset('default-image.png');
+    }
+
+    /**
+     * Retrieve all complaint images.
+     */
+    public function getAllImagesUrlsAttribute()
+    {
+        $mediaItems = $this->getMedia('complaint_images');
+        $imageUrls = [];
+    
+        foreach ($mediaItems as $media) {
+            $imageUrls[] = $media->getUrl(); // Collect URLs of all images
+        }
+    
+        return $imageUrls; // Return an array of image URLs
+    }
+
+    /**
+     * Update complaint status.
      */
     public function updateStatus($status)
     {
