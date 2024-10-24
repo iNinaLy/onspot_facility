@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Complaint extends Model
+class Complaint extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia; // Implement MediaLibrary
 
     protected $table = 'complaints'; // Specify the table name
     protected $primaryKey = 'id'; // Primary key (auto-increment)
@@ -20,7 +21,6 @@ class Complaint extends Model
         'comp_desc',
         'comp_location',
         'comp_status',
-        'comp_image',
         'officer_id',
         'assigned_by',
         'assigned_date',
@@ -46,37 +46,45 @@ class Complaint extends Model
         ];
     }
 
+    /**
+     * Register media collections for complaints.
+     */
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('complaint_images')
-             ->useDisk('public'); // Explicitly use the public disk
+             ->useDisk('public'); // Store images in the 'public' disk
     }
 
     /**
-     * Accessor to retrieve the binary image as a Base64-encoded string.
+     * Accessor to retrieve the first complaint image URL or a default image if none exists.
      * 
-     * @return string|null
+     * @return string
      */
-    public function getCompImageAttribute($value)
+    public function getCompImageAttribute()
     {
         // Check if there's media associated with 'complaint_images'
         if ($this->hasMedia('complaint_images')) {
             return $this->getFirstMediaUrl('complaint_images');
         }
 
-        // If no media is present, fall back to the stored value or default image
-        return $value ?: asset('default-image.png');
+        // Return default image if no media is present
+        return asset('default-image.png');
     }
 
+    /**
+     * Retrieve all complaint image URLs.
+     * 
+     * @return array
+     */
     public function getAllImagesUrlsAttribute()
     {
         $mediaItems = $this->getMedia('complaint_images');
         $imageUrls = [];
-    
+
         foreach ($mediaItems as $media) {
             $imageUrls[] = $media->getUrl(); // Collect URLs of all images
         }
-    
+
         return $imageUrls; // Return an array of image URLs
     }
 
@@ -130,7 +138,7 @@ class Complaint extends Model
     }
 
     /**
-     * Assign cleaners to the complaint and update relevant details
+     * Assign cleaners to the complaint and update relevant details.
      *
      * @param array $cleanerIds
      * @param string $assignedBy
@@ -144,7 +152,7 @@ class Complaint extends Model
             throw new \Exception("Cleaners can only be assigned when the complaint status is 'pending'.");
         }
 
-        // Assign the cleaners using syncWithPivotValues method
+        // Sync the cleaners with pivot data
         $this->cleaners()->syncWithPivotValues($cleanerIds, [
             'assigned_by' => $assignedBy,
             'assigned_date' => now(),

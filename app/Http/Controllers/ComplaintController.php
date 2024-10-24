@@ -7,7 +7,7 @@ use App\Models\Cleaner;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Notification;  // Correct import for Notification
+use Illuminate\Support\Facades\Notification;
 use App\Notifications\NewCleaningComplaint;
 use Illuminate\Support\Facades\DB;
 
@@ -29,7 +29,6 @@ class ComplaintController extends Controller
 
         return view('admin.complaints.index', compact('complaints'));
     }
-
 
     // Batch update complaint statuses
     public function batchUpdate(Request $request)
@@ -70,7 +69,6 @@ class ComplaintController extends Controller
     }
 
     // Store a new complaint
-
     public function store(Request $request)
     {
         $request->validate([
@@ -89,33 +87,20 @@ class ComplaintController extends Controller
         $complaint->comp_status = 'pending';
         $complaint->officer_id = $request->input('officer_id');
         $complaint->cleaner_id = $request->input('cleaner_id');
-
-        // Check if there's an uploaded image
-        if ($request->hasFile('comp_image')) {
-            $image = file_get_contents($request->file('comp_image')->getRealPath());
-            $complaint->comp_image = $image; // Store the binary image data
-        }
-
-        // Save the complaint record
         $complaint->save();
 
-        $complaintData = [
-            'id' => $complaint->id,
-            'comp_date' => $complaint->comp_date,
-            'comp_desc' => $complaint->comp_desc,
-            'comp_location' => $complaint->comp_location,
-            'officer_id' => $complaint->officer_id,
-            'cleaner_id' => $complaint->cleaner_id,
-        ];
+        // Handle the image upload using Spatie MediaLibrary
+        if ($request->hasFile('comp_image')) {
+            $complaint->addMedia($request->file('comp_image'))
+                      ->toMediaCollection('complaint_images');
+        }
 
-        // Get all admin users to notify
+        // Send notifications
         $adminUsers = User::where('is_admin', true)->get();
-
-        // Send the notification
-        Notification::send($adminUsers, new NewCleaningComplaint($complaintData));
+        Notification::send($adminUsers, new NewCleaningComplaint($complaint));
 
         return redirect()->route('supervisor.complaints.index')
-            ->with('success', 'Complaint created and notification sent successfully.');
+                         ->with('success', 'Complaint created and notification sent successfully.');
     }
 
     // Supervisor: Show complaint details with available cleaners
@@ -127,19 +112,7 @@ class ComplaintController extends Controller
         return view('supervisor.complaints.show', compact('complaint', 'availableCleaners'));
     }
 
-    // Fetch image for display
-    public function showImage($id)
-    {
-        $complaint = Complaint::findOrFail($id);
-
-        if ($complaint->comp_image) {
-            $mimeType = finfo_buffer(finfo_open(), $complaint->comp_image, FILEINFO_MIME_TYPE);
-            return response($complaint->comp_image)->header('Content-Type', $mimeType);
-        } else {
-            return response()->json(['message' => 'No image available'], 404);
-        }
-    }
-
+    // Assign cleaners to the complaint
     public function assignCleaner(Request $request, $id)
     {
         $request->validate([
@@ -150,10 +123,9 @@ class ComplaintController extends Controller
 
         $complaint = Complaint::findOrFail($id);
 
-        // Check if cleaners are already assigned
         if ($complaint->cleaners()->exists()) {
             return redirect()->route('supervisor.complaints.show', $id)
-                            ->withErrors('Cleaners have already been assigned for this complaint.');
+                             ->withErrors('Cleaners have already been assigned for this complaint.');
         }
 
         DB::transaction(function () use ($request, $complaint) {
@@ -172,14 +144,14 @@ class ComplaintController extends Controller
             // Update the complaint status to 'ongoing'
             $complaint->update([
                 'comp_status' => 'ongoing',
-                'no_of_cleaners' => $request->no_of_cleaners, // Update complaint table as well
+                'no_of_cleaners' => $request->no_of_cleaners,
                 'assigned_by' => Auth::id(),
                 'assigned_date' => now(),
             ]);
         });
 
         return redirect()->route('supervisor.complaints.show', $id)
-                        ->with('success', 'Cleaners assigned successfully.');
+                         ->with('success', 'Cleaners assigned successfully.');
     }
 
     // Update complaint details
