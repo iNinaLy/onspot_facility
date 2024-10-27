@@ -72,4 +72,7 @@ class CleanerController extends Controller
         $cleaner->delete();
         return response()->json(['message' => 'Cleaner deleted'], 200);
     }
+
+
+    
 }
