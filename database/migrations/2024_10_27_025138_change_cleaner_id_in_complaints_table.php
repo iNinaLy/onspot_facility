@@ -4,29 +4,25 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class ChangeCleanerIdInComplaintsTable extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
         Schema::table('complaints', function (Blueprint $table) {
-            $table->text('cleaner_id')->change(); // Change `cleaner_id` to TEXT to store comma-separated IDs
+            //
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::table('complaints', function (Blueprint $table) {
-            $table->unsignedBigInteger('cleaner_id')->change(); // Revert to original type if needed
+            //
         });
     }
-}
+};

@@ -15,6 +15,7 @@ class ComplaintCleaner extends Model
 
     protected $fillable = [
         'id',
+        'complaint_id',
         'cleaner_id',
         'no_of_cleaners',
         'assigned_by',
@@ -24,7 +25,7 @@ class ComplaintCleaner extends Model
     // Define relationships
     public function complaint()
     {
-        return $this->belongsTo(Complaint::class, 'id');
+        return $this->belongsTo(Complaint::class, 'complaint_id');
     }
 
     public function cleaner()

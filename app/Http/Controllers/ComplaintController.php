@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
+use App\Models\ComplaintCleaner;
+
 
 
 class ComplaintController extends Controller
@@ -143,13 +145,102 @@ class ComplaintController extends Controller
             'complaint' => $complaint, // The 'comp_image' field now contains the URL of the image
         ], 201);
     }
-
     public function AssignTask(Request $request, $id)
+    {
+        // Retrieve the complaint details from the `complaints` table
+        $complaint = Complaint::select('id', 'comp_location', 'comp_date', 'comp_desc', 'officer_id', 'comp_status')
+            ->where('id', $id) // Filter by the specific complaint ID
+            ->whereNull('assigned_by') // Include only unassigned complaints
+            ->first();
+    
+        // Check if complaint was found
+        if (!$complaint) {
+            return response()->json(['message' => 'Complaint not found'], 404);
+        }
+    
+        // Retrieve officer name from `users` table
+        $user = User::select('name')
+            ->where('id', $complaint->officer_id)
+            ->first();
+        $officerName = $user ? $user->name : 'Unknown Officer';
+    
+        // Retrieve available cleaners' IDs and names
+        $availableCleaners = Cleaner::select('id', 'cleaner_name')
+            ->where('status', 'available')
+            ->get();
+        $cleaners = $availableCleaners->map(function ($cleaner) {
+            return [
+                'cleaner_id' => (string) $cleaner->id,
+                'cleaner_name' => $cleaner->cleaner_name
+            ];
+        })->toArray();
+    
+        // Prepare data to send to frontend
+        $complaintData = [
+            'id' => (string) $complaint->id,
+            'comp_location' => $complaint->comp_location ?? 'No Location',
+            'comp_date' => (string) $complaint->comp_date,
+            'comp_desc' => (string) $complaint->comp_desc,
+            'officer_name' => (string) $officerName,
+            'available_cleaners' => $cleaners,
+            'comp_status' => $complaint->comp_status,
+        ];
+    
+        // Check if there's data to be inserted (if provided in the request)
+        if ($request->has('cleaner_ids') && $request->has('no_of_cleaners') && $request->has('assigned_by')) {
+            $assignedDate = now();
+            
+            // Insert data into the complaint_cleaner table for each cleaner
+            foreach ($request->input('cleaner_ids') as $cleanerId) {
+                ComplaintCleaner::create([
+                    'complaint_id' => $complaint->id,
+                    'cleaner_id' => $cleanerId,
+                    'no_of_cleaners' => $request->input('no_of_cleaners'),
+                    'assigned_by' => $request->input('assigned_by'),
+                    'assigned_date' => $assignedDate,
+                ]);
+    
+                // Update cleaner status to "unavailable"
+                Cleaner::where('id', $cleanerId)->update(['status' => 'unavailable']);
+            }
+    
+            // Update the complaints table with assignment details and change status to "ongoing"
+            $complaint->update([
+                'comp_status' => 'ongoing',
+                'assigned_by' => $request->input('assigned_by'),
+                'assigned_date' => $assignedDate,
+                'no_of_cleaners' => $request->input('no_of_cleaners'),
+            ]);
+        }
+    
+        // Retrieve assigned cleaners for the response
+        $assignedCleaners = ComplaintCleaner::where('complaint_id', $complaint->id)
+            ->join('cleaners', 'complaint_cleaner.cleaner_id', '=', 'cleaners.id')
+            ->select('cleaners.id as cleaner_id', 'cleaners.cleaner_name', 'cleaners.status')
+            ->groupBy('cleaners.id') // Ensures unique cleaner entries
+            ->get()
+            ->map(function ($cleaner) {
+                return [
+                    'cleaner_id' => (string) $cleaner->cleaner_id,
+                    'cleaner_name' => $cleaner->cleaner_name,
+                    'status' => $cleaner->status,
+                ];
+            });
+    
+        // Return both the retrieved data and success message
+        return response()->json([
+            'complaint_data' => $complaintData,
+            'assigned_cleaners' => $assignedCleaners,
+            'message' => 'Data retrieved and updated successfully'
+        ]);
+    }
+
+
+    public function getComplaintDetails($id)
 {
-    // Retrieve the complaint details from the `complaints` table
+    // Retrieve specific fields from the complaints table for the given complaint ID
     $complaint = Complaint::select('id', 'comp_location', 'comp_date', 'comp_desc', 'officer_id', 'comp_status')
-        ->where('id', $id) // Filter by the specific complaint ID
-        ->whereNull('assigned_by') // Include only unassigned complaints
+        ->where('id', $id)
         ->first();
 
     // Check if complaint was found
@@ -167,12 +258,6 @@ class ComplaintController extends Controller
     $availableCleaners = Cleaner::select('id', 'cleaner_name')
         ->where('status', 'available')
         ->get();
-    $cleaners = $availableCleaners->map(function ($cleaner) {
-        return [
-            'cleaner_id' => (string) $cleaner->id,
-            'cleaner_name' => $cleaner->cleaner_name
-        ];
-    })->toArray();
 
     // Prepare data to send to frontend
     $complaintData = [
@@ -180,41 +265,75 @@ class ComplaintController extends Controller
         'comp_location' => $complaint->comp_location ?? 'No Location',
         'comp_date' => (string) $complaint->comp_date,
         'comp_desc' => (string) $complaint->comp_desc,
-        'officer_name' => (string) $officerName,
-        'available_cleaners' => $cleaners,
+        'officer_name' => $officerName,
+        'available_cleaners' => $availableCleaners->map(function ($cleaner) {
+            return [
+                'cleaner_id' => (string) $cleaner->id,
+                'cleaner_name' => $cleaner->cleaner_name
+            ];
+        }),
         'comp_status' => $complaint->comp_status,
     ];
 
-    // Check if there's data to be inserted (if provided in the request)
-    if ($request->has('cleaner_ids') && $request->has('no_of_cleaners') && $request->has('assigned_by')) {
-        $assignedDate = now();
-        
-        // Insert data into the complaint_cleaner table for each cleaner
-        foreach ($request->input('cleaner_ids') as $cleanerId) {
-            ComplaintCleaner::create([
-                'complaint_id' => $complaint->id,
-                'cleaner_id' => $cleanerId,
-                'no_of_cleaners' => $request->input('no_of_cleaners'),
-                'assigned_by' => $request->input('assigned_by'),
-                'assigned_date' => $assignedDate,
-            ]);
-        }
-
-        // Update the complaints table with assignment details
-        $complaint->update([
-            'assigned_by' => $request->input('assigned_by'),
-            'assigned_date' => $assignedDate,
-            'no_of_cleaners' => $request->input('no_of_cleaners'),
-            'cleaner_id' => implode(',', $request->input('cleaner_ids')), // Join multiple cleaner IDs as comma-separated
-        ]);
-    }
-
-    // Return both the retrieved data and success message
-    return response()->json([
-        'complaint_data' => $complaintData,
-        'message' => 'Data retrieved and updated successfully'
-    ]);
+    // Return the data as JSON
+    return response()->json($complaintData);
 }
 
+public function getHistory(Request $request)
+{
+    // Get supervisor's ID from request (assuming it's passed with the token)
+    $supervisorId = $request->user()->id; // Adjust this if needed based on your auth setup
+
+    // Fetch tasks assigned by this supervisor
+    $tasks = Complaint::where('assigned_by', $supervisorId)
+        ->select('id', 'comp_desc', 'no_of_cleaners', 'comp_status', 'comp_date')
+        ->orderBy('comp_date', 'desc') // Order by date, latest first
+        ->get();
+
+    return response()->json($tasks);
+}
+
+
+public function getHistoryDetails($id)
+{
+    // Retrieve the complaint details including location, description, etc.
+    $complaint = Complaint::select('id', 'comp_desc', 'comp_time', 'comp_date', 'comp_location', 'officer_id', 'comp_status', 'no_of_cleaners', 'assigned_date')
+        ->where('id', $id)
+        ->first();
+
+    if (!$complaint) {
+        return response()->json(['message' => 'Complaint not found'], 404);
+    }
+
+    // Retrieve the officer's name based on the officer_id
+    $officer = User::select('name')->where('id', $complaint->officer_id)->first();
+    $officerName = $officer ? $officer->name : 'Unknown Officer';
+
+    // Retrieve assigned cleaners for the task
+    $assignedCleaners = ComplaintCleaner::where('complaint_id', $complaint->id)
+        ->join('cleaners', 'complaint_cleaner.cleaner_id', '=', 'cleaners.id')
+        ->select('cleaners.id as cleaner_id', 'cleaners.cleaner_name')
+        ->get();
+
+    // Prepare the response data, including the complaint_id
+    $responseData = [
+        'complaint_id' => $complaint->id,
+        'comp_desc' => $complaint->comp_desc,
+        'comp_time' => $complaint->comp_time,
+        'comp_date' => $complaint->comp_date,
+        'comp_location' => $complaint->comp_location,
+        'officer_name' => $officerName,
+        'assigned_cleaners' => $assignedCleaners,
+        'comp_status' => $complaint->comp_status,
+        'no_of_cleaners' => $complaint->no_of_cleaners,
+        'assigned_date' => $complaint->assigned_date,
+    ];
+
+    return response()->json($responseData);
+}
+
+
+
+    
     
 }    

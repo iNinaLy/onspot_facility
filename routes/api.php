@@ -14,13 +14,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Http\Request;
 
 
-// Cleaner Routes
-Route::get('/cleaners', [CleanerController::class, 'index']);
-Route::post('/cleaners', [CleanerController::class, 'store']);
-Route::get('/cleaners/{id}', [CleanerController::class, 'show']);
-Route::put('/cleaners/{id}', [CleanerController::class, 'update']);
-Route::delete('/cleaners/{id}', [CleanerController::class, 'destroy']);
-//Cleaner Attendance
+// Cleaner Attendance Routes
 Route::get('/attendance', [AttendanceController::class, 'index']); // For retrieving attendance records
 Route::post('/attendance', [AttendanceController::class, 'store']); // For storing attendance records
 
@@ -31,29 +25,6 @@ Route::get('/officers/{id}', [OfficerController::class, 'show']);
 Route::put('/officers/{id}', [OfficerController::class, 'update']);
 Route::delete('/officers/{id}', [OfficerController::class, 'destroy']);
 
-
-//supervisor
-Route::get('/supervisors', [SupervisorController::class, 'index']);
-Route::post('/supervisors', [SupervisorController::class, 'store']);
-Route::get('/supervisors/{id}', [SupervisorController::class, 'show']);
-Route::put('/supervisors/{id}', [SupervisorController::class, 'update']);
-Route::delete('/supervisors/{id}', [SupervisorController::class, 'destroy']);
-
-
-
-//Task
-Route::get('/tasks', [TaskController::class, 'index']);
-Route::post('/tasks', [TaskController::class, 'store']);
-Route::get('/tasks/{id}', [TaskController::class, 'show']);
-Route::put('/tasks/{id}', [TaskController::class, 'update']);
-Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
-
-
-// TaskCleaner 
-Route::get('/tasks/{id}/cleaners', [TaskCleanerController::class, 'showCleanersForTask']);
-Route::post('/tasks/assign-cleaner', [TaskCleanerController::class, 'assignCleanerToTask']);
-Route::post('/tasks/remove-cleaner', [TaskCleanerController::class, 'removeCleanerFromTask']);
-Route::post('/tasks', [TaskController::class, 'store']);
 
 // Authentication routes
 Route::post('/flutterlogin', [AuthController::class, 'login']);
@@ -73,16 +44,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/profile', [ProfileController::class, 'update']);
 });
 
-//Supervisor App
+//Supervisor Search Cleaners
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/supervisor/cleaners', [SupervisorController::class, 'getAllCleaners']);
     Route::get('supervisor/cleaner/{id}', [SupervisorController::class, 'showapi']);
-
 });
 //Supervisor Assign Task
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('supervisor/complaints', [ComplaintController::class, 'getComplaints']);
-    Route::post('supervisor/assign-task/{id}', [ComplaintController::class, 'AssignTask']);
+    Route::get('/supervisor/assign-task/{id}', [ComplaintController::class, 'getComplaintDetails']);
+    Route::post('supervisor/assign-task/{id}/assign', [ComplaintController::class, 'AssignTask']);
+    Route::get('/supervisor/history', [ComplaintController::class, 'getHistory']);
+    Route::get('/supervisor/history/{id}', [ComplaintController::class, 'getHistoryDetails']);
+
 });
 
 
