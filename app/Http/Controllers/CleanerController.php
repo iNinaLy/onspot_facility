@@ -11,22 +11,6 @@ class CleanerController extends Controller
     public function index()
     {
         Log::info('Cleaners index accessed');
-<<<<<<< HEAD
-    
-        // Fetch all cleaners
-        $cleaners = Cleaner::all();
-    
-        // Log the cleaners data
-        Log::info('Cleaners data: ', $cleaners->toArray());
-    
-        // Count based on status
-        $availableCount = $cleaners->where('status', 'available')->count();
-        $unavailableCount = $cleaners->where('status', 'unavailable')->count();
-        $totalCleaners = $cleaners->count();
-    
-        // Return the view with the necessary data
-        return view('supervisor.cleaners.index', compact('cleaners', 'totalCleaners', 'availableCount', 'unavailableCount'));
-=======
 
         $cleaners = Cleaner::all(); // Retrieve all cleaners
         $availableCount = Cleaner::where('status', 'available')->count(); // Count available cleaners
@@ -84,7 +68,6 @@ class CleanerController extends Controller
 
         Cleaner::create($validated);
         return redirect()->back()->with('success', 'Cleaner added successfully');
->>>>>>> origin/of
     }
 
     // Fetch available cleaners for API (used by AJAX)
@@ -120,38 +103,18 @@ class CleanerController extends Controller
         if (!$cleaner) {
             return response()->json(['message' => 'Cleaner not found'], 404);
         }
-<<<<<<< HEAD
-
-        return $cleaner;
-=======
         return response()->json($cleaner);
->>>>>>> origin/of
     }
 
     // Update cleaner information
     public function update(Request $request, $id)
     {
-<<<<<<< HEAD
-        $cleaner = Cleaner::find($id);
-        
-        // Check if the cleaner exists
-        if (!$cleaner) {
-            return response()->json(['message' => 'Cleaner not found'], 404);
-        }
-
-        // Validate incoming request
-        $validated = $request->validate([
-            'cleaner_name' => 'sometimes|required|string|max:255',
-            'cleaner_phoneNo' => 'sometimes|required|string|max:15',
-            'status' => 'sometimes|required|in:available,unavailable', // Use cleaner_available instead of status
-=======
         $request->validate([
             'username' => 'required|string|max:255',
             'name' => 'required|string|max:255',
             'phone_no' => 'required|string|max:20',
             'status' => 'required|in:available,unavailable',
             'password' => 'nullable|confirmed|min:8'
->>>>>>> origin/of
         ]);
 
         $cleaner = Cleaner::findOrFail($id);

@@ -5,52 +5,62 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class User extends Authenticatable
+class User extends Authenticatable implements HasMedia
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, InteractsWithMedia;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
-        'username',  // Add username
+        'username',
         'name',
         'email',
         'profile_pic', // Profile picture for web
         'password',
-        'phone_no', // Phone number for web
+        'phone_no',
         'role',
         'email_verified_at',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
 
     /**
-     * Role checking methods
+     * Register media collections for the user profile picture.
      */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('profile_pictures')
+             ->singleFile() // Ensure only one profile picture per user
+             ->useDisk('public'); // Use public disk to make the images accessible
+    }
+
+    /**
+     * Accessor for the profile picture URL.
+     * Returns a default image if no media exists for this user.
+     */
+    public function getProfilePicAttribute()
+    {
+        // Check if there's a media item in the profile_pictures collection
+        if ($this->hasMedia('profile_pictures')) {
+            return $this->getFirstMediaUrl('profile_pictures');
+        }
+
+        // Fallback to stored value or default image if no profile picture is set
+        return $this->attributes['profile_pic'] ?: asset('default-profile.png');
+    }
+
+    // Your role-checking and other methods remain the same...
+
     public function isCleaner()
     {
         return $this->role === 'cleaner';
@@ -64,30 +74,5 @@ class User extends Authenticatable
     public function isOfficer()
     {
         return $this->role === 'officer';
-    }
-
-    /**
-     * Method to fetch and categorize cleaners (for web usage)
-     */
-    public function showCleaners()
-    {
-        // Fetch users with the role 'cleaner'
-        $cleaners = User::where('role', 'cleaner')->get();
-
-        // Count total cleaners and categorize them by availability
-        $totalCleaners = $cleaners->count();
-        $availableCount = $cleaners->where('status', 'available')->count();
-        $unavailableCount = $totalCleaners - $availableCount;
-
-        // Return the view with the cleaner data (web functionality)
-        return view('cleaners.index', compact('cleaners', 'totalCleaners', 'availableCount', 'unavailableCount'));
-    }
-
-    /**
-     * Relationship with Officer model (for web usage)
-     */
-    public function officer()
-    {
-        return $this->hasOne(Officer::class, 'user_id');
     }
 }

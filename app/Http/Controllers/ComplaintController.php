@@ -245,4 +245,41 @@ class ComplaintController extends Controller
             return response()->json(['error' => 'Server error: ' . $e->getMessage()], 500);
         }
     }
+
+    // Get details of a specific complaint
+    public function getComplaintDetails($id)
+    {
+        // Retrieve the complaint by its ID
+        $complaint = Complaint::where('id', $id)->first();
+
+        // Check if the complaint exists
+        if (!$complaint) {
+            return response()->json(['error' => 'Complaint not found'], 404);
+        }
+
+        // Get the media URL for the complaint image if it exists
+        $compImageUrl = $complaint->getFirstMediaUrl('complaint_images') ? url($complaint->getFirstMediaUrl('complaint_images')) : null;
+
+
+        // Format the complaint details for response
+        $complaintDetails = [
+            'id' => $complaint->id,
+            'comp_date' => $complaint->comp_date,
+            'comp_time' => $complaint->comp_time,
+            'comp_desc' => $complaint->comp_desc,
+            'comp_location' => $complaint->comp_location,
+            'comp_image' => $compImageUrl,  // Use the media URL
+            'officer_id' => $complaint->officer_id,
+            'assigned_by' => $complaint->assigned_by,
+            'assigned_date' => $complaint->assigned_date,
+            'no_of_cleaners' => $complaint->no_of_cleaners,
+            'cleaner_id' => $complaint->cleaner_id,
+            'created_at' => $complaint->created_at,
+            'updated_at' => $complaint->updated_at,
+            'comp_status' => $complaint->comp_status,
+        ];
+
+        return response()->json($complaintDetails, 200);
+    }
+
 }

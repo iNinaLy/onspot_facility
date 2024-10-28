@@ -4,25 +4,18 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+class DropMediaTable extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
-        Schema::table('media', function (Blueprint $table) {
-            //
-        });
+        Schema::dropIfExists('media'); // Drop the media table
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
-        Schema::table('media', function (Blueprint $table) {
-            //
-        });
+        Schema::create('media', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+        }); // Optionally recreate it (with minimal columns) if you want to rollback
     }
-};
+}

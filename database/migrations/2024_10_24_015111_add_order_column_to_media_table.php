@@ -4,25 +4,19 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+class AddOrderColumnToMediaTable extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
         Schema::table('media', function (Blueprint $table) {
-            //
+            $table->unsignedInteger('order_column')->nullable()->after('responsive_images'); // Add the order_column field
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
         Schema::table('media', function (Blueprint $table) {
-            //
+            $table->dropColumn('order_column'); // Drop the order_column field in case of rollback
         });
     }
-};
+}
