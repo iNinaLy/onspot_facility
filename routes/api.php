@@ -14,7 +14,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Http\Request;
 
 
-// Cleaner Attendance Routes
+//Cleaner Attendance Routes
 Route::get('/attendance', [AttendanceController::class, 'index']); // For retrieving attendance records
 Route::post('/attendance', [AttendanceController::class, 'store']); // For storing attendance records
 
@@ -58,6 +58,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/supervisor/history/{id}', [ComplaintController::class, 'getHistoryDetails']);
 
 });
+
+//Forgot Password Route
+Route::post('/forgot-password', [AuthController::class, 'sendResetCode']);
+Route::post('/reset-password', [AuthController::class, 'verifyResetCode']);
+
 
 
 Route::get('/test', function () {
