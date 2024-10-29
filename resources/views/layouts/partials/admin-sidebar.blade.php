@@ -88,11 +88,9 @@
             <div class="flex items-center justify-between py-4 px-4 border-b border-gray-200">
                 @if($adminUser)
                     <div class="flex items-center">
-                        @if($adminUser->profile_pic)
-                            <img src="data:image/jpeg;base64,{{ base64_encode($adminUser->profile_pic) }}" alt="Profile Picture" class="w-10 h-10 rounded-full mr-3">
-                        @else
-                            <span>No Image</span>
-                        @endif
+                        <img src="{{ $adminUser->profile_pic ? 'data:image/jpeg;base64,' . base64_encode($adminUser->profile_pic) : 'https://via.placeholder.com/40' }}" 
+                             alt="Profile Picture" 
+                             class="w-10 h-10 rounded-full mr-3">
                         <div>
                             <div class="text-sm font-semibold">{{ $adminUser->name }}</div>
                             <div class="text-xs text-gray-500">{{ $adminUser->username }}</div>
@@ -102,7 +100,7 @@
                 @else
                     <p class="text-gray-500">Admin user not found.</p>
                 @endif
-                <button id="toggle-button" class="p-2 focus:outline-none md:hidden">
+                <button id="toggle-button" class="p-2 focus:outline-none md:hidden" aria-label="Toggle sidebar">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
                     </svg>
@@ -113,7 +111,7 @@
             <div class="flex-1 px-4 py-4 space-y-2">
 
                 <!-- Home Link -->
-                <a href="{{ route('admin.dashboard') }}" class="menu-item p-2 flex items-center rounded-lg {{ Route::is('admin.dashboard') ? 'active-link' : '' }}">
+                <a href="{{ route('admin.dashboard') }}" class="menu-item p-2 flex items-center rounded-lg {{ request()->routeIs('admin.dashboard') ? 'active-link' : '' }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M10 20a1 1 0 01-1-1V11H6a1 1 0 01-1-1V8.414L10 3.586l5 4.828V10a1 1 0 01-1 1h-3v8a1 1 0 01-1 1z" />
                     </svg>
@@ -122,7 +120,7 @@
 
                 <!-- Manage Dropdown -->
                 <div>
-                    <button class="menu-item w-full p-2 flex items-center justify-between rounded-lg" onclick="toggleSubmenu()">
+                    <button class="menu-item w-full p-2 flex items-center justify-between rounded-lg" onclick="toggleSubmenu()" aria-expanded="false" aria-controls="manageSubmenu">
                         <span class="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M5.5 3a1.5 1.5 0 000 3h9a1.5 1.5 0 000-3h-9zM3 8.5A1.5 1.5 0 014.5 7h11a1.5 1.5 0 010 3h-11A1.5 1.5 0 013 8.5zM6.5 13a1.5 1.5 0 000 3h7a1.5 1.5 0 000-3h-7z" />
@@ -136,20 +134,20 @@
 
                     <!-- Manage Submenu -->
                     <div id="manageSubmenu" class="hidden pl-4 space-y-2">
-                        <a href="{{ route('admin.officers') }}" class="menu-item p-2 block rounded-lg">
+                        <a href="{{ route('admin.officers.index') }}" class="menu-item p-2 block rounded-lg">
                             {{ __('Officer') }}
                         </a>
                         <a href="{{ route('admin.supervisors.index') }}" class="menu-item p-2 block rounded-lg">
                             {{ __('Supervisor') }}
                         </a>
-                        <a href="{{ route('admin.cleaners') }}" class="menu-item p-2 block rounded-lg">
+                        <a href="{{ route('admin.cleaners.index') }}" class="menu-item p-2 block rounded-lg">
                             {{ __('Cleaner') }}
                         </a>
                     </div>
                 </div>
 
                 <!-- New User Link -->
-                <a href="{{ route('admin.users.create') }}" class="menu-item p-2 flex items-center rounded-lg {{ Route::is('admin.users.create') ? 'active-link' : '' }}">
+                <a href="{{ route('admin.users.create') }}" class="menu-item p-2 flex items-center rounded-lg {{ request()->routeIs('admin.users.create') ? 'active-link' : '' }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 11c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                     </svg>
@@ -157,9 +155,9 @@
                 </a>
 
                 <!-- Complaints Link -->
-                <a href="{{ route('admin.complaints') }}" class="menu-item p-2 flex items-center rounded-lg {{ Route::is('admin.complaints') ? 'active-link' : '' }}">
+                <a href="{{ route('admin.complaints.index') }}" class="menu-item p-2 flex items-center rounded-lg {{ request()->routeIs('admin.complaints.index') ? 'active-link' : '' }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927a1 1 0 011.902 0l1.618 4.956a1 1 0                        00.95.69h5.18a1 1 0 010 2h-5.18a1 1 0 00-.95.69l-1.618 4.956a1 1 0 01-1.902 0L7.431 11.2a1 1 0 00-.95-.69H1.25a1 1 0 110-2h5.231a1 1 0 00.95-.69L9.049 2.927z" />
+                        <path d="M9.049 2.927a1 1 0 011.902 0l1.618 4.956a1 1 0 00.95.69h5.18a1 1 0 010 2h-5.18a1 1 0 00-.95.69l-1.618 4.956a1 1 0 01-1.902 0L7.431 11.2a1 1 0 00-.95-.69H1.25a1 1 0 110-2h5.231a1 1 0 00.95-.69L9.049 2.927z" />
                     </svg>
                     {{ __('Complaints') }}
                 </a>
@@ -168,7 +166,7 @@
 
             <!-- Account Section -->
             <div class="px-4 py-4 border-t border-gray-200 space-y-2">
-                <a href="{{ route('profile.edit') }}" class="menu-item p-2 flex items-center rounded-lg {{ Route::is('profile.edit') ? 'active-link' : '' }}">
+                <a href="{{ route('admin.profile.edit') }}" class="menu-item p-2 flex items-center rounded-lg {{ request()->routeIs('admin.profile.edit') ? 'active-link' : '' }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M10 3a4 4 0 100 8 4 4 0 000-8zM4 10a6 6 0 1112 0 6 6 0 01-12 0zm6 8a8 8 0 110-16 8 8 0 010 16z" clip-rule="evenodd" />
                     </svg>
@@ -243,4 +241,3 @@
 
 </body>
 </html>
-

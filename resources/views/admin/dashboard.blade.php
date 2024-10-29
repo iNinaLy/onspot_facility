@@ -221,7 +221,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="font-weight-bold text-dark">Recent Complaints</h5>
             <!-- See All Button -->
-            <a href="{{ route('admin.complaints') }}" class="see-all-btn">See All</a>
+            <a href="{{ route('admin.complaints.index') }}" class="see-all-btn">See All</a>
         </div>
         <table class="recent-complaints-table">
             <thead>

@@ -50,7 +50,7 @@
 
         <!-- Action Buttons -->
         <div class="flex justify-between">
-            <a href="{{ route('admin.complaints') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Back to Complaints</a>
+            <a href="{{ route('admin.complaints.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Back to Complaints</a>
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Update Status</button>
         </div>
     </form>

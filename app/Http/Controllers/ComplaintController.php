@@ -7,34 +7,30 @@ use App\Models\Cleaner;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Notification;
-use App\Notifications\NewCleaningComplaint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\NewCleaningComplaint;
 
 class ComplaintController extends Controller
 {
     // Admin: Fetch complaints with optional filtering and sorting (Web)
     public function index(Request $request)
     {
-        // Start building the query
         $query = Complaint::query();
 
-        // Apply status filter if provided
         if ($request->filled('status')) {
             $query->where('comp_status', $request->status);
         }
 
-        // Eager load related models to avoid N+1 query issues
         $complaints = $query->with(['officer', 'supervisor'])->paginate(10);
-
         return view('admin.complaints.index', compact('complaints'));
     }
 
     // Store a new complaint (Web)
     public function store(Request $request)
     {
-        $request->validate([
+        $validatedData = $request->validate([
             'comp_desc' => 'required|string|max:255',
             'comp_location' => 'required|string|max:255',
             'comp_date' => 'required|date',
@@ -43,24 +39,17 @@ class ComplaintController extends Controller
             'cleaner_id' => 'nullable|exists:users,id',
         ]);
 
-        $complaint = new Complaint();
-        $complaint->comp_desc = $request->input('comp_desc');
-        $complaint->comp_location = $request->input('comp_location');
-        $complaint->comp_date = $request->input('comp_date');
-        $complaint->comp_status = 'pending';
-        $complaint->officer_id = $request->input('officer_id');
-        $complaint->cleaner_id = $request->input('cleaner_id');
-        $complaint->save();
+        $complaint = Complaint::create(array_merge($validatedData, [
+            'comp_status' => 'pending',
+        ]));
 
-        // Handle the image upload using Spatie MediaLibrary
         if ($request->hasFile('comp_image')) {
             $complaint->addMedia($request->file('comp_image'))
                       ->toMediaCollection('complaint_images');
         }
 
-        // Send notifications
-        $adminUsers = User::where('is_admin', true)->get();
-        Notification::send($adminUsers, new NewCleaningComplaint($complaint));
+        $supervisors = User::where('role', 'supervisor')->get();
+        Notification::send($supervisors, new NewCleaningComplaint($complaint));
 
         return redirect()->route('supervisor.complaints.index')
                          ->with('success', 'Complaint created and notification sent successfully.');
@@ -71,7 +60,6 @@ class ComplaintController extends Controller
     {
         $complaint = Complaint::with('cleaners')->findOrFail($id);
         $availableCleaners = Cleaner::where('status', 'available')->get();
-
         return view('supervisor.complaints.show', compact('complaint', 'availableCleaners'));
     }
 
@@ -81,7 +69,7 @@ class ComplaintController extends Controller
         $request->validate([
             'no_of_cleaners' => 'required|integer|min:1|max:3',
             'cleaners' => 'required|array|size:' . $request->no_of_cleaners,
-            'cleaners.*' => 'exists:users,id', // Assuming 'users' table stores cleaners
+            'cleaners.*' => 'exists:users,id',
         ]);
 
         $complaint = Complaint::findOrFail($id);
@@ -92,19 +80,13 @@ class ComplaintController extends Controller
         }
 
         DB::transaction(function () use ($request, $complaint) {
-            $assignments = [];
-            foreach ($request->cleaners as $cleanerId) {
-                $assignments[$cleanerId] = [
-                    'assigned_by' => Auth::id(),
-                    'assigned_date' => now(),
-                    'no_of_cleaners' => $request->no_of_cleaners,
-                ];
-            }
+            $assignments = array_fill_keys($request->cleaners, [
+                'assigned_by' => Auth::id(),
+                'assigned_date' => now(),
+                'no_of_cleaners' => $request->no_of_cleaners,
+            ]);
 
-            // Attach cleaners with pivot data
             $complaint->cleaners()->attach($assignments);
-
-            // Update the complaint status to 'ongoing'
             $complaint->update([
                 'comp_status' => 'ongoing',
                 'no_of_cleaners' => $request->no_of_cleaners,
@@ -134,7 +116,7 @@ class ComplaintController extends Controller
     // Update complaint details (Web)
     public function update(Request $request, $id)
     {
-        $request->validate([
+        $validatedData = $request->validate([
             'comp_date' => 'required|date',
             'comp_time' => 'required|date_format:H:i',
             'comp_desc' => 'required|string|max:255',
@@ -143,7 +125,7 @@ class ComplaintController extends Controller
         ]);
 
         $complaint = Complaint::findOrFail($id);
-        $complaint->update($request->only('comp_date', 'comp_time', 'comp_desc', 'comp_location', 'comp_status'));
+        $complaint->update($validatedData);
 
         return response()->json($complaint, 200);
     }
@@ -177,17 +159,16 @@ class ComplaintController extends Controller
         ]);
 
         $complaint->update(['comp_status' => 'ongoing']);
-
         return redirect()->route('supervisor.complaints.show', $complaintId)
                          ->with('success', 'Cleaners assigned successfully.');
     }
 
-    // **API Functions (From Current Version)**
+    // **API Functions**
 
     // Store a new complaint (API)
     public function apistore(Request $request)
     {
-        $request->validate([
+        $validatedData = $request->validate([
             'comp_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'comp_date' => 'required|date',
             'comp_time' => 'required',
@@ -195,28 +176,15 @@ class ComplaintController extends Controller
             'comp_location' => 'required|string',
         ]);
 
-        $complaint = Complaint::create([
-            'comp_date' => $request->comp_date,
-            'comp_time' => $request->comp_time,
-            'comp_desc' => $request->comp_desc,
-            'comp_location' => $request->comp_location,
+        $complaint = Complaint::create(array_merge($validatedData, [
             'officer_id' => Auth::id(),
-            'assigned_by' => null,
-            'cleaner_id' => null,
             'comp_status' => Complaint::STATUS_PENDING,
-            'comp_image' => null,
-        ]);
+        ]));
 
-        // Check if an image is uploaded and attach it using the media library
         if ($request->hasFile('comp_image')) {
-            $media = $complaint->addMediaFromRequest('comp_image')
-                        ->toMediaCollection('complaint_images', 'public');
-
-            Log::info('Media uploaded:', ['media' => $media]);
-
+            $media = $complaint->addMediaFromRequest('comp_image')->toMediaCollection('complaint_images', 'public');
             $complaint->update(['comp_image' => $media->getUrl()]);
-        } else {
-            Log::info('No image was uploaded');
+            Log::info('Media uploaded:', ['media' => $media]);
         }
 
         return response()->json([
@@ -234,15 +202,11 @@ class ComplaintController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        try {
-            $complaints = Complaint::where('officer_id', $officerId)
-                ->orderBy('comp_date', 'desc')
-                ->orderBy('comp_time', 'desc')
-                ->get();
+        $complaints = Complaint::where('officer_id', $officerId)
+            ->orderBy('comp_date', 'desc')
+            ->orderBy('comp_time', 'desc')
+            ->get();
 
-            return response()->json($complaints, 200);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Server error: ' . $e->getMessage()], 500);
-        }
+        return response()->json($complaints, 200);
     }
 }

@@ -1,4 +1,4 @@
-<!-- resources/views/profile/edit.blade.php -->
+@extends('layouts.admin')
 
 <x-app-layout>
     <div class="py-12 bg-gradient-to-r from-yellow-300 via-orange-200 to-pink-200 min-h-screen">

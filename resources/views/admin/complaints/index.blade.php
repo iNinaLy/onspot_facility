@@ -15,7 +15,7 @@
     @endif
 
     <div class="sort-bar mb-4 d-flex justify-content-center align-items-center">
-        <form method="GET" action="{{ route('admin.complaints') }}" class="d-flex" 
+        <form method="GET" action="{{ route('admin.complaints.index') }}" class="d-flex" 
               style="width: 100%; max-width: 600px; gap: 1rem;">
             <select name="status" id="status" class="form-control" 
                     style="border-radius: 8px; border: 1px solid #ced4da; padding: 10px;">

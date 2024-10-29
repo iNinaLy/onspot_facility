@@ -6,8 +6,9 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Broadcasting\PrivateChannel;
 
-class NewCleaningComplaint extends Notification
+class NewCleaningComplaint extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -31,7 +32,7 @@ class NewCleaningComplaint extends Notification
      */
     public function via($notifiable)
     {
-        return ['mail', 'database'];
+        return ['mail', 'database', 'broadcast'];
     }
 
     /**
@@ -74,5 +75,35 @@ class NewCleaningComplaint extends Notification
             'cleaner_id' => $this->complaint['cleaner_id'],
             'submitted_at' => now(),
         ];
+    }
+
+    /**
+     * Get the broadcastable data representation of the notification.
+     *
+     * @param mixed $notifiable
+     * @return array
+     */
+    public function toBroadcast($notifiable)
+    {
+        return [
+            'id' => $this->complaint['id'],
+            'comp_date' => $this->complaint['comp_date'],
+            'comp_time' => $this->complaint['comp_time'],
+            'comp_desc' => $this->complaint['comp_desc'],
+            'comp_location' => $this->complaint['comp_location'],
+            'officer_id' => $this->complaint['officer_id'],
+            'cleaner_id' => $this->complaint['cleaner_id'],
+            'submitted_at' => now(),
+        ];
+    }
+
+    /**
+     * Specify the broadcasting channel for real-time notifications.
+     *
+     * @return \Illuminate\Broadcasting\PrivateChannel
+     */
+    public function broadcastOn()
+    {
+        return new PrivateChannel('notifications');
     }
 }

@@ -19,6 +19,8 @@ class Complaint extends Model implements HasMedia
     public $incrementing = true; // Ensure it's auto-incrementing
     protected $keyType = 'int'; // Primary key type
 
+    protected $dates = ['comp_date'];
+
     // Allow mass assignment on these fields
     protected $fillable = [
         'comp_date',
@@ -122,11 +124,7 @@ class Complaint extends Model implements HasMedia
     /**
      * Define one-to-many relationship with Task model.
      */
-    public function tasks()
-    {
-        return $this->hasMany(Task::class, 'comp_id');
-    }
-
+  
     /**
      * Update the status of the complaint.
      * Throws an exception if the status is invalid.

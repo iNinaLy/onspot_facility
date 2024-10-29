@@ -111,3 +111,7 @@ Route::get('/cleaner/my-tasks', [CleanerController::class, 'myTasks'])->name('cl
 Route::get('/history', [HistoryController::class, 'index'])->name('history');
 
 require __DIR__.'/auth.php';
+
+Route::get('/test-image', function () {
+    return view('test_image');
+});

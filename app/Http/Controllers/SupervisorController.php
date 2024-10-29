@@ -23,7 +23,10 @@ class SupervisorController extends Controller
         // Fetch the total number of supervisors
         $totalSupervisors = Supervisor::count();
 
-        return view('supervisor.dashboard', compact('totalCleaners', 'availableCleaners', 'unavailableCleaners', 'totalSupervisors'));
+        // Fetch the 5 most recent complaints
+        $recentComplaints = Complaint::orderBy('comp_date', 'desc')->limit(5)->get();
+
+        return view('supervisor.dashboard', compact('totalCleaners', 'availableCleaners', 'unavailableCleaners', 'totalSupervisors', 'recentComplaints'));
     }
 
     /**

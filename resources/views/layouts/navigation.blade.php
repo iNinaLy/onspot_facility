@@ -77,7 +77,7 @@
 
                     <x-slot name="content">
                         <div class="rounded-lg shadow-lg overflow-hidden bg-white">
-                            <x-dropdown-link :href="route('profile.edit')" class="block px-4 py-2 text-sm text-black hover:bg-gray-100">
+                            <x-dropdown-link :href="route('supervisor.profile.edit')" class="block px-4 py-2 text-sm text-black hover:bg-gray-100">
                                 {{ __('Profile') }}
                             </x-dropdown-link>
                             <form method="POST" action="{{ route('logout') }}">
