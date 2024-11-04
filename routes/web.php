@@ -64,13 +64,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/users', [UserController::class, 'index'])->name('users.index'); // List users
     Route::get('/users/create', [UserController::class, 'create'])->name('users.create'); // Show the form
     Route::post('/users', [UserController::class, 'store'])->name('users.store'); // Handle form submission
-
+   
     // Complaints
     Route::get('/complaints', [AdminController::class, 'complaints'])->name('complaints');
-    Route::post('/complaints/batch-update', [ComplaintController::class, 'batchUpdate'])->name('complaints.batchUpdate');
+    Route::post('/complaints/batch-update', [AdminController::class, 'batchUpdate'])->name('complaints.batchUpdate');
     Route::get('/complaints/search', [AdminController::class, 'searchComplaints'])->name('complaints.search');
+    Route::put('/complaints/{id}/status', [AdminController::class, 'updateStatus'])->name('complaints.updateStatus');
     Route::get('/complaints/{complaint}/edit', [AdminController::class, 'editComplaint'])->name('complaints.edit');
-    Route::put('/complaints/{complaint}', [AdminController::class, 'updateComplaint'])->name('complaints.update');
     Route::delete('/complaints/{complaint}', [AdminController::class, 'destroyComplaint'])->name('complaints.destroy');
 
     // Profile
@@ -87,6 +87,9 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     Route::get('/cleaners', [SupervisorController::class, 'cleaners'])->name('cleaners');
     Route::get('/pending-complaints', [ComplaintController::class, 'getPendingComplaints']);
     Route::post('/assign-cleaner', [ComplaintController::class, 'assignCleanerToComplaint']);
+  
+    Route::get('/complaints/pending', [ComplaintController::class, 'getPendingComplaints']);
+    Route::post('/complaints/assign', [ComplaintController::class, 'assignCleaner']);
 
     // API routes for fetching available cleaners
     Route::get('/api/cleaners', [CleanerController::class, 'getAvailableCleaners']);
@@ -97,7 +100,7 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     Route::get('/complaints/{id}', [ComplaintController::class, 'show'])->name('complaints.show');
     Route::post('/complaints/{id}/assign-cleaner', [ComplaintController::class, 'assignCleaner'])->name('assign.cleaner');
     Route::post('/complaints/{id}/update-assignment', [ComplaintController::class, 'updateAssignment'])->name('complaints.updateAssignment');
-
+    
     // History page
     Route::get('/history', [SupervisorController::class, 'history'])->name('history');
 

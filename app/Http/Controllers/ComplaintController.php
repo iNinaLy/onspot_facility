@@ -251,6 +251,8 @@ class ComplaintController extends Controller
     {
         // Fetch complaints with 'Pending' status
         $pendingComplaints = Complaint::where('comp_status', 'Pending')->get();
+
+        // Return as JSON response
         return response()->json($pendingComplaints);
     }
 

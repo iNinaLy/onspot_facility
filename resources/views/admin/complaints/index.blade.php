@@ -1,10 +1,63 @@
 <title>{{ config('app.name','OnSpot Facility') }}</title>
 <link rel="icon" href="{{ asset('images/favicon-32x32.png') }}" type="image/png">
 
-
 @extends('layouts.admin')
 
 @section('content')
+
+<style>
+    /* Custom Select Dropdown */
+    .custom-select {
+        border-radius: 12px;
+        border: 1px solid #ced4da;
+        padding: 0.5rem 1rem;
+        background-color: #f9f9f9;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .custom-select:focus {
+        outline: none;
+        border-color: #4C7F9D;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Custom Update Button */
+    .custom-update-button {
+        display: flex;
+        align-items: center;
+        padding: 0.3rem 1.2rem;
+        background-color: #4C7F9D;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .custom-update-button:hover {
+        background-color: #3a6781;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .custom-update-button i {
+        margin-right: 4px;
+    }
+
+    .profile-img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid #ddd;
+    }
+
+    .no-underline {
+        text-decoration: none;
+    }
+</style>
+
 <div class="container my-5" style="max-width: 1200px;">
     <div class="text-center mb-4">
         <h1 style="font-weight: 600; font-size: 2.5rem; color: #333;">Manage Complaints</h1>
@@ -18,24 +71,6 @@
         </div>
     @endif
 
-    <div class="sort-bar mb-4 d-flex justify-content-center align-items-center">
-        <form method="GET" action="{{ route('admin.complaints') }}" class="d-flex" 
-              style="width: 100%; max-width: 600px; gap: 1rem;">
-              <select name="status" id="status" class="form-control" 
-                    style="border-radius: 8px; border: 1px solid #ced4da; padding: 10px;">
-                <option value="">All Statuses</option>
-                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                <option value="ongoing" {{ request('status') == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
-                <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
-            </select>
-
-            <button class="btn btn-primary" type="submit" 
-                    style="border-radius: 8px; padding: 10px 20px; background-color: #4C7F9D; border: none;">
-                Sort
-            </button>
-        </form>
-    </div>
-
     <div class="table-responsive">
         @if($complaints->isEmpty())
             <div class="alert alert-info text-center">No complaints found.</div>
@@ -44,12 +79,10 @@
             <thead>
                 <tr>
                     <th>#ID</th>
-                    <th>Date & Time</th>
-                    <th>Location</th>
                     <th>Status</th>
-                    <th>Officer</th>
-                    <th>Supervisor</th>
-                    <th>Assigned Date</th>
+                    <th>Location</th>
+                    <th>Complaint by</th>
+                    <th>Assigned by</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -58,29 +91,30 @@
                 <tr>
                     <td>{{ $complaint->id }}</td>
                     <td>
-                        {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }} 
-                        {{ \Carbon\Carbon::parse($complaint->comp_time)->format('h:i A') }}
+                        <div class="d-flex align-items-center justify-content-center">
+                            <form method="POST" action="{{ route('admin.complaints.updateStatus', $complaint->id) }}" class="d-flex align-items-center">
+                                @csrf
+                                @method('PUT')
+                                <select name="status" class="form-select custom-select me-2">
+                                    <option value="pending" {{ $complaint->comp_status == 'pending' ? 'selected' : '' }}>Pending</option>
+                                    <option value="ongoing" {{ $complaint->comp_status == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
+                                    <option value="completed" {{ $complaint->comp_status == 'completed' ? 'selected' : '' }}>Completed</option>
+                                </select>
+                                <button type="submit" class="btn custom-update-button">
+                                    <i class="bi bi-check-circle"></i> Update
+                                </button>
+                            </form>
+                        </div>
                     </td>
+
                     <td>{{ $complaint->comp_location }}</td>
-                    <td>
-                        @php $status = strtolower(trim($complaint->comp_status)); @endphp
-                        @if($status === 'pending')
-                            <span class="badge" style="background-color: #FFD966; color: #333; padding: 0.5rem 1rem; border-radius: 12px;">Pending</span>
-                        @elseif($status === 'ongoing')
-                            <span class="badge" style="background-color: #A7D2CB; color: #333; padding: 0.5rem 1rem; border-radius: 12px;">Ongoing</span>
-                        @elseif($status === 'completed')
-                            <span class="badge" style="background-color: #B4D3A8; color: #333; padding: 0.5rem 1rem; border-radius: 12px;">Completed</span>
-                        @else
-                            <span class="badge" style="background-color: #FF6F61; color: #fff; padding: 0.5rem 1rem; border-radius: 12px;">Unknown</span>
-                        @endif
-                    </td>
 
                     <td>
                         @if($complaint->officer)
                             <div class="d-flex align-items-center">
                                 @if($complaint->officer->profile_pic)
                                     <img src="{{ asset('storage/' . $complaint->officer->profile_pic) }}" 
-                                        alt="Profile Picture" class="profile-img me-2">
+                                         alt="Profile Picture" class="profile-img me-2">
                                 @else
                                     <span>No Image</span>
                                 @endif
@@ -92,20 +126,16 @@
                     </td>
 
                     <td>{{ $complaint->supervisor->name ?? 'N/A' }}</td>
-                    <td>{{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y h:i A') }}</td>
                     <td>
                         <div class="btn-group" role="group" style="gap: 0.75rem;">
-                            <a href="{{ route('admin.complaints.edit', $complaint->id) }}" class="btn btn-sm btn-light">
-                                <i class="bi bi-pencil-square"></i> Edit
-                            </a>
-                            <button type="button" class="btn btn-sm btn-dark" data-bs-toggle="modal" 
+                            <button type="button" class="btn btn-link text-black p-0 no-underline" data-bs-toggle="modal" 
                                     data-bs-target="#deleteModal{{ $complaint->id }}">
                                 <i class="bi bi-trash"></i> Delete
                             </button>
                         </div>
 
                         <div class="modal fade" id="deleteModal{{ $complaint->id }}" tabindex="-1" 
-                             aria-labelledby="deleteModalLabel{{ $complaint->id }}" aria-hidden="true">
+                            aria-labelledby="deleteModalLabel{{ $complaint->id }}" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content">
                                     <div class="modal-header">
@@ -127,6 +157,8 @@
                             </div>
                         </div> <!-- End of modal -->
                     </td>
+
+                    </td>
                 </tr>
             @endforeach
             </tbody>
@@ -139,13 +171,4 @@
     </div>
 </div>
 
-<style>
-    .profile-img {
-        width: 40px;
-        height: 40px;
-        object-fit: cover;
-        border-radius: 50%;
-        border: 2px solid #ddd;
-    }
-</style>
 @endsection

@@ -1,10 +1,18 @@
 <x-app-layout>
-    <title>{{ config('app.name', 'OnSpot Facility') }}</title>
-    <link rel="icon" href="{{ asset('images/favicon-32x32.png') }}" type="image/png">
+    <title>{{ config('app.name','OnSpot Facility') }}</title>
+    <link rel="icon" href="{{ asset('images/favicon-32x32.png') }}" type="image/png">>
 
     <head>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
         <style>
+            :root {
+                --primary-color: #2E5675;
+                --secondary-color: #4caf50;
+                --available-color: #2196f3;
+                --unavailable-color: #f44336;
+            }
+
             /* General Container Styles */
             .container {
                 max-width: 1200px;
@@ -26,7 +34,7 @@
             .heading {
                 font-size: 2rem;
                 font-weight: bold;
-                color: #2E5675;
+                color: var(--primary-color);
             }
 
             /* Filter Form Styles */
@@ -47,7 +55,7 @@
             }
 
             .view-details-btn {
-                background-color: #2E5675;
+                background-color: var(--primary-color);
                 color: white;
                 padding: 0.5rem 1rem;
                 border-radius: 0.5rem;
@@ -96,17 +104,16 @@
                 color: #555;
             }
 
-            /* Specific Colors for Each Number */
             .overview-total .overview-number {
-                color: #4caf50;
+                color: var(--secondary-color);
             }
 
             .overview-available .overview-number {
-                color: #2196f3;
+                color: var(--available-color);
             }
 
             .overview-unavailable .overview-number {
-                color: #f44336;
+                color: var(--unavailable-color);
             }
 
             /* Cleaner Card Styling */
@@ -136,7 +143,7 @@
                 border-radius: 50%;
                 object-fit: cover;
                 margin-bottom: 15px;
-                border: 4px solid #3b82f6;
+                border: 4px solid var(--available-color);
                 box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
             }
 
@@ -158,12 +165,12 @@
 
             .status-available {
                 background-color: #e3fcec;
-                color: #27ae60;
+                color: var(--secondary-color);
             }
 
             .status-unavailable {
                 background-color: #fdecea;
-                color: #e74c3c;
+                color: var(--unavailable-color);
             }
 
             .grid {
@@ -205,7 +212,7 @@
                 border-radius: 50%;
                 object-fit: cover;
                 margin-bottom: 15px;
-                border: 4px solid #3b82f6;
+                border: 4px solid var(--available-color);
                 box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
             }
 
@@ -234,8 +241,53 @@
 
             .detail-icon {
                 font-size: 1.25rem;
-                color: #2e5675;
+                color: var(--primary-color);
             }
+
+            .status-available {
+                background-color: #d4f8e8; /* Soft green background */
+                color: #28a745; /* Darker green text */
+            }
+
+            .status-unavailable {
+                background-color: #fde2e2; /* Soft red background */
+                color: #e3342f; /* Darker red text */
+            }
+
+            /* Status Indicator Styles */
+            .status-indicator {
+                display: flex;
+                align-items: center;
+                font-size: 0.9rem;
+                font-weight: 500;
+            }
+
+            .status-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                margin-right: 8px;
+            }
+
+            .status-available .status-dot {
+                background-color: #98e2b7; /* Pastel green for available */
+                border-radius: 30%;
+            }
+
+            .status-unavailable .status-dot {
+                background-color: #f8b2b2; /* Pastel red for unavailable */
+                border-radius: 30%;
+            }
+
+            .status-available .status-text {
+                color: #28a745; /* Darker green text for available */
+            }
+
+            .status-unavailable .status-text {
+                color: #e3342f; /* Darker red text for unavailable */
+            }
+
+
 
             .assign-button, .close-button {
                 padding: 10px 20px;
@@ -248,7 +300,7 @@
             }
 
             .assign-button {
-                background-color: #4caf50;
+                background-color: var(--secondary-color);
                 color: white;
                 transition: background-color 0.3s;
             }
@@ -258,7 +310,7 @@
             }
 
             .close-button {
-                background-color: #f44336;
+                background-color: var(--unavailable-color);
                 color: white;
                 transition: background-color 0.3s;
             }
@@ -266,27 +318,44 @@
             .close-button:hover {
                 background-color: #d32f2f;
             }
+
+            /* Assign Task Modal Styling */
+            .assign-task-list {
+                max-height: 300px;
+                overflow-y: auto;
+                width: 100%;
+                text-align: left;
+                margin-bottom: 20px;
+            }
+
+            .complaint-item {
+                padding: 10px;
+                border-bottom: 1px solid #ddd;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .no-complaints-message {
+                font-size: 1rem;
+                color: #555;
+                text-align: center;
+                padding: 20px;
+            }
         </style>
     </head>
 
     <div class="container">
-        <!-- Header with Filters on the Right -->
         <div class="header-container">
             <h1 class="heading">Cleaners</h1>
-            <!-- Filter Form -->
             <form id="filter-form" class="filter-container">
-                <div class="search-bar">
-                    <input 
-                        type="search" 
-                        class="search-input" 
-                        placeholder="Search for cleaners..." 
-                        aria-label="Search" 
-                        id="search-input" 
-                    />
-                    <span class="search-icon-container">
-                        <i class="fas fa-search"></i>
-                    </span>
-                </div>
+                <input 
+                    type="search" 
+                    class="search-input" 
+                    placeholder="Search for cleaners..." 
+                    aria-label="Search" 
+                    id="search-input" 
+                />
                 <select id="sort-status" class="sort-select">
                     <option value="all">All Status</option>
                     <option value="available">Available</option>
@@ -295,7 +364,6 @@
             </form>
         </div>
 
-        <!-- Cleaner Overview -->
         <div class="cleaner-overview">
             <div class="overview-box overview-total">
                 <div class="overview-number">{{ $totalCleaners }}</div>
@@ -311,7 +379,6 @@
             </div>
         </div>
 
-        <!-- Cleaner Cards -->
         <div class="grid" id="cleaner-grid">
             @foreach($cleaners as $cleaner)
             <div class="cleaner-card" data-id="{{ $cleaner->id }}" data-name="{{ strtolower($cleaner->cleaner_name) }}" data-status="{{ strtolower($cleaner->status) }}" data-phone="{{ $cleaner->cleaner_phoneNo }}" data-building="{{ $cleaner->building }}">
@@ -328,103 +395,163 @@
             @endforeach
         </div>
 
-        <!-- Cleaner Details Modal -->
+        <!-- Cleaner Detail Modal -->
         <div class="modal" id="cleanerModal">
             <div class="modal-content">
-                <span class="modal-close" onclick="closeCleanerModal()">&times;</span>
+                <span class="modal-close" onclick="closeModal()" role="button" aria-label="Close">&times;</span>
                 <img src="" alt="Cleaner Profile Picture" class="profile-pic-large" id="modalProfilePic">
-                <h2 id="modalCleanerName"></h2>
-                <p><strong>Contact:</strong> <a href="#" id="modalCleanerPhone"></a></p>
-                <p><strong>Building:</strong> <span id="modalCleanerBuilding"></span></p>
-                <p><strong>Status:</strong> <span id="modalCleanerStatus"></span></p>
-                <button class="assign-button" onclick="openAssignTaskModal()">Assign Task</button>
-                <button class="close-button" onclick="closeCleanerModal()">Close</button>
+                <h2 class="modal-cleaner-name" id="modalCleanerName"></h2>
+                <div class="modal-cleaner-details">
+                    <div class="detail-item">
+                        <i class="fas fa-phone-alt detail-icon"></i>
+                        <span>Contact Number:</span> <a href="#" id="modalCleanerPhoneLink"></a>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-building detail-icon"></i>
+                        <span>Building:</span> <span id="modalCleanerBuilding"></span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-circle detail-icon" style="color: green;"></i>
+                        <span>Status:</span> <span id="modalCleanerStatus"></span>
+                    </div>
+                </div>
+                <button class="assign-button" onclick="assignTask()">Assign Task</button>
+                <button class="close-button" onclick="closeModal()">Close</button>
             </div>
         </div>
 
         <!-- Assign Task Modal -->
         <div class="modal" id="assignTaskModal">
             <div class="modal-content">
-                <span class="modal-close" onclick="closeAssignTaskModal()">&times;</span>
-                <h2>Pending Complaints</h2>
-                <div id="complaintList"></div>
+                <h3>Assign Task to Cleaner</h3>
+                <div class="assign-task-list" id="assignTaskList">
+                    <!-- Pending complaints will be loaded here -->
+                </div>
                 <button class="close-button" onclick="closeAssignTaskModal()">Close</button>
             </div>
         </div>
     </div>
 
     <script>
-        let selectedCleanerId = null;
-        let selectedComplaintId = null;
+        const cleanerGrid = document.getElementById('cleaner-grid');
+        const modal = document.getElementById('cleanerModal');
+        const assignTaskModal = document.getElementById('assignTaskModal');
+        const assignTaskList = document.getElementById('assignTaskList');
+        let selectedCleanerId;
 
-        // Open Cleaner Modal
-        function openCleanerModal(cleaner) {
-            selectedCleanerId = cleaner.id;
-            document.getElementById('modalProfilePic').src = cleaner.profile_pic ? `data:image/jpeg;base64,${cleaner.profile_pic}` : '{{ asset("images/default-placeholder.png") }}';
-            document.getElementById('modalCleanerName').textContent = cleaner.cleaner_name;
-            document.getElementById('modalCleanerPhone').textContent = cleaner.cleaner_phoneNo;
-            document.getElementById('modalCleanerPhone').href = `tel:${cleaner.cleaner_phoneNo}`;
-            document.getElementById('modalCleanerBuilding').textContent = cleaner.building;
-            document.getElementById('modalCleanerStatus').textContent = cleaner.status.charAt(0).toUpperCase() + cleaner.status.slice(1);
-            document.getElementById('cleanerModal').style.display = 'flex';
+        cleanerGrid.addEventListener('click', (event) => {
+            const card = event.target.closest('.cleaner-card');
+            if (card) openModal(card);
+        });
+
+        function openModal(card) {
+            const cleanerName = card.querySelector('.cleaner-name').textContent;
+            const cleanerPhone = card.getAttribute('data-phone');
+            const cleanerBuilding = card.getAttribute('data-building');
+            const cleanerStatus = card.querySelector('.cleaner-status').textContent.toLowerCase(); // Get status in lowercase
+            const imgSrc = card.querySelector('.profile-pic').src;
+
+            document.getElementById('modalCleanerName').textContent = cleanerName;
+            document.getElementById('modalCleanerPhoneLink').textContent = cleanerPhone;
+            document.getElementById('modalCleanerPhoneLink').href = `tel:${cleanerPhone}`;
+            document.getElementById('modalCleanerBuilding').textContent = cleanerBuilding;
+
+            // Update status indicator text and apply the correct class based on availability
+            const statusElement = document.getElementById('modalCleanerStatus');
+            statusElement.textContent = cleanerStatus.charAt(0).toUpperCase() + cleanerStatus.slice(1); // Capitalize status text
+
+            if (cleanerStatus === 'available') {
+                statusElement.classList.add('status-available');
+                statusElement.classList.remove('status-unavailable');
+            } else {
+                statusElement.classList.add('status-unavailable');
+                statusElement.classList.remove('status-available');
+            }
+
+            document.getElementById('modalProfilePic').src = imgSrc;
+
+            modal.style.display = 'flex';
         }
 
-        function closeCleanerModal() {
-            document.getElementById('cleanerModal').style.display = 'none';
+        function closeModal() {
+            modal.style.display = 'none';
         }
 
-        // Fetch and Open Assign Task Modal
-        function openAssignTaskModal() {
-            fetch('/pending-complaints')
+        function assignTask() {
+            selectedCleanerId = document.getElementById('modalCleanerName').textContent;
+            loadPendingComplaints();
+            assignTaskModal.style.display = 'flex';
+        }
+
+        function loadPendingComplaints() {
+            fetch('/api/complaints/pending')
                 .then(response => response.json())
                 .then(data => {
-                    const complaintList = document.getElementById('complaintList');
-                    complaintList.innerHTML = '';
-
+                    console.log("Pending complaints:", data); // Debugging line
+                    assignTaskList.innerHTML = '';
                     if (data.length === 0) {
-                        complaintList.innerHTML = '<p>No pending complaints found.</p>';
-                        return;
+                        assignTaskList.innerHTML = `<p class="no-complaints-message">No pending complaints available at the moment. All tasks are currently assigned. Please check back later!</p>`;
+                    } else {
+                        data.forEach(complaint => {
+                            const complaintItem = document.createElement('div');
+                            complaintItem.classList.add('complaint-item');
+                            complaintItem.innerHTML = `
+                                <span>${complaint.comp_desc} - ${complaint.comp_location}</span>
+                                <button class="assign-button" onclick="assignCleanerToComplaint(${complaint.id})">Assign</button>
+                            `;
+                            assignTaskList.appendChild(complaintItem);
+                        });
                     }
-
-                    data.forEach(complaint => {
-                        const complaintItem = document.createElement('div');
-                        complaintItem.classList.add('complaint-item');
-                        complaintItem.innerHTML = `
-                            <p><strong>ID:</strong> ${complaint.id}</p>
-                            <p><strong>Description:</strong> ${complaint.comp_desc}</p>
-                            <button onclick="assignComplaintToCleaner(${complaint.id})">Assign to Cleaner</button>
-                        `;
-                        complaintList.appendChild(complaintItem);
-                    });
-
-                    document.getElementById('assignTaskModal').style.display = 'flex';
+                })
+                .catch(error => {
+                    console.error("Error fetching complaints:", error); // Debugging line
+                    assignTaskList.innerHTML = `<p class="no-complaints-message">There was an error fetching the complaints. Please try again later.</p>`;
                 });
         }
 
-        function assignComplaintToCleaner(complaintId) {
-            selectedComplaintId = complaintId;
 
-            fetch('/assign-cleaner', {
+        function assignCleanerToComplaint(complaintId) {
+            fetch(`/complaints/assign/${complaintId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
-                    complaint_id: selectedComplaintId,
                     cleaner_id: selectedCleanerId
                 })
             })
             .then(response => response.json())
             .then(data => {
-                alert(data.message);
-                closeAssignTaskModal();
-            })
-            .catch(error => console.error('Error:', error));
+                alert(data.message || 'Cleaner assigned successfully.');
+                loadPendingComplaints();
+            });
         }
 
         function closeAssignTaskModal() {
-            document.getElementById('assignTaskModal').style.display = 'none';
+            assignTaskModal.style.display = 'none';
         }
+
+        function filterCleaners() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedStatus = statusFilter.value;
+            document.querySelectorAll('.cleaner-card').forEach(card => {
+                const name = card.getAttribute('data-name');
+                const status = card.getAttribute('data-status');
+                const matchesSearch = name.includes(searchTerm);
+                const matchesStatus = selectedStatus === 'all' || status === selectedStatus;
+                card.style.display = matchesSearch && matchesStatus ? 'flex' : 'none';
+            });
+        }
+
+        const searchInput = document.getElementById('search-input');
+        const statusFilter = document.getElementById('sort-status');
+        searchInput.addEventListener('input', filterCleaners);
+        statusFilter.addEventListener('change', filterCleaners);
+
+
     </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 </x-app-layout>

@@ -87,6 +87,16 @@ class AdminController extends Controller
         return redirect()->route('admin.complaints')->with('success', 'Complaint updated successfully!');
     }
 
+    public function updateStatus(Request $request, $id)
+    {
+        $complaint = Complaint::findOrFail($id);
+        $complaint->comp_status = $request->status;
+        $complaint->save();
+
+        return redirect()->route('admin.complaints')->with('success', 'Complaint status updated successfully.');
+    }
+
+
     public function destroyComplaint($id)
     {
         $complaint = Complaint::findOrFail($id);
