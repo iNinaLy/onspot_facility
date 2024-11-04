@@ -1,3 +1,6 @@
+<title>{{ config('app.name','Cleaners') }}</title>
+<link rel="icon" href="{{ asset('images/favicon-32x32.png') }}" type="image/png">
+
 @extends('layouts.admin')
 
 @section('content')
@@ -94,17 +97,24 @@
                         <td class="px-6 py-4 text-gray-800">{{ $cleaner->cleaner_phoneNo }}</td>
                         <td class="px-6 py-4 text-gray-800">{{ $cleaner->cleaner_username }}</td>
                         <td class="px-6 py-4">
-                            <span class="px-3 py-1 rounded-full text-sm font-medium 
-                                @if($cleaner->status == 'available')
-                                    bg-green-200 text-green-800
-                                @elseif($cleaner->status == 'unavailable')
-                                    bg-red-200 text-red-800
-                                @else
-                                    bg-gray-200 text-gray-800
-                                @endif
-                            ">
-                                {{ ucfirst($cleaner->status) }}
-                            </span>
+                            <div class="flex items-center space-x-2">
+                                <span class="px-3 py-1 rounded-full text-sm font-medium 
+                                    @if($cleaner->status == 'available')
+                                        bg-green-200 text-green-800
+                                    @elseif($cleaner->status == 'unavailable')
+                                        bg-red-200 text-red-800
+                                    @else
+                                        bg-gray-200 text-gray-800
+                                    @endif
+                                ">
+                                    {{ ucfirst($cleaner->status) }}
+                                </span>
+
+                                <!-- Edit Status Button -->
+                                <button type="button" class="text-custom-blue hover:text-custom-blue-dark" data-bs-toggle="modal" data-bs-target="#editStatusModal{{ $cleaner->id }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
                         </td>
                         <td class="px-6 py-4 text-gray-800">{{ $cleaner->building ?? 'Not Assigned' }}</td>
                         <td class="px-6 py-4">
@@ -121,31 +131,61 @@
                                     <i class="bi bi-trash mr-1"></i> Delete
                                 </button>
                             </div>
+                        </td>
+                    </tr>
 
-                            <!-- Delete Confirmation Modal -->
-                            <div class="modal fade" id="deleteModal{{ $cleaner->id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ $cleaner->id }}" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="deleteModalLabel{{ $cleaner->id }}">Confirm Deletion</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            Are you sure you want to delete <strong>{{ $cleaner->cleaner_name }}</strong>?
+                    <!-- Edit Status Modal -->
+                    <div class="modal fade" id="editStatusModal{{ $cleaner->id }}" tabindex="-1" aria-labelledby="editStatusModalLabel{{ $cleaner->id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="editStatusModalLabel{{ $cleaner->id }}">Edit Status</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form action="{{ route('admin.cleaners.updateStatus', $cleaner->id) }}" method="POST">
+                                        @csrf
+                                        @method('PATCH')
+                                        <div class="mb-4">
+                                            <label class="block text-gray-700 font-medium mb-2">Status</label>
+                                            <select name="status" class="w-full border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-custom-blue shadow-sm">
+                                                <option value="available" {{ $cleaner->status == 'available' ? 'selected' : '' }}>Available</option>
+                                                <option value="unavailable" {{ $cleaner->status == 'unavailable' ? 'selected' : '' }}>Unavailable</option>
+                                            </select>
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                            <form action="{{ route('admin.cleaners.destroy', $cleaner->id) }}" method="POST">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-danger">Delete</button>
-                                            </form>
+                                            <button type="submit" class="btn btn-primary">Save changes</button>
                                         </div>
-                                    </div>
+                                    </form>
                                 </div>
-                            </div> <!-- End of modal -->
-                        </td>
-                    </tr>
+                            </div>
+                        </div>
+                    </div> <!-- End of Edit Status Modal -->
+
+                    <!-- Delete Confirmation Modal -->
+                    <div class="modal fade" id="deleteModal{{ $cleaner->id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ $cleaner->id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="deleteModalLabel{{ $cleaner->id }}">Confirm Deletion</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    Are you sure you want to delete <strong>{{ $cleaner->cleaner_name }}</strong>?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <form action="{{ route('admin.cleaners.destroy', $cleaner->id) }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- End of Delete Modal -->
+
                 @endforeach
             </tbody>
         </table>
@@ -166,7 +206,6 @@
         --custom-red: #e63946;
     }
 
-    /* Enhanced search input */
     .search-input {
         width: 100%;
         padding-right: 40px;
@@ -181,25 +220,6 @@
         background: white;
     }
 
-    .search-icon-container {
-        position: absolute;
-        right: 0;
-        padding-right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        cursor: pointer;
-    }
-
-    /* Profile picture adjustments */
-    .w-10 {
-        width: 2.5rem;
-        height: 2.5rem;
-        object-fit: cover;
-        border-radius: 50%;
-        border: 2px solid #ddd;
-    }
-
-    /* Custom modal animation */
     .animate-fade-in {
         animation: fadeIn 0.3s ease;
     }
@@ -209,13 +229,11 @@
         to { opacity: 1; }
     }
 
-    /* Hover effect for table rows */
     tbody tr:hover {
         background-color: #e9effa;
         transition: background-color 0.2s ease;
     }
 
-    /* Button color customization */
     .bg-custom-blue {
         background-color: var(--custom-blue);
     }
@@ -231,25 +249,10 @@
     .hover\:text-custom-blue-dark:hover {
         color: var(--custom-blue-dark);
     }
-
-    /* Responsive Adjustments */
-    @media (max-width: 768px) {
-        h1 {
-            font-size: 1.5rem;
-        }
-        .table-auto {
-            font-size: 0.9rem;
-        }
-        .w-10 {
-            width: 2rem;
-            height: 2rem;
-        }
-    }
 </style>
 
 <!-- Script Enhancements -->
 <script>
-    // JavaScript to handle filter modal display with smooth transitions
     document.getElementById('filter-button').addEventListener('click', function() {
         document.getElementById('filter-modal').classList.remove('hidden');
     });
@@ -262,7 +265,6 @@
         document.getElementById('filter-modal').classList.add('hidden');
     });
 
-    // When input is cleared, display back all results
     const searchInput = document.getElementById('search-input');
     searchInput.addEventListener('input', function () {
         if (searchInput.value === '') {

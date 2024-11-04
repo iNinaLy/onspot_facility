@@ -1,17 +1,27 @@
+<title>{{ config('app.name', 'OnSpot Facility') }}</title>
+<link rel="icon" href="{{ asset('images/favicon-32x32.png') }}" type="image/png">
+
 @extends('layouts.admin')
 
 @section('content')
-<!-- Include Google Fonts in the layout -->
+
+
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
     body {
         font-family: 'Roboto', sans-serif;
-        background: linear-gradient(252deg, #f5f7fa, #dfe6eb); /* Softer background gradient */
+        background: linear-gradient(252deg, #f5f7fa, #dfe6eb);
         color: #333;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
 
-    /* Smaller Card Style */
+    /* Sidebar styling */
+    #sidebar-container {
+        background-color: #ffffff;
+        transition: background-color 0.3s ease;
+    }
+
+    /* Card Style */
     .card {
         border: none;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -23,35 +33,19 @@
 
     .card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); /* Slight hover effect */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
     }
 
     .key-metric {
-        font-size: 0.85rem; /* Smaller font */
+        font-size: 0.85rem;
         font-weight: 600;
         color: #1f3d5a;
     }
 
     .metric-value {
-        font-size: 1.5rem; /* Smaller font */
+        font-size: 1.5rem;
         font-weight: bold;
         color: #2e5675;
-    }
-
-    /* Dark mode styling */
-    .dark-mode {
-        background-color: #1d1f21;
-        color: #f5f5f5;
-    }
-
-    .dark-mode .card {
-        background-color: #2e2e3e;
-        color: #f5f5f5;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    }
-
-    .dark-mode .key-metric, .dark-mode .metric-value {
-        color: #ffffff;
     }
 
     /* Button styling */
@@ -68,13 +62,13 @@
         background-color: #1f3d5a;
     }
 
-    /* Smaller Chart Container */
+    /* Chart Container */
     .chart-container {
         position: relative;
         width: 100%;
-        max-width: 250px; /* Reduced size for donut chart */
+        max-width: 250px;
         margin: 0 auto;
-        padding: 0; /* Removed extra padding */
+        padding: 0;
     }
 
     /* Table Styling */
@@ -87,14 +81,14 @@
     .recent-complaints-table th {
         background-color: #2e5675;
         color: #fff;
-        padding: 0.5rem; /* Reduced padding */
+        padding: 0.5rem;
         font-weight: 700;
         text-align: left;
         border-bottom: 2px solid #e0e0e0;
     }
 
     .recent-complaints-table td {
-        padding: 0.5rem; /* Reduced padding */
+        padding: 0.5rem;
         border-bottom: 1px solid #e0e0e0;
         color: #333;
     }
@@ -107,7 +101,7 @@
     .see-all-btn {
         background-color: #2e5675;
         color: #fff;
-        padding: 0.3rem 0.8rem; /* Smaller button */
+        padding: 0.3rem 0.8rem;
         border-radius: 20px;
         border: none;
         font-size: 0.85rem;
@@ -118,7 +112,7 @@
         background-color: #1f3d5a;
     }
 
-    /* Additional styles for header */
+    /* Header */
     .header {
         background-color: #fff;
         border-bottom: 1px solid #eee;
@@ -136,21 +130,7 @@
         color: white;
     }
 
-    
-
-    /* Chart Legend */
-    .chart-legend div {
-        display: inline-block;
-        margin-right: 10px;
-        font-size: 0.8rem; /* Smaller font */
-        color: #333;
-    }
-
-    .dark-mode .chart-legend div {
-        color: #f5f5f5;
-    }
-
-    /* Responsive adjustments */
+    /* Responsive Adjustments */
     @media (max-width: 768px) {
         .row {
             flex-direction: column;
@@ -160,11 +140,8 @@
 
 <div class="main-content-wrapper fade-in">
     <!-- Header Section -->
-    <div class="header d-flex justify-content-between align-items-center mb-4 fixed-top">
+    <div class="header d-flex justify-content-between align-items-center mb-4">
         <h1 class="h4 text-dark">Dashboard</h1>
-        <div class="profile d-flex align-items-center">
-            <button id="darkModeToggle" class="btn btn-sm">Dark Mode</button>
-        </div>
     </div>
 
     <div class="row mt-4">
@@ -220,8 +197,7 @@
     <div class="recent-complaints-section mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="font-weight-bold text-dark">Recent Complaints</h5>
-            <!-- See All Button -->
-            <a href="{{ route('admin.complaints.index') }}" class="see-all-btn">See All</a>
+            <a href="{{ route('admin.complaints') }}" class="see-all-btn">See All</a>
         </div>
         <table class="recent-complaints-table">
             <thead>
@@ -252,12 +228,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Dark Mode Toggle
-    document.getElementById('darkModeToggle').addEventListener('click', function() {
-        document.body.classList.toggle('dark-mode');
-        document.querySelectorAll('.card').forEach(card => card.classList.toggle('dark-mode'));
-    });
-
     // Prepare data for Complaint Status Chart
     const complaintStatusLabels = @json(array_keys($complaintsByStatus->toArray()));
     const complaintStatusData = @json(array_values($complaintsByStatus->toArray()));
@@ -278,7 +248,7 @@
         },
         options: {
             responsive: true,
-            cutout: '75%', /* Increased cutout for a smaller center */
+            cutout: '75%',
             plugins: {
                 legend: {
                     display: false

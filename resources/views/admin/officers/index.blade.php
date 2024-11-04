@@ -1,3 +1,6 @@
+<title>{{ config('app.name','OnSpot Facility') }}</title>
+<link rel="icon" href="{{ asset('images/favicon-32x32.png') }}" type="image/png">
+
 @extends('layouts.admin')
 
 @section('content')

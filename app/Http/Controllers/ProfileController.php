@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class ProfileController extends Controller
 {
@@ -20,14 +21,18 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        // Check user role and load the respective view
-        if ($user->hasRole('admin')) {
+        // Check if the user is an admin and use the admin-specific view
+        if ($user->role === 'admin') {
             return view('admin.profile.edit', ['user' => $user]);
-        } elseif ($user->hasRole('supervisor')) {
+        }
+
+        // Check if the user is a supervisor and use the supervisor-specific view
+        if ($user->role === 'supervisor') {
             return view('supervisor.profile.edit', ['user' => $user]);
         }
 
-        return view('profile.edit', ['user' => $user]);
+        // Default view for other roles (or return a 403 error if not authorized)
+        return abort(403, 'Unauthorized action.');
     }
 
     /**
@@ -40,52 +45,21 @@ class ProfileController extends Controller
     }
 
     /**
-     * Handle profile picture upload.
+     * Handle profile picture storage.
      */
-    public function storeProfilePicture(Request $request): ?string
+    public function storeProfilePicture(Request $request)
     {
         if ($request->hasFile('profile_pic')) {
+            Log::info('Incoming request data:', $request->all());
+
+            // Store the file in the 'public/profile_pics' directory
             $path = $request->file('profile_pic')->store('profile_pics', 'public');
-            return $path; // Return the relative path for database storage
+            Log::info('Stored file path:', [$path]);
+
+            // Return the public URL for database storage
+            return $path;
         }
-        return null; // Return null if no file was uploaded
-    }
-
-    /**
-     * Update the user's profile information.
-     */
-    public function update(ProfileUpdateRequest $request): JsonResponse
-    {
-        $user = $request->user();
-
-        if (!$user) {
-            return response()->json(['message' => 'User not authenticated'], 401);
-        }
-
-        // Handle profile picture upload
-        $profilePicPath = $this->storeProfilePicture($request);
-        if ($profilePicPath) {
-            $user->profile_pic = $profilePicPath; // Save the profile picture path
-        }
-
-        $user->fill($request->validated());
-        $user->save();
-
-        // Return updated user info including profile picture
-        return response()->json([
-            'message' => 'Profile updated successfully',
-            'user' => [
-                'id' => $user->id,
-                'username' => $user->username,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone_no' => $user->phone_no,
-                'profile_pic' => $user->profile_pic ? asset('storage/' . $user->profile_pic) : null,
-                'role' => $user->roles->pluck('name')->first(), // Retrieve role name
-                'created_at' => $user->created_at,
-                'updated_at' => $user->updated_at
-            ]
-        ], 200);
+        return null;
     }
 
     /**
@@ -108,7 +82,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Get profile information as JSON.
+     * API function to get profile details in JSON format.
      */
     public function getProfile(Request $request): JsonResponse
     {
@@ -126,4 +100,41 @@ class ProfileController extends Controller
 
         return response()->json(['message' => 'User not found'], 404);
     }
+
+    /**
+     * Update the user's profile information.
+     */
+    public function update(ProfileUpdateRequest $request): RedirectResponse
+    {
+        Log::info('Profile update request received:', $request->all());
+        $user = $request->user();
+
+        if (!$user) {
+            return redirect()->route('profile.edit')->with('error', 'User not authenticated.');
+        }
+
+        Log::info('Validated data:', $request->validated());
+
+        // Handle profile picture upload
+        if ($request->hasFile('profile_pic')) {
+            // Delete previous profile picture if exists
+            if ($user->profile_pic) {
+                Storage::disk('public')->delete($user->profile_pic);
+            }
+
+            // Store the new profile picture
+            $path = $this->storeProfilePicture($request);
+            $user->profile_pic = $path;
+        }
+
+        // Update user with validated data
+        $user->fill($request->validated());
+        $user->save();
+
+        Log::info('User after save:', [$user->toArray()]);
+
+        // Redirect back with a success message
+        return redirect()->route('profile.edit')->with('success', 'Profile updated successfully!');
+    }
+
 }

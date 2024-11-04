@@ -1,3 +1,7 @@
+<title>{{ config('app.name','OnSpot Facility') }}</title>
+<link rel="icon" href="{{ asset('images/favicon-32x32.png') }}" type="image/png">
+
+
 @extends('layouts.admin')
 
 @section('content')
@@ -15,15 +19,16 @@
     @endif
 
     <div class="sort-bar mb-4 d-flex justify-content-center align-items-center">
-        <form method="GET" action="{{ route('admin.complaints.index') }}" class="d-flex" 
+        <form method="GET" action="{{ route('admin.complaints') }}" class="d-flex" 
               style="width: 100%; max-width: 600px; gap: 1rem;">
-            <select name="status" id="status" class="form-control" 
+              <select name="status" id="status" class="form-control" 
                     style="border-radius: 8px; border: 1px solid #ced4da; padding: 10px;">
                 <option value="">All Statuses</option>
                 <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                <option value="on going" {{ request('status') == 'on going' ? 'selected' : '' }}>On Going</option>
+                <option value="ongoing" {{ request('status') == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
                 <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
             </select>
+
             <button class="btn btn-primary" type="submit" 
                     style="border-radius: 8px; padding: 10px 20px; background-color: #4C7F9D; border: none;">
                 Sort
@@ -60,15 +65,16 @@
                     <td>
                         @php $status = strtolower(trim($complaint->comp_status)); @endphp
                         @if($status === 'pending')
-                            <span style="color: #FFD966;">Pending</span>
+                            <span class="badge" style="background-color: #FFD966; color: #333; padding: 0.5rem 1rem; border-radius: 12px;">Pending</span>
                         @elseif($status === 'ongoing')
-                            <span style="color: #A7D2CB;">Ongoing</span>
+                            <span class="badge" style="background-color: #A7D2CB; color: #333; padding: 0.5rem 1rem; border-radius: 12px;">Ongoing</span>
                         @elseif($status === 'completed')
-                            <span style="color: #B4D3A8;">Completed</span>
+                            <span class="badge" style="background-color: #B4D3A8; color: #333; padding: 0.5rem 1rem; border-radius: 12px;">Completed</span>
                         @else
-                            <span style="color: #FF6F61;">Unknown</span>
+                            <span class="badge" style="background-color: #FF6F61; color: #fff; padding: 0.5rem 1rem; border-radius: 12px;">Unknown</span>
                         @endif
                     </td>
+
                     <td>
                         @if($complaint->officer)
                             <div class="d-flex align-items-center">

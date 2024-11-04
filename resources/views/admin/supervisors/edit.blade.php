@@ -1,3 +1,6 @@
+<title>{{ config('app.name','OnSpot Facility') }}</title>
+<link rel="icon" href="{{ asset('images/favicon-32x32.png') }}" type="image/png">
+
 @extends('layouts.admin')
 
 @section('content')
@@ -5,8 +8,18 @@
     <!-- Page Title -->
     <div class="text-center mb-8">
         <h1 class="text-3xl font-semibold text-gray-900">Edit Supervisor</h1>
-        <p class="text-gray-600">Make changes to the supervisor's details below.</p>
+        <p class="text-gray-600">Update the supervisor's details below.</p>
     </div>
+
+    <!-- Success Message -->
+    @if (session('status'))
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6" role="alert">
+            {{ session('status') }}
+            <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3" data-bs-dismiss="alert" aria-label="Close">
+                <span class="text-green-500">&times;</span>
+            </button>
+        </div>
+    @endif
 
     <!-- Validation Errors -->
     @if ($errors->any())
@@ -23,7 +36,7 @@
     @endif
 
     <!-- Edit Supervisor Form -->
-    <form action="{{ route('admin.supervisors.update', $supervisor->id) }}" method="POST" enctype="multipart/form-data" class="p-6 bg-white rounded-lg shadow">
+    <form action="{{ route('admin.supervisors.update', $supervisor->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 
@@ -61,10 +74,11 @@
             @endif
         </div>
 
-        <!-- New Password Field -->
+        <!-- Reset Password Button -->
         <div class="mb-6">
-            <label for="password" class="block text-gray-700 font-medium mb-2">New Password (optional)</label>
-            <input type="password" name="password" class="form-control border-gray-300 rounded-lg w-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter New Password">
+            <button type="button" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
+                Reset Password
+            </button>
         </div>
 
         <!-- Submit and Cancel Buttons -->
@@ -75,6 +89,100 @@
     </form>
 </div>
 
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetPasswordModalLabel">Reset Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ route('admin.supervisors.resetPassword', $supervisor->id) }}" method="POST">
+                    @csrf
+                    @method('PATCH')
+                    
+                    <!-- New Password Field -->
+                    <div class="form-floating mb-4 position-relative">
+                        <input type="password" name="new_password" class="form-control" id="new_password" placeholder="New Password" required>
+                        <label for="new_password">New Password</label>
+                        <span class="toggle-password" data-target="new_password" style="cursor: pointer; position: absolute; top: 50%; right: 15px; transform: translateY(-50%);">
+                            <i class="bi bi-eye-slash"></i>
+                        </span>
+                        <small id="passwordFeedback" class="form-text text-danger d-none">
+                            Password must be at least 8 characters, include an uppercase letter, a lowercase letter, a digit, and a special character.
+                        </small>
+                    </div>
+
+                    <!-- Confirm New Password Field -->
+                    <div class="form-floating mb-4 position-relative">
+                        <input type="password" name="new_password_confirmation" class="form-control" id="new_password_confirmation" placeholder="Confirm Password" required>
+                        <label for="new_password_confirmation">Confirm Password</label>
+                        <span class="toggle-password" data-target="new_password_confirmation" style="cursor: pointer; position: absolute; top: 50%; right: 15px; transform: translateY(-50%);">
+                            <i class="bi bi-eye-slash"></i>
+                        </span>
+                        <small id="passwordMatchError" class="text-danger d-none">Passwords do not match.</small>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Save changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (session('status'))
+    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6" role="alert">
+        {{ session('status') }}
+        <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3" data-bs-dismiss="alert" aria-label="Close">
+            <span class="text-green-500">&times;</span>
+        </button>
+    </div>
+@endif
+
+
+<!-- Password Validation Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const passwordInput = document.getElementById('new_password');
+        const confirmPasswordInput = document.getElementById('new_password_confirmation');
+        const passwordFeedback = document.getElementById('passwordFeedback');
+        const passwordMatchError = document.getElementById('passwordMatchError');
+
+        const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+
+        function validatePassword() {
+            const isPasswordValid = passwordPattern.test(passwordInput.value);
+            const doPasswordsMatch = passwordInput.value === confirmPasswordInput.value;
+
+            passwordFeedback.classList.toggle('d-none', isPasswordValid);
+            passwordMatchError.classList.toggle('d-none', doPasswordsMatch || confirmPasswordInput.value === "");
+        }
+
+        document.querySelectorAll('.toggle-password').forEach(item => {
+            item.addEventListener('click', function () {
+                const targetId = this.getAttribute('data-target');
+                const targetInput = document.getElementById(targetId);
+                const icon = this.querySelector('i');
+
+                if (targetInput.getAttribute('type') === 'password') {
+                    targetInput.setAttribute('type', 'text');
+                    icon.classList.replace('bi-eye-slash', 'bi-eye');
+                } else {
+                    targetInput.setAttribute('type', 'password');
+                    icon.classList.replace('bi-eye', 'bi-eye-slash');
+                }
+            });
+        });
+
+        passwordInput.addEventListener('input', validatePassword);
+        confirmPasswordInput.addEventListener('input', validatePassword);
+    });
+</script>
+
 <!-- Styling -->
 <style>
     .form-control {
@@ -82,12 +190,21 @@
         border: 1px solid #d1d5db;
         border-radius: 0.375rem;
         padding: 0.75rem;
+        padding-right: 2.5rem; /* Extra padding for the eye icon */
         width: 100%;
     }
 
     .form-control:focus {
         border-color: #3b82f6;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+
+    .toggle-password {
+        position: absolute;
+        top: 50%;
+        right: 15px;
+        transform: translateY(-50%);
+        cursor: pointer;
     }
 
     .btn {

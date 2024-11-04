@@ -6,6 +6,7 @@ use App\Models\Cleaner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class CleanerController extends Controller
 {
@@ -13,14 +14,12 @@ class CleanerController extends Controller
     public function index()
     {
         Log::info('Cleaners index accessed');
-        
-        $cleaners = Cleaner::all();
-        
-        // Count based on status
-        $availableCount = $cleaners->where('status', 'available')->count();
-        $unavailableCount = $cleaners->where('status', 'unavailable')->count();
+
+        $cleaners = Cleaner::all(); // Retrieve all cleaners
+        $availableCount = Cleaner::where('status', 'available')->count();
+        $unavailableCount = Cleaner::where('status', 'unavailable')->count();
         $totalCleaners = $cleaners->count();
-        
+
         return view('supervisor.cleaners.index', compact('cleaners', 'totalCleaners', 'availableCount', 'unavailableCount'));
     }
 
@@ -34,27 +33,11 @@ class CleanerController extends Controller
             })
             ->paginate(10);
         
-        // Count for available and unavailable cleaners
         $totalCleaners = Cleaner::count();
         $availableCount = Cleaner::where('status', 'available')->count();
         $unavailableCount = Cleaner::where('status', 'unavailable')->count();
 
         return view('supervisor.cleaners.index', compact('totalCleaners', 'availableCount', 'unavailableCount', 'cleaners'));
-    }
-
-    // Search cleaners via AJAX for autocomplete or dynamic search
-    public function searchCleaners(Request $request)
-    {
-        $query = $request->query('q');
-        
-        $cleaners = Cleaner::when($query, function ($queryBuilder, $query) {
-                return $queryBuilder->where('cleaner_name', 'like', '%' . $query . '%')
-                    ->orWhere('cleaner_username', 'like', '%' . $query . '%');
-            })
-            ->limit(10)
-            ->get();
-
-        return response()->json($cleaners);
     }
 
     // Store a new cleaner
@@ -66,17 +49,15 @@ class CleanerController extends Controller
             'status' => 'required|in:available,unavailable',
         ]);
 
-        Cleaner::create($validated);
+        $cleaner = Cleaner::create($validated);
+
+        // Handle profile picture upload using Spatie Media Library
+        if ($request->hasFile('profile_pic')) {
+            $cleaner->addMediaFromRequest('profile_pic')
+                    ->toMediaCollection('profile_pictures', 'public');
+        }
+
         return redirect()->back()->with('success', 'Cleaner added successfully');
-    }
-
-    // Fetch available cleaners (for API or AJAX requests)
-    public function getAvailableCleaners(Request $request)
-    {
-        $limit = $request->get('limit', 10);
-        $cleaners = Cleaner::where('status', 'available')->limit($limit)->get();
-
-        return response()->json(['cleaners' => $cleaners]);
     }
 
     // Show the form to edit cleaner information
@@ -86,54 +67,105 @@ class CleanerController extends Controller
         return view('admin.cleaners.edit', compact('cleaner'));
     }
 
-    // Show cleaner details via API
-    public function show($id)
-    {
-        $cleaner = Cleaner::find($id);
-
-        if (!$cleaner) {
-            return response()->json(['message' => 'Cleaner not found'], 404);
-        }
-
-        return response()->json($cleaner);
-    }
-
     // Update cleaner information
     public function update(Request $request, $id)
     {
+        // Retrieve the cleaner
         $cleaner = Cleaner::findOrFail($id);
 
-        // Validate incoming request
-        $validated = $request->validate([
+        // Initialize validation rules
+        $validationRules = [
             'cleaner_name' => 'sometimes|required|string|max:255',
             'cleaner_phoneNo' => 'sometimes|required|string|max:15',
-            'status' => 'sometimes|required|in:available,unavailable',
-            'username' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:cleaners,cleaner_username,' . $cleaner->id,
             'phone_no' => 'required|string|max:20',
-            'password' => 'nullable|confirmed|min:8'
-        ]);
+            'password' => 'nullable|confirmed|min:8',
+        ];
 
-        // Update cleaner attributes
-        $cleaner->update([
-            'cleaner_username' => $validated['username'] ?? $cleaner->cleaner_username,
-            'cleaner_name' => $validated['cleaner_name'] ?? $cleaner->cleaner_name,
-            'cleaner_phoneNo' => $validated['phone_no'] ?? $cleaner->cleaner_phoneNo,
-            'status' => $validated['status'] ?? $cleaner->status,
-            'cleaner_password' => $request->filled('password') ? bcrypt($validated['password']) : $cleaner->cleaner_password,
-        ]);
-
-        // Handle profile picture upload if present
-        if ($request->hasFile('profile_pic')) {
-            $file = $request->file('profile_pic');
-            $path = $file->store('profile_pics', 'public');
-            $cleaner->profile_pic = $path;
+        // Only allow admins to change the status field
+        if (Auth::user()->role === 'admin') {
+            $validationRules['status'] = 'required|in:available,unavailable';
         }
 
+        // Validate the request based on the defined rules
+        $validated = $request->validate($validationRules);
+
+        // Only update fields that are provided in the request and have changed
+        if ($request->filled('cleaner_name') && $request->cleaner_name !== $cleaner->cleaner_name) {
+            $cleaner->cleaner_name = $validated['cleaner_name'];
+        }
+
+        if ($request->filled('cleaner_phoneNo') && $request->cleaner_phoneNo !== $cleaner->cleaner_phoneNo) {
+            $cleaner->cleaner_phoneNo = $validated['cleaner_phoneNo'];
+        }
+
+        if ($request->filled('username') && $request->username !== $cleaner->cleaner_username) {
+            $cleaner->cleaner_username = $validated['username'];
+        }
+
+        if ($request->filled('phone_no') && $request->phone_no !== $cleaner->cleaner_phoneNo) {
+            $cleaner->cleaner_phoneNo = $validated['phone_no'];
+        }
+
+        if ($request->filled('password')) {
+            $cleaner->cleaner_password = bcrypt($validated['password']);
+        }
+
+        // Update status only if the user is an admin and the status field is provided in the request
+        if (Auth::user()->role === 'admin' && $request->filled('status') && $request->status !== $cleaner->status) {
+            $cleaner->status = $validated['status'];
+        }
+
+        // Handle profile picture upload using Spatie Media Library
+        if ($request->hasFile('profile_pic')) {
+            $cleaner->clearMediaCollection('profile_pictures'); // Remove previous image
+            $cleaner->addMediaFromRequest('profile_pic')
+                    ->toMediaCollection('profile_pictures', 'public');
+        }
+
+        // Save the cleaner changes
         $cleaner->save();
 
         return redirect()->route('admin.cleaners.edit', $cleaner->id)
-                         ->with('success', 'Cleaner details updated successfully');
+                        ->with('success', 'Cleaner details updated successfully');
     }
+
+    public function updateStatus(Request $request, $id)
+    {
+        // Ensure only admins can change status
+        if (Auth::user()->role !== 'admin') {
+            return redirect()->back()->with('error', 'Only admins can change cleaner status.');
+        }
+
+        // Find the cleaner
+        $cleaner = Cleaner::findOrFail($id);
+
+        // Validate the status field
+        $validated = $request->validate([
+            'status' => 'required|in:available,unavailable',
+        ]);
+
+        // Update the status
+        $cleaner->status = $validated['status'];
+        $cleaner->save();
+
+        // Redirect back with success message
+        return redirect()->route('admin.cleaners')->with('success', 'Cleaner status updated successfully.');
+    }
+
+    public function resetPassword(Request $request, $id)
+    {
+        $request->validate([
+            'new_password' => 'required|confirmed|min:8',
+        ]);
+
+        $cleaner = Cleaner::findOrFail($id);
+        $cleaner->password = Hash::make($request->new_password);
+        $cleaner->save();
+
+        return redirect()->route('admin.cleaners.edit', $id)->with('status', 'Password has been reset successfully.');
+    }
+
 
     // Delete a cleaner
     public function destroy($id)

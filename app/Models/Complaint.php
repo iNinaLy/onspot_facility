@@ -35,9 +35,9 @@ class Complaint extends Model implements HasMedia
         'comp_image', // Add comp_image to fillable fields
     ];
 
-    // Define status constants
+   // Define status constants
     const STATUS_PENDING = 'pending';
-    const STATUS_ON_GOING = 'on going';
+    const STATUS_ONGOING = 'ongoing';
     const STATUS_COMPLETED = 'completed';
 
     /**
@@ -49,10 +49,11 @@ class Complaint extends Model implements HasMedia
     {
         return [
             self::STATUS_PENDING,
-            self::STATUS_ON_GOING,
+            self::STATUS_ONGOING,
             self::STATUS_COMPLETED,
         ];
     }
+
 
     /**
      * Register media collections for the complaint images.
@@ -165,6 +166,6 @@ class Complaint extends Model implements HasMedia
         ]);
 
         // Update the complaint status to on-going
-        $this->updateStatus(self::STATUS_ON_GOING);
+        $this->updateStatus(self::STATUS_ONGOING);
     }
 }

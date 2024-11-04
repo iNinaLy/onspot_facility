@@ -25,10 +25,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Officer routes
 Route::middleware('auth:sanctum')->group(function () {
-    //Complaint page
+    // Complaint routes
     Route::post('/complaints', [ComplaintController::class, 'apistore']);
     Route::get('/complaints-history', [ComplaintController::class, 'getOfficerComplaints']);
-    Route::get('/complaints-recent', [ComplaintController::class, 'recentComplaint']);
+    Route::get('/complaints-recent', [ComplaintController::class, 'recentComplaint']); 
+    Route::get('/complaints/{id}/details', [ComplaintController::class, 'getComplaintDetails']);
 });
 
 //attendance

@@ -167,17 +167,17 @@
       <h1 class="heading">Recent Complaints</h1>
 
       <!-- Filter Form -->
-      <form id="filter-form" class="filter-container">
+      <form id="filter-form" class="filter-container" method="GET" action="{{ route('supervisor.complaints.index') }}">
         <label for="status-filter">Status:</label>
-        <select id="status-filter">
+        <select id="status-filter" name="status">
           <option value="">All</option>
-          <option value="pending">Pending</option>
-          <option value="ongoing">Ongoing</option>
-          <option value="completed">Completed</option>
+          <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+          <option value="ongoing" {{ request('status') == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
+          <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
         </select>
 
         <label for="date-filter">Date:</label>
-        <input type="date" id="date-filter" />
+        <input type="date" id="date-filter" name="date" value="{{ request('date') }}" />
 
         <button type="submit" class="view-details-btn">Filter</button>
       </form>
@@ -192,7 +192,7 @@
 
         <div class="complaint-image-container">
             @if ($complaint->comp_image)
-              <img src="data:image/jpeg;base64,{{ base64_encode($complaint->comp_image) }}" alt="Complaint Image" class="complaint-image" />
+              <img src="{{ $complaint->getFirstMediaUrl('complaint_images') }}" alt="Complaint Image" class="complaint-image" />
             @else
               <span>No Image Available</span>
             @endif
@@ -218,30 +218,8 @@
 
     <!-- Pagination Links -->
     <div class="mt-6">
-      {{ $complaints->links() }}
+      {{ $complaints->appends(request()->query())->links() }}
     </div>
   </div>
 
-  <script>
-    // Filter Complaints
-    document.getElementById('filter-form').addEventListener('submit', function (event) {
-      event.preventDefault();
-
-      const statusFilter = document.getElementById('status-filter').value.toLowerCase();
-      const dateFilter = document.getElementById('date-filter').value; // Format: YYYY-MM-DD
-      const complaintCards = document.querySelectorAll('.complaint-card');
-
-      complaintCards.forEach(card => {
-        const status = card.getAttribute('data-status'); // Get status from data attribute
-        const date = card.getAttribute('data-date');     // Get date from data attribute
-
-        // Compare the status and date with the filters
-        const statusMatch = !statusFilter || status === statusFilter;
-        const dateMatch = !dateFilter || date === dateFilter;
-
-        // Show or hide the card based on the match results
-        card.style.display = statusMatch && dateMatch ? 'flex' : 'none';
-      });
-    });
-  </script>
 </x-app-layout>
