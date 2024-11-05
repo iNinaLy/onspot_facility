@@ -28,15 +28,28 @@ use Illuminate\Support\Str;
                 'role' => 'required|string', 
             ]);
         
-            // Create the user
+            // Create the user in the users table
             $user = \App\Models\User::create([
-                'username' => $request->username, // Optional username
+                'username' => $request->username,
                 'name' => $request->name,
                 'email' => $request->email,
-                'password' => bcrypt($request->password), // Hash the password
-                'phone_no' => $request->phone_no, // Optional phone number
-                'role' => $request->role, // Set the role from the request data
+                'password' => bcrypt($request->password),
+                'phone_no' => $request->phone_no,
+                'role' => $request->role,
             ]);
+        
+            // If the role is 'cleaner', create a corresponding record in the cleaners table
+            if ($request->role === 'cleaner') {
+                \App\Models\Cleaner::create([
+                    'cleaner_name' => $user->name,
+                    'cleaner_phoneNo' => $user->phone_no,
+                    'cleaner_username' => $user->username,
+                    'cleaner_password' => $user->password,
+                    'profile_pic' => null, // Optionally set this if needed
+                    'status' => 'available', // Default status, modify if needed
+                    'building' => $request->building ?? null, // Optional if building is provided
+                ]);
+            }
         
             // Generate a token for the newly registered user
             $token = $user->createToken('YourAppName')->plainTextToken;
@@ -45,10 +58,10 @@ use Illuminate\Support\Str;
             return response()->json([
                 'user' => [
                     'id' => $user->id,
-                    'username' => $user->username, // Include username
+                    'username' => $user->username,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'phone_no' => $user->phone_no, // Include phone_no
+                    'phone_no' => $user->phone_no,
                     'role' => $user->role,
                     'created_at' => $user->created_at,
                     'updated_at' => $user->updated_at,
@@ -56,7 +69,6 @@ use Illuminate\Support\Str;
                 'token' => $token,
             ], 201);
         }
-        
     
 
     //login method

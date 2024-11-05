@@ -13,19 +13,18 @@ use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
-    /**
-     * Show the dashboard.
-     *
-     * @return \Illuminate\View\View
-     */
     public function dashboard()
     {
         $totalComplaints = Complaint::count();
         $activeCleaners = Cleaner::where('status', 'available')->count();
-        $totalOfficers = Officer::count();
-        $recentComplaints = Complaint::latest()->take(5)->get();
+        $totalOfficers = User::where('role', 'officer')->count();
+        $totalSupervisors = User::where('role', 'supervisor')->count();
 
-        // Prepare data for charts
+        $recentComplaints = Complaint::select('id', 'comp_date', 'comp_time', 'comp_desc', 'comp_location', 'comp_status')
+            ->latest()
+            ->take(5)
+            ->get();
+
         $monthlyComplaints = Complaint::selectRaw("MONTH(comp_date) as month, COUNT(*) as count")
             ->groupBy('month')
             ->pluck('count', 'month');
@@ -34,24 +33,28 @@ class AdminController extends Controller
             ->groupBy('status')
             ->pluck('count', 'status');
 
-        // Complaint status counts for the donut chart
         $complaintsByStatus = Complaint::selectRaw("comp_status, COUNT(*) as count")
             ->groupBy('comp_status')
             ->pluck('count', 'comp_status');
 
         return view('admin.dashboard', compact(
-            'totalComplaints', 'activeCleaners', 'totalOfficers', 'recentComplaints',
+            'totalComplaints', 'activeCleaners', 'totalOfficers', 'totalSupervisors', 'recentComplaints',
             'monthlyComplaints', 'cleanersByStatus', 'complaintsByStatus'
         ));
     }
 
-
-    // Complaints Methods
-
-    public function complaints()
+    public function complaints(Request $request)
     {
-        $complaints = Complaint::all();
-        return view('admin.complaints.index', compact('complaints'));
+        $status = $request->input('status');
+        $query = Complaint::query();
+
+        if ($status) {
+            $query->where('comp_status', $status);
+        }
+
+        $complaints = $query->orderBy('comp_date', 'desc')->paginate(10);
+
+        return view('admin.complaints.index', compact('complaints', 'status'));
     }
 
     public function createComplaint()
@@ -62,50 +65,75 @@ class AdminController extends Controller
     public function storeComplaint(Request $request)
     {
         $this->validateComplaint($request);
+
         Complaint::create($request->all());
+
         return redirect()->route('admin.complaints')->with('success', 'Complaint created successfully!');
     }
 
-    public function showComplaint(Complaint $complaint)
+    public function editComplaint($id)
     {
-        return view('admin.complaints.show', compact('complaint'));
-    }
-
-    public function editComplaint(Complaint $complaint)
-    {
+        $complaint = Complaint::findOrFail($id);
         return view('admin.complaints.edit', compact('complaint'));
     }
 
-    public function updateComplaint(Request $request, Complaint $complaint)
+    public function updateComplaint(Request $request, $id)
     {
         $this->validateComplaint($request);
+
+        $complaint = Complaint::findOrFail($id);
         $complaint->update($request->all());
+
         return redirect()->route('admin.complaints')->with('success', 'Complaint updated successfully!');
     }
 
-    public function destroyComplaint(Complaint $complaint)
+    public function destroyComplaint($id)
     {
+        $complaint = Complaint::findOrFail($id);
         $complaint->delete();
+
         return redirect()->route('admin.complaints')->with('success', 'Complaint deleted successfully!');
+    }
+
+    public function searchComplaints(Request $request)
+    {
+        $query = $request->input('query');
+
+        $complaints = Complaint::where('comp_desc', 'like', "%{$query}%")
+            ->orWhere('comp_location', 'like', "%{$query}%")
+            ->orWhere('id', 'like', "%{$query}%")
+            ->paginate(10);
+
+        return view('admin.complaints.index', compact('complaints', 'query'));
     }
 
     private function validateComplaint(Request $request)
     {
         $request->validate([
-            'comp_desc' => 'required|string',
-            'comp_status' => 'required|in:' . implode(',', Complaint::getStatuses()),
-            'comp_location' => 'required|string',
+            'comp_desc' => 'required|string|max:255',
+            'comp_status' => 'required|in:pending,on going,completed',
+            'comp_location' => 'required|string|max:255',
             'comp_date' => 'required|date',
-            'comp_time' => 'required',
+            'comp_time' => 'required|date_format:H:i',
         ]);
     }
 
-    // Cleaners Methods
-
-    public function cleaners()
+    public function cleaners(Request $request)
     {
-        $cleaners = Cleaner::all();
-        return view('admin.cleaners.index', compact('cleaners'));
+        $search = $request->query('search');
+        $status = $request->query('status');
+
+        $cleaners = Cleaner::when($search, function ($query, $search) {
+                return $query->where('cleaner_name', 'LIKE', "%{$search}%")
+                             ->orWhere('cleaner_phoneNo', 'LIKE', "%{$search}%")
+                             ->orWhere('cleaner_username', 'LIKE', "%{$search}%");
+            })
+            ->when($status, function ($query, $status) {
+                return $query->where('status', strtolower($status));
+            })
+            ->paginate(10);
+
+        return view('admin.cleaners.index', compact('cleaners', 'search', 'status'));
     }
 
     public function createCleaner()
@@ -116,13 +144,30 @@ class AdminController extends Controller
     public function storeCleaner(Request $request)
     {
         $this->validateCleaner($request);
-        Cleaner::create($request->all());
-        return redirect()->route('admin.cleaners')->with('success', 'Cleaner created successfully!');
-    }
 
-    public function showCleaner(Cleaner $cleaner)
-    {
-        return view('admin.cleaners.show', compact('cleaner'));
+        $profilePicData = null;
+        if ($request->hasFile('profile_pic')) {
+            $profilePicData = file_get_contents($request->file('profile_pic')->getRealPath());
+        }
+
+        $user = User::create([
+            'name' => $request->name,
+            'username' => $request->username,
+            'phone_no' => $request->phone_no,
+            'password' => bcrypt($request->password),
+            'role' => 'cleaner',
+        ]);
+
+        Cleaner::create([
+            'cleaner_username' => $user->username,
+            'cleaner_name' => $user->name,
+            'cleaner_phoneNo' => $user->phone_no,
+            'profile_pic' => $profilePicData,
+            'status' => $request->status,
+            'user_id' => $user->id,
+        ]);
+
+        return redirect()->route('admin.cleaners.index')->with('success', 'Cleaner created successfully!');
     }
 
     public function editCleaner(Cleaner $cleaner)
@@ -133,149 +178,157 @@ class AdminController extends Controller
     public function updateCleaner(Request $request, Cleaner $cleaner)
     {
         $this->validateCleaner($request);
-        $cleaner->update($request->all());
+
+        $cleaner->update([
+            'cleaner_username' => $request->username ?? $cleaner->cleaner_username,
+            'cleaner_name' => $request->name ?? $cleaner->cleaner_name,
+            'cleaner_phoneNo' => $request->phone_no ?? $cleaner->cleaner_phoneNo,
+            'status' => $request->status ?? $cleaner->status,
+        ]);
+
+        if ($request->filled('password')) {
+            $cleaner->update(['cleaner_password' => bcrypt($request->password)]);
+        }
+
+        if ($request->hasFile('profile_pic')) {
+            $cleaner->update(['profile_pic' => file_get_contents($request->file('profile_pic')->getRealPath())]);
+        }
+
         return redirect()->route('admin.cleaners')->with('success', 'Cleaner updated successfully!');
     }
 
-    public function destroyCleaner(Cleaner $cleaner)
-    {
-        $cleaner->delete();
-        return redirect()->route('admin.cleaners')->with('success', 'Cleaner deleted successfully!');
-    }
-
-    private function validateCleaner(Request $request)
+    public function resetCleanerPassword(Request $request, $cleaner)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'status' => 'required|string',
+            'new_password' => 'required|confirmed|min:8',
         ]);
-    }
 
-    // Officers Methods
+        $cleaner = Cleaner::findOrFail($cleaner);
+        $cleaner->password = Hash::make($request->new_password);
+        $cleaner->save();
+
+        return redirect()->route('cleaners.edit', $cleaner)->with('status', 'Password has been reset successfully.');
+    }
 
     public function officers(Request $request)
     {
         $search = $request->query('search');
-        
-        // Filter officers by search query if provided
-        $officers = Officer::when($search, function ($query, $search) {
-            return $query->where('officer_name', 'LIKE', "%{$search}%");
-        })->get();
+
+        $officers = User::where('role', 'officer')
+            ->when($search, function ($query, $search) {
+                return $query->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('phone_no', 'LIKE', "%{$search}%")
+                            ->orWhere('email', 'LIKE', "%{$search}%");
+            })
+            ->paginate(10);
 
         return view('admin.officers.index', compact('officers'));
     }
-
-    public function searchOfficers(Request $request)
-    {
-        $query = $request->query('query');
-
-        $officers = Officer::where('officer_name', 'LIKE', "%{$query}%")->get(['id', 'officer_name', 'officer_email', 'officer_phoneNo', 'created_at', 'updated_at']);
-
-        return response()->json(['officers' => $officers]);
-    }
-
-
 
     public function createOfficer()
     {
         return view('admin.officers.create');
     }
 
-
     public function storeOfficer(Request $request)
-{
-    // Validate input data
-    $request->validate([
-        'officer_name' => 'required|string|max:255',
-        'officer_email' => 'required|email|unique:users,email',
-        'officer_phoneNo' => 'required|string|max:20',
-        'officer_pass' => 'required|string|min:8'
-    ]);
-
-    // Store the officer data in both users and officers tables
-    DB::transaction(function () use ($request) {
-        // Create the user record
-        $user = User::create([
-            'name' => $request->officer_name,
-            'email' => $request->officer_email,
-            'password' => Hash::make($request->officer_pass),
-            'role' => 'officer',  // assuming you have a role column in users table
-        ]);
-
-        // Create the officer record linked to the user ID
-        Officer::create([
-            'user_id' => $user->id,
-            'officer_name' => $request->officer_name,
-            'officer_email' => $request->officer_email,
-            'officer_phoneNo' => $request->officer_phoneNo,
-        ]);
-    });
-
-    // Redirect back with a success message
-    return redirect()->route('admin.officers')->with('success', 'Officer added successfully.');
-}
-
-    public function showOfficer(Officer $officer)
     {
-        return view('admin.officers.show', compact('officer'));
+        $request->validate([
+            'officer_name' => 'required|string|max:255',
+            'officer_email' => 'required|email|unique:users,email',
+            'officer_phoneNo' => 'required|string|max:20',
+            'officer_pass' => 'required|string|min:8',
+        ]);
+
+        DB::transaction(function () use ($request) {
+            $user = User::create([
+                'name' => $request->officer_name,
+                'email' => $request->officer_email,
+                'password' => Hash::make($request->officer_pass),
+                'role' => 'officer',
+            ]);
+
+            Officer::create([
+                'user_id' => $user->id,
+                'officer_name' => $request->officer_name,
+                'officer_email' => $request->officer_email,
+                'officer_phoneNo' => $request->officer_phoneNo,
+            ]);
+        });
+
+        return redirect()->route('admin.officers')->with('success', 'Officer added successfully.');
     }
 
     public function editOfficer($id)
     {
-        $officer = Officer::findOrFail($id);  // Fetch the officer by ID
+        $officer = User::where('id', $id)->where('role', 'officer')->firstOrFail();
         return view('admin.officers.edit', compact('officer'));
     }
 
-
     public function updateOfficer(Request $request, $id)
-    {
-        // Validate input
-        $request->validate([
-            'officer_name' => 'required|string|max:255',
-            'officer_email' => 'required|email|unique:users,email,' . $id, // unique validation for email, excluding current officer's email
-            'officer_phoneNo' => 'required|string|max:20',
-            'officer_pass' => 'nullable|string|min:8'
-        ]);
-
-        // Find the officer by ID
-        $officer = Officer::findOrFail($id);
-
-        // Update officer data
-        $officer->officer_name = $request->officer_name;
-        $officer->officer_email = $request->officer_email;
-        $officer->officer_phoneNo = $request->officer_phoneNo;
-
-        // Update password only if a new one is provided
-        if ($request->filled('officer_pass')) {
-            $officer->officer_pass = Hash::make($request->officer_pass);
-        }
-
-        // Save updated officer data
-        $officer->save();
-
-        return redirect()->route('admin.officers')->with('success', 'Officer updated successfully.');
-    }
-
-
-    public function destroyOfficer(Officer $officer)
-    {
-        $officer->delete();
-        return redirect()->route('admin.officers')->with('success', 'Officer deleted successfully!');
-    }
-
-    private function validateOfficer(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'status' => 'required|string',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'phone_no' => 'required|string|max:20',
+            'password' => 'nullable|string|min:8',
+            'profile_pic' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
+
+        $officer = User::where('id', $id)->where('role', 'officer')->firstOrFail();
+
+        $officer->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone_no' => $request->phone_no,
+        ]);
+
+        if ($request->filled('password')) {
+            $officer->update([
+                'password' => Hash::make($request->password),
+            ]);
+        }
+
+        if ($request->hasFile('profile_pic')) {
+            $path = $request->file('profile_pic')->store('profile_pics', 'public');
+            $officer->update(['profile_pic' => $path]);
+        }
+
+        return redirect()->route('admin.officers')->with('success', 'Officer updated successfully!');
     }
 
-    // Supervisors Methods
-
-    public function supervisors()
+    public function resetOfficerPassword(Request $request, $id)
     {
-        $supervisors = Supervisor::all();
+        $request->validate([
+            'new_password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[@$!%*#?&]/',
+            ],
+        ]);
+
+        $officer = User::findOrFail($id);
+        $officer->password = Hash::make($request->new_password);
+        $officer->save();
+
+        return back()->with('status', 'Password updated successfully.');
+    }
+
+    public function supervisors(Request $request)
+    {
+        $search = $request->query('search');
+        $supervisors = User::where('role', 'supervisor')
+            ->when($search, function ($query, $search) {
+                return $query->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('username', 'LIKE', "%{$search}%")
+                            ->orWhere('email', 'LIKE', "%{$search}%");
+            })
+            ->paginate(10);
+
         return view('admin.supervisors.index', compact('supervisors'));
     }
 
@@ -286,38 +339,94 @@ class AdminController extends Controller
 
     public function storeSupervisor(Request $request)
     {
-        $this->validateSupervisor($request);
-        Supervisor::create($request->all());
-        return redirect()->route('admin.supervisors')->with('success', 'Supervisor created successfully!');
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'phone_no' => 'required|string|max:20',
+            'profile_pic' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        $data = $request->all();
+
+        if ($request->hasFile('profile_pic')) {
+            $data['profile_pic'] = $request->file('profile_pic')->store('profile_pics', 'public');
+        }
+
+        User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone_no' => $data['phone_no'],
+            'role' => 'supervisor',
+            'profile_pic' => $data['profile_pic'] ?? null,
+        ]);
+
+        return redirect()->route('admin.supervisors.index')->with('success', 'Supervisor created successfully!');
     }
 
-    public function showSupervisor(Supervisor $supervisor)
+    public function editSupervisor($id)
     {
-        return view('admin.supervisors.show', compact('supervisor'));
-    }
-
-    public function editSupervisor(Supervisor $supervisor)
-    {
+        $supervisor = User::where('id', $id)->where('role', 'supervisor')->firstOrFail();
         return view('admin.supervisors.edit', compact('supervisor'));
     }
 
-    public function updateSupervisor(Request $request, Supervisor $supervisor)
-    {
-        $this->validateSupervisor($request);
-        $supervisor->update($request->all());
-        return redirect()->route('admin.supervisors')->with('success', 'Supervisor updated successfully!');
-    }
-
-    public function destroySupervisor(Supervisor $supervisor)
-    {
-        $supervisor->delete();
-        return redirect()->route('admin.supervisors')->with('success', 'Supervisor deleted successfully!');
-    }
-
-    private function validateSupervisor(Request $request)
+    public function updateSupervisor(Request $request, $id)
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'phone_no' => 'required|string|max:20',
+            'profile_pic' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        $supervisor = User::where('id', $id)->where('role', 'supervisor')->firstOrFail();
+
+        $supervisor->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone_no' => $request->phone_no,
+        ]);
+
+        if ($request->hasFile('profile_pic')) {
+            $path = $request->file('profile_pic')->store('profile_pics', 'public');
+            $supervisor->update(['profile_pic' => $path]);
+        }
+
+        return redirect()->route('admin.supervisors.index')->with('success', 'Supervisor updated successfully!');
+    }
+
+    public function resetSupervisorPassword(Request $request, $id)
+    {
+        $request->validate([
+            'new_password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/[a-z]/', // at least one lowercase letter
+                'regex:/[A-Z]/', // at least one uppercase letter
+                'regex:/[0-9]/', // at least one digit
+                'regex:/[@$!%*#?&]/' // at least one special character
+            ],
+        ]);
+
+        $supervisor = User::findOrFail($id); // Ensure the user exists in the `users` table
+        $supervisor->password = Hash::make($request->new_password); // Hash the new password
+        $supervisor->save(); // Save the updated password to the database
+
+        return redirect()->route('admin.supervisors.index', $id)->with('status', 'Password has been reset successfully.');
+    }
+
+
+
+    private function validateCleaner(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string|max:255|unique:users,username',
+            'name' => 'required|string|max:255',
+            'phone_no' => 'required|string|max:20',
+            'status' => 'required|in:Available,Unavailable',
+            'password' => 'nullable|confirmed|min:8',
+            'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
     }
 }
