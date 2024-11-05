@@ -2,236 +2,318 @@
 <head>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* General Container Styles */
+        /* General Body and Container Styling */
+        body {
+            background-color: #f3f6f9;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            color: #2E5675;
+        }
         .container {
             max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
+            margin: 2.5rem auto;
+            padding: 1rem;
         }
-
-        /* Header with Filters on the Right */
-        .header-container {
+        .heading {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2E5675;
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+        .section-heading {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2E5675;
+            margin: 2rem 0 1rem;
+            border-bottom: 2px solid #d1d5db;
+            padding-bottom: 0.5rem;
+        }
+        .filter-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
-
-        .heading {
-            font-size: 2rem;
-            font-weight: bold;
+        .search-container {
+            position: relative;
+            flex-grow: 1;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 1.5rem 0.6rem 2.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #555;
+            transition: border-color 0.2s ease;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #2E5675;
+            box-shadow: 0 2px 8px rgba(46, 86, 117, 0.2);
+        }
+        .search-icon {
+            position: absolute;
+            top: 50%;
+            left: 0.8rem;
+            transform: translateY(-50%);
+            font-size: 1rem;
+            color: #888;
+        }
+        .filter-select, .btn-toggle-all, .date-input {
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 0.4rem 1.5rem;
+            color: #555;
+            background-color: #ffffff;
+            border: 1px solid #d1d5db;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .btn-toggle-all {
+            background-color: #2E5675;
+            color: #fff;
+        }
+        .btn-toggle-all:hover {
+            background-color: #1f3c52;
+        }
+        /* Remaining Styles */
+        .list-item {
+            background-color: #ffffff;
+            border: 1px solid #e1e5ea;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+        .list-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .list-item-title {
+            font-size: 1.15rem;
+            font-weight: 600;
             color: #2E5675;
         }
-
-        /* Card Styles */
-        .card {
-            background-color: #ffffff; /* White background for the card */
-            border-radius: 10px; /* Rounded corners for a modern feel */
-            border: none; /* Remove card border */
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out; /* Smooth transitions */
+        .list-item-date {
+            font-size: 0.85rem;
+            color: #6b7280;
         }
-
-        .card:hover {
-            transform: translateY(-4px); /* Slight lift effect on hover */
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* More shadow on hover */
-        }
-
-        /* Button Styles */
-        .btn-outline-primary {
-            color: #2E5675; /* Darker blue for button */
-            border-color: #2E5675; /* Matching border color */
-            transition: background-color 0.3s, color 0.3s; /* Transition for hover effect */
-        }
-
-        .btn-outline-primary:hover {
-            background-color: #2E5675; /* Background color on hover */
-            color: white; /* White text on hover */
-        }
-
-        /* Badge Styles */
+        /* Badge Styling */
         .badge {
-            display: inline-block;
-            padding: .25em .4em;
-            margin-bottom: 1rem;
-            font-size: 75%;
-            font-weight: 700;
-            line-height: 1;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: baseline;
-            border-radius: .25rem;
-            transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+            font-size: 0.85rem;
+            padding: 0.4em 0.7em;
+            border-radius: 5px;
+            font-weight: 600;
+            text-transform: capitalize;
         }
-
-        .badge-success {
-            background-color: #28a745; /* Green for completed */
+        .status-pending { background-color: #fce8e8; color: #c0392b; }
+        .status-ongoing { background-color: #fff5db; color: #e67e22; }
+        .status-completed { background-color: #e8f5e9; color: #27ae60; }
+        .badge-new { background-color: #cce5ff; color: #004085; }
+        .btn-details {
+            background-color: #2E5675;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            margin-top: 10px;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.2s ease;
         }
-
-        .badge-warning {
-            background-color: #ffc107; /* Yellow for in-progress */
+        .btn-details:hover { background-color: #1f3c52; }
+        /* Toggle Content */
+        .toggle-content {
+            padding: 1.5rem;
+            font-size: 1rem;
+            color: #555;
+            background-color: #f9fafb;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 0.75rem;
+            border-radius: 0 0 12px 12px;
+            display: none;
         }
-
-        .badge-secondary {
-            background-color: #6c757d; /* Grey for pending */
+        .cleaners-list {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 0.5rem;
         }
-
-        /* Modal styles */
-        .modal-header {
-            background-color: #e3f2fd; /* Light pastel blue for the modal header */
-            color: #000; /* Dark text for contrast */
-            border-bottom: none; /* No border for a cleaner look */
+        .cleaners-list li {
+            color: #2E5675;
+            margin-bottom: 10px;
         }
-
-        .modal-content {
-            border-radius: 10px; /* Rounded corners for the modal */
-            background-color: #f9f9f9; /* Soft pastel background for modal */
+        /* Phone Link Styling */
+        .phone-link {
+            display: inline-flex;
+            align-items: center;
+            color: rgba(46, 86, 117, 0.6); /* Low opacity color */
+            font-size: 0.85rem; /* Smaller font size */
+            text-decoration: none;
+            margin-top: 4px; /* Adds space under cleaner's name */
         }
-
-        .modal-body {
-            padding: 20px; /* Increased padding for better spacing */
+        .phone-link i {
+            margin-right: 4px;
+            color: rgba(39, 174, 96, 0.6); /* Icon color with low opacity */
         }
-
-        .modal-body p {
-            margin-bottom: 15px; /* Space below each paragraph in modal */
-            color: #555; /* Softer text color */
-        }
-
-        .modal-body h6 {
-            margin-top: 20px; /* Space above assigned cleaners heading */
-            font-weight: bold; /* Bold for emphasis */
-        }
-
-        .modal-body ul {
-            padding-left: 20px; /* Indent for cleaner list */
-        }
-
-        /* Responsive Styles */
-        .col-md-4 {
-            flex: 1 0 calc(33.333% - 15px); /* Flex basis to ensure 3 cards per row */
-            box-sizing: border-box;
-        }
-
-        /* Ensure responsive design on smaller screens */
-        @media (max-width: 768px) {
-            .col-md-4 {
-                flex: 1 0 calc(50% - 15px); /* 2 cards per row on tablet */
-            }
-        }
-
-        @media (max-width: 576px) {
-            .col-md-4 {
-                flex: 1 0 100%; /* 1 card per row on mobile */
-            }
+        .phone-link:hover {
+            color: rgba(31, 60, 82, 0.8); /* Slightly darker color on hover */
         }
     </style>
 </head>
 
 <div class="container">
-    <div class="header-container">
-        <h1 class="heading">Complaint History</h1>
+    <h1 class="heading">Complaint History</h1>
+
+    <!-- Filter and Expand/Collapse All Buttons -->
+    <div class="filter-bar">
+        <div class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search complaints by description...">
+        </div>
+        <input type="date" id="dateFilter" class="date-input" placeholder="Select date">
+        <select id="statusFilter" class="filter-select">
+            <option value="all">All Statuses</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+        </select>
+        <button id="toggleAllBtn" class="btn-toggle-all">Expand All</button>
     </div>
 
-    <div class="row">
-        @forelse($complaints as $complaint)
-            <div class="col-md-4 mb-4">
-                <div class="card shadow-sm rounded">
-                    <div class="card-body">
-                        <h5 class="card-title font-weight-bold">Task Assigned</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">{{ $complaint->updated_at->format('H:i A') }}</h6>
-                        <p class="card-text"><strong>Floor:</strong> {{ $complaint->location ?? 'N/A' }}</p>
-                        <p class="card-text">
-                            <strong>Assigned Cleaners:</strong> 
-                            @if ($complaint->cleaners->isNotEmpty())
-                                {{ $complaint->cleaners->count() }} Cleaners
-                            @else
-                                Not Assigned
-                            @endif
-                        </p>
-                        <p class="card-text">
-                            <strong>Status:</strong> 
-                            <span class="badge badge-{{ $complaint->comp_status == 'completed' ? 'success' : ($complaint->comp_status == 'in progress' ? 'warning' : 'secondary') }}">{{ ucfirst($complaint->comp_status) }}</span>
-                        </p>
-                        <a href="#" class="btn btn-outline-primary btn-block" 
-                           data-toggle="modal" 
-                           data-target="#complaintModal"
-                           data-floor="{{ $complaint->location ?? 'N/A' }}"
-                           data-date="{{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}"
-                           data-officer="{{ $complaint->officer->officer_name ?? 'Unknown Officer' }}"
-                           data-status="{{ ucfirst($complaint->comp_status) }}"
-                           data-description="{{ $complaint->comp_desc }}"
-                           data-cleaners="{{ json_encode($complaint->cleaners) }}">View Details</a>
-                    </div>
+    <!-- Complaints Sections (Today's and Past Complaints) -->
+    <div class="section">
+        <h2 class="section-heading">Recent Complaints</h2>
+        @forelse($todaysComplaints as $complaint)
+            <div class="list-item" data-status="{{ $complaint->comp_status }}" data-description="{{ strtolower($complaint->comp_desc) }}" data-date="{{ $complaint->comp_date }}">
+                <div class="list-item-header">
+                    <div class="list-item-title">Location: {{ $complaint->comp_location ?? 'N/A' }}</div>
+                    <small class="list-item-date">{{ \Carbon\Carbon::parse($complaint->comp_date)->format('H:i A') }}</small>
+                    @if($complaint->updated_at->diffInHours(now()) <= 24)
+                        <span class="badge badge-new">New</span>
+                    @endif
+                </div>
+                <div><strong>Description:</strong> {{ $complaint->comp_desc }}</div>
+                <div>
+                    <strong>Status:</strong>
+                    <span class="badge 
+                      {{ strtolower($complaint->comp_status) == 'pending' ? 'status-pending' : '' }}
+                      {{ strtolower($complaint->comp_status) == 'ongoing' ? 'status-ongoing' : '' }}
+                      {{ strtolower($complaint->comp_status) == 'completed' ? 'status-completed' : '' }}">
+                        {{ ucfirst($complaint->comp_status) }}
+                    </span>
+                </div>
+                <button class="btn-details" onclick="toggleDetails({{ $complaint->id }})">View Details</button>
+                <div id="details-{{ $complaint->id }}" class="toggle-content">
+                    <p><strong>Complaint by:</strong> {{ $complaint->officer->name ?? 'Unknown Officer' }}</p>
+                    <h6 class="mt-3">Assigned Cleaners:</h6>
+                    <ul class="cleaners-list">
+                        @forelse ($complaint->cleaners as $cleaner)
+                            <li>
+                                <strong>{{ $cleaner->cleaner_name }}</strong>
+                                <div class="phone-link">
+                                    <i class="fas fa-phone-alt"></i> {{ $cleaner->cleaner_phoneNo ?? 'N/A' }}
+                                </div>
+                            </li>
+                        @empty
+                            <li>No cleaners assigned.</li>
+                        @endforelse
+                    </ul>
                 </div>
             </div>
         @empty
-            <div class="col-12">
-                <div class="alert alert-info text-center">No complaints found.</div>
+            <p>No recent complaints.</p>
+        @endforelse
+    </div>
+
+    <div class="section">
+        <h2 class="section-heading">Past Complaints</h2>
+        @forelse($pastComplaints as $complaint)
+            <div class="list-item" data-status="{{ $complaint->comp_status }}" data-description="{{ strtolower($complaint->comp_desc) }}" data-date="{{ $complaint->comp_date }}">
+                <div class="list-item-header">
+                    <div class="list-item-title">Floor: {{ $complaint->comp_location ?? 'N/A' }}</div>
+                    <small class="list-item-date">{{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}</small>
+                </div>
+                <div><strong>Description:</strong> {{ $complaint->comp_desc }}</div>
+                <div>
+                    <strong>Status:</strong>
+                    <span class="badge 
+                      {{ strtolower($complaint->comp_status) == 'pending' ? 'status-pending' : '' }}
+                      {{ strtolower($complaint->comp_status) == 'ongoing' ? 'status-ongoing' : '' }}
+                      {{ strtolower($complaint->comp_status) == 'completed' ? 'status-completed' : '' }}">
+                        {{ ucfirst($complaint->comp_status) }}
+                    </span>
+                </div>
+                <button class="btn-details" onclick="toggleDetails({{ $complaint->id }})">View Details</button>
+                <div id="details-{{ $complaint->id }}" class="toggle-content">
+                    <p><strong>Complaint by:</strong> {{ $complaint->officer->name ?? 'Unknown Officer' }}</p>
+                    <h6 class="mt-3">Assigned Cleaners:</h6>
+                    <ul class="cleaners-list">
+                        @forelse ($complaint->cleaners as $cleaner)
+                            <li>
+                                <strong>{{ $cleaner->cleaner_name }}</strong>
+                            </li>
+                            <li>
+                            <div class="phone-link">
+                                    <i class="fas fa-phone-alt"></i> {{ $cleaner->cleaner_phoneNo ?? 'N/A' }}
+                            </div>
+                             </li>
+                        @empty
+                            <li>No cleaners assigned.</li>
+                        @endforelse
+                    </ul>
+                </div>
             </div>
+        @empty
+            <p>No past complaints found.</p>
         @endforelse
     </div>
 </div>
 
-<!-- Modal -->
-<div class="modal fade" id="complaintModal" tabindex="-1" role="dialog" aria-labelledby="complaintModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="complaintModalLabel">Complaint Details</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p><strong>Floor:</strong> <span id="modal-floor"></span></p>
-                <p><strong>Date:</strong> <span id="modal-date"></span></p>
-                <p><strong>Complaint by:</strong> <span id="modal-officer"></span></p>
-                <p><strong>Status:</strong> <span id="modal-status" class="badge"></span></p>
-                <p><strong>Description:</strong> <span id="modal-description"></span></p>
-                <h6>Assigned Cleaners:</h6>
-                <ul id="modal-cleaners-list"></ul>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- JavaScript to handle cleaner selection -->
+<!-- Custom JavaScript for filter, toggle, and search functionality -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $('#complaintModal').on('show.bs.modal', function (event) {
-        var button = $(event.relatedTarget); // Button that triggered the modal
-        var floor = button.data('floor'); // Extract info from data-* attributes
-        var date = button.data('date');
-        var officer = button.data('officer');
-        var status = button.data('status');
-        var description = button.data('description');
-        var cleaners = button.data('cleaners'); // Extract cleaners data
+    function toggleDetails(id) {
+        $('#details-' + id).toggle();
+    }
 
-        // Populate the modal fields
-        var modal = $(this);
-        modal.find('#modal-floor').text(floor);
-        modal.find('#modal-date').text(date);
-        modal.find('#modal-officer').text(officer);
-        modal.find('#modal-status').text(status);
+    let expanded = false;
+    $('#toggleAllBtn').click(function() {
+        expanded = !expanded;
+        $('.toggle-content').toggle(expanded);
+        $(this).text(expanded ? 'Collapse All' : 'Expand All');
+    });
 
-        // Set the badge class based on status
-        var statusClass = status.toLowerCase() === 'completed' ? 'badge-success' : (status.toLowerCase() === 'in progress' ? 'badge-warning' : 'badge-secondary');
-        modal.find('#modal-status').addClass(statusClass).removeClass('badge-success badge-warning badge-secondary');
+    $('#statusFilter').change(function() {
+        let selectedStatus = $(this).val();
+        $('.list-item').each(function() {
+            let status = $(this).data('status');
+            $(this).toggle(selectedStatus === 'all' || status === selectedStatus);
+        });
+    });
 
-        modal.find('#modal-description').text(description);
+    $('#dateFilter').change(function() {
+        let selectedDate = $(this).val();
+        $('.list-item').each(function() {
+            let date = $(this).data('date');
+            $(this).toggle(date.startsWith(selectedDate));
+        });
+    });
 
-        // Populate the assigned cleaners list
-        var cleanersList = modal.find('#modal-cleaners-list');
-        cleanersList.empty(); // Clear existing entries
-        if (cleaners.length) {
-            cleaners.forEach(function(cleaner) {
-                cleanersList.append('<li>' + cleaner.cleaner_name + ' (' + cleaner.cleaner_phoneNo + ')</li>');
-            });
-        } else {
-            cleanersList.append('<li>No cleaners assigned.</li>');
-        }
+    $('#searchInput').on('input', function() {
+        let searchTerm = $(this).val().toLowerCase();
+        $('.list-item').each(function() {
+            let description = $(this).data('description');
+            $(this).toggle(description.includes(searchTerm));
+        });
     });
 </script>
 </x-app-layout>

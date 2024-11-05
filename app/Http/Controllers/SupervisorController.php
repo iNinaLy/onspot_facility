@@ -7,6 +7,9 @@ use App\Models\Complaint;
 use App\Models\Cleaner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
+
 
 class SupervisorController extends Controller
 {
@@ -32,16 +35,33 @@ class SupervisorController extends Controller
     /**
      * Show the history of complaints.
      */
-    public function history()
-    {
-        // Fetch complaints with status 'in progress' or 'completed'
-        $complaints = Complaint::with('cleaners')
-            ->whereIn('comp_status', ['in progress', 'completed'])
-            ->orderBy('updated_at', 'desc')
-            ->get();
+    
+    
+     public function history()
+        {
+            $supervisorId = Auth::id();
 
-        return view('supervisor.history', compact('complaints'));
-    }
+            // Fetch today's complaints with cleaner details
+            $todaysComplaints = Complaint::where('assigned_by', $supervisorId)
+                ->whereDate('comp_date', Carbon::today())
+                ->with(['cleaners' => function ($query) {
+                    $query->select('cleaners.id', 'cleaner_name', 'cleaner_phoneNo');
+                }])
+                ->orderBy('comp_date', 'desc')
+                ->get();
+
+            // Fetch past complaints with cleaner details
+            $pastComplaints = Complaint::where('assigned_by', $supervisorId)
+                ->whereDate('comp_date', '<', Carbon::today())
+                ->with(['cleaners' => function ($query) {
+                    $query->select('cleaners.id', 'cleaner_name', 'cleaner_phoneNo');
+                }])
+                ->orderBy('comp_date', 'desc')
+                ->get();
+
+            return view('supervisor.history', compact('todaysComplaints', 'pastComplaints'));
+        }
+
 
     /**
      * Show all cleaners, with optional search filtering.

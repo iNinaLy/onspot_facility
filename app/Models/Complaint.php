@@ -117,10 +117,11 @@ class Complaint extends Model implements HasMedia
      */
     public function cleaners()
     {
-        return $this->belongsToMany(Cleaner::class, 'complaint_cleaner')
-            ->withPivot('no_of_cleaners', 'assigned_by', 'assigned_date')
-            ->withTimestamps();
+        return $this->belongsToMany(Cleaner::class, 'complaint_cleaner', 'complaint_id', 'cleaner_id')
+                    ->withPivot('no_of_cleaners')
+                    ->withTimestamps();
     }
+
 
     /**
      * Define one-to-many relationship with Task model.
@@ -168,4 +169,5 @@ class Complaint extends Model implements HasMedia
         // Update the complaint status to on-going
         $this->updateStatus(self::STATUS_ONGOING);
     }
+
 }
