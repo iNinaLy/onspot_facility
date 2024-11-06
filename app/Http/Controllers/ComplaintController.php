@@ -74,18 +74,25 @@ class ComplaintController extends Controller
 
         $complaint = Complaint::findOrFail($id);
 
+        // Check if cleaners have already been assigned to this complaint
         if ($complaint->cleaners()->exists()) {
             return redirect()->route('supervisor.complaints.show', $id)
-                             ->withErrors('Cleaners have already been assigned for this complaint.');
+                            ->withErrors('Cleaners have already been assigned for this complaint.');
         }
 
+        // Use a transaction to ensure atomicity
         DB::transaction(function () use ($request, $complaint) {
-            $assignments = array_fill_keys($request->cleaners, [
-                'assigned_by' => Auth::id(),
-                'assigned_date' => now(),
-                'no_of_cleaners' => $request->no_of_cleaners,
-            ]);
+            // Prepare assignments with the supervisor ID, date, and number of cleaners
+            $assignments = [];
+            foreach ($request->cleaners as $cleanerId) {
+                $assignments[$cleanerId] = [
+                    'assigned_by' => Auth::id(),
+                    'assigned_date' => now(),
+                    'no_of_cleaners' => $request->no_of_cleaners,
+                ];
+            }
 
+            // Attach cleaners with pivot data and update complaint status
             $complaint->cleaners()->attach($assignments);
             $complaint->update([
                 'comp_status' => 'ongoing',
@@ -96,8 +103,9 @@ class ComplaintController extends Controller
         });
 
         return redirect()->route('supervisor.complaints.show', $id)
-                         ->with('success', 'Cleaners assigned successfully.');
+                        ->with('success', 'Cleaners assigned successfully.');
     }
+
 
     // Supervisor: List complaints (Web)
     public function supervisorIndex()
@@ -264,11 +272,12 @@ class ComplaintController extends Controller
             'cleaner_id' => 'required|exists:cleaners,id',
         ]);
 
-        // Assign cleaner to complaint
+        // Assign cleaner to complaint with supervisor ID
         DB::table('complaint_cleaner')->insert([
             'complaint_id' => $validated['complaint_id'],
             'cleaner_id' => $validated['cleaner_id'],
             'assigned_at' => now(),
+            'assigned_by' => Auth::id(), // Add supervisor ID
         ]);
 
         // Update complaint status to 'Ongoing'

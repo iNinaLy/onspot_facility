@@ -41,7 +41,7 @@
       width: 150px;
     }
 
-    .view-details-btn {
+    .view-details-btn, .edit-btn {
       background-color: #2E5675;
       color: white;
       padding: 0.5rem 1rem;
@@ -52,7 +52,7 @@
       cursor: pointer;
     }
 
-    .view-details-btn:hover {
+    .view-details-btn:hover, .edit-btn:hover {
       background-color: #1f3c52;
     }
 
@@ -65,6 +65,7 @@
       overflow: hidden;
       transition: transform 0.3s, box-shadow 0.3s;
       margin-bottom: 1.5rem;
+      position: relative; /* For "New" Badge Positioning */
     }
 
     .complaint-card:hover {
@@ -129,6 +130,19 @@
       color: #065f46;
     }
 
+    /* New Badge Styles */
+    .new-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #cce5ff;
+      color: #004085;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: bold;
+      border-radius: 0.5rem;
+    }
+
     /* Pagination Styles */
     .pagination {
       display: flex;
@@ -190,6 +204,11 @@
            data-status="{{ strtolower($complaint->comp_status) }}"
            data-date="{{ $complaint->comp_date }}">
 
+        <!-- New Badge for Complaints Updated in Last 24 Hours -->
+        @if($complaint->updated_at->diffInHours(now()) <= 24)
+          <div class="new-badge">New</div>
+        @endif
+
         <div class="complaint-image-container">
             @if ($complaint->comp_image)
               <img src="{{ $complaint->getFirstMediaUrl('complaint_images') }}" alt="Complaint Image" class="complaint-image" />
@@ -212,6 +231,11 @@
           </span>
 
           <a href="{{ route('supervisor.complaints.show', $complaint->id) }}" class="view-details-btn">View Details</a>
+
+          <!-- Show Edit Button if the logged-in supervisor assigned the complaint -->
+          @if($complaint->cleaners->isNotEmpty() && $complaint->cleaners->first()->pivot->assigned_by == Auth::id())
+            <a href="{{ route('supervisor.complaints.edit', $complaint->id) }}" class="edit-btn mt-2">Edit</a>
+          @endif
         </div>
       </div>
     @endforeach
