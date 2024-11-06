@@ -183,4 +183,50 @@ class SupervisorController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Supervisor deleted successfully'], 200);
     }
+
+    public function getAllCleaners()
+    {
+        $cleaners = Cleaner::all();
+    
+        foreach ($cleaners as $cleaner) {
+            // Check and handle profile_pic as a blob
+            if ($cleaner->profile_pic !== null) {
+                // Convert the blob data to base64 encoding
+                $cleaner->profile_pic = base64_encode($cleaner->profile_pic);
+            }
+    
+            // Handle any other malformed UTF-8 fields
+            foreach ($cleaner->getAttributes() as $key => $value) {
+                if (!mb_check_encoding($value, 'UTF-8')) {
+                    return response()->json(['success' => false, 'message' => "Malformed UTF-8 detected in Cleaner ID: {$cleaner->id}, Field: $key"], 500);
+                }
+            }
+        }
+    
+        return response()->json(['success' => true, 'data' => $cleaners], 200);
+    }
+    
+       
+    // Show method to retrieve a specific cleaner by ID
+    public function showapi($id)
+    {
+        // Find the cleaner by ID
+        $cleaner = Cleaner::find($id);
+
+        // Check if the cleaner exists
+        if (!$cleaner) {
+            return response()->json(['message' => 'Cleaner not found'], 404);
+        }
+
+        // Convert the BLOB data to Base64 if it exists
+        if ($cleaner->profile_pic) {
+            $cleaner->profile_pic = base64_encode($cleaner->profile_pic);
+        }
+
+        // Return the cleaner's details including profile_pic
+        return response()->json([
+            'data' => $cleaner,
+        ]);
+    }
+
 }

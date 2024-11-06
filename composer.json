@@ -7,11 +7,11 @@
     "require": {
         "php": "^8.2",
         "fruitcake/php-cors": "*",
+        "kreait/firebase-php": "*",
         "laravel/framework": "^11.9",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "laravel/ui": "^4.5",
-        "pusher/pusher-php-server": "^7.2",
         "spatie/laravel-medialibrary": "^11.9",
         "spatie/laravel-permission": "^6.9"
     },

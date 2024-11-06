@@ -11,6 +11,7 @@ return [
         'http://localhost:54195', // Add frontend origin
         'http://127.0.0.1:54195',
         'https://*.example.com',
+        'http://192.168.1.121',
         '*'
     ],
     'allowed_origins_patterns' => ['/localhost:\d+/', '/127\.0\.0\.1:\d+/', '/10\.0\.2\.2:\d+/'],

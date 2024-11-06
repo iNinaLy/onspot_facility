@@ -10,7 +10,7 @@ class Attendance extends Model
     use HasFactory;
 
     protected $table = 'attendance';
-    protected $primaryKey = 'attend_id';
+    protected $primaryKey = 'id';
 
     protected $fillable = [
         'attend_date',
@@ -25,4 +25,4 @@ class Attendance extends Model
     {
         return $this->belongsTo(Cleaner::class, 'cleaner_id');
     }
-}
+}   
