@@ -11,7 +11,6 @@ use App\Http\Controllers\SupervisorController;
 // Cleaner Task and Complaint Routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cleaner/{cleaner_id}/tasks', [ComplaintCleanerController::class, 'getCleanerTasks']); // List all tasks for a specific cleaner
-    Route::get('/cleaner/{cleaner_id}/tasks/latest', [ComplaintCleanerController::class, 'getLatestTask']); // Get the latest task for a specific cleaner
     Route::get('/complaints/{id}/details', [ComplaintCleanerController::class, 'getComplaintDetailsConditional']); // Get details of a specific complaint
 });
 

@@ -12,7 +12,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements HasMedia
 {
-    use HasApiTokens, HasFactory, Notifiable, InteractsWithMedia,HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, InteractsWithMedia, HasRoles;
 
     protected $fillable = [
         'username',
@@ -60,7 +60,7 @@ class User extends Authenticatable implements HasMedia
         return $this->attributes['profile_pic'] ?: asset('default-profile.png');
     }
 
-    // Your role-checking and other methods remain the same...
+    // Your role-checking methods remain the same...
 
     public function isCleaner()
     {
@@ -76,4 +76,13 @@ class User extends Authenticatable implements HasMedia
     {
         return $this->role === 'officer';
     }
+
+    /**
+     * Relationship with NotificationToken model.
+     */
+    public function notificationTokens()
+    {
+        return $this->hasMany(NotificationToken::class);
+    }
 }
+    

@@ -10,30 +10,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\NewCleaningComplaint;
-use App\Services\FirebaseNotificationService;
+use App\Notifications\ComplaintNotification;
 
     class ComplaintController extends Controller
     {
-        protected $firebaseNotificationService;
-
-        public function __construct(FirebaseNotificationService $firebaseNotificationService)
-        {
-            $this->firebaseNotificationService = $firebaseNotificationService;
-        }
-        // Admin: Fetch complaints with optional filtering and sorting (Web)
-        public function index(Request $request)
-        {
-            $query = Complaint::query();
-
-            if ($request->filled('status')) {
-                $query->where('comp_status', $request->status);
-            }
-
-            $complaints = $query->with(['officer', 'supervisor'])->paginate(10);
-            return view('admin.complaints.index', compact('complaints'));
-        }
-
         // Store a new complaint (Web)
         public function store(Request $request)
         {
@@ -182,32 +162,31 @@ use App\Services\FirebaseNotificationService;
                 'comp_location' => 'required|string',
             ]);
 
+            // Create a new complaint
             $complaint = Complaint::create(array_merge($validatedData, [
                 'officer_id' => Auth::id(),
                 'comp_status' => Complaint::STATUS_PENDING,
             ]));
 
+            // Handle image upload
             if ($request->hasFile('comp_image')) {
                 $media = $complaint->addMediaFromRequest('comp_image')->toMediaCollection('complaint_images', 'public');
                 $complaint->update(['comp_image' => $media->getUrl()]);
                 Log::info('Media uploaded:', ['media' => $media]);
             }
 
-            // Broadcast the ComplaintSubmitted event to supervisors
-            event(new ComplaintSubmitted($complaint));
+            // Fetch supervisors to notify
+            $supervisors = User::where('role', 'supervisor')->get();
 
-            // Send notification to supervisors
-            $title = 'New Complaint Submitted';
-            $body = 'A new complaint has been submitted by officer ID: ' . Auth::id();
-            $this->firebaseNotificationService->sendComplaintNotification($title, $body, [
-                'complaint_id' => $complaint->id,
-                'comp_location' => $complaint->comp_location,
-            ]);
+            // Send notification to each supervisor
+            foreach ($supervisors as $supervisor) {
+                $supervisor->notify(new ComplaintNotification($complaint, Auth::user()));
+            }
 
             return response()->json([
                 'message' => 'Complaint submitted successfully!',
                 'complaint' => $complaint,
-            ], 201);
+            ]);
         }
 
         // Get officer complaints (API)
