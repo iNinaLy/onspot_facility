@@ -60,4 +60,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/supervisor/history/{id}', [ComplaintController::class, 'getHistoryDetails']);
 });
 
+Route::middleware('auth:sanctum')->post('/store-token', [AuthController::class, 'storeNotificationToken']);
+
+
 

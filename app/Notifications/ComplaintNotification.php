@@ -2,7 +2,6 @@
 
 namespace App\Notifications;
 
-use Illuminate\Notifications\Channels\DatabaseChannel;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\Fcm\FcmChannel;
 use NotificationChannels\Fcm\FcmMessage;
@@ -22,13 +21,30 @@ class ComplaintNotification extends Notification
     public function via($notifiable)
     {
         return [
-            DatabaseChannel::class,
-            FcmChannel::class,
+            'database', // This will store notification data in `notifications` table
+            FcmChannel::class, // This will send FCM notification
         ];
     }
 
-    public function toFcm($notifiable): FcmMessage
+    // Store notification in notifications table
+    public function toDatabase($notifiable)
     {
+        return [
+            'complaint_id' => $this->complaint->id,
+            'officer_name' => $this->officer->name,
+            'message' => 'A new complaint has been submitted by Officer ' . $this->officer->name,
+        ];
+    }
+
+    // Use device tokens to send FCM notification
+    public function toFcm($notifiable): ?FcmMessage
+    {
+        $tokens = $notifiable->notificationTokens()->pluck('device_token');
+
+        if ($tokens->isEmpty()) {
+            return null; // No tokens to send notification
+        }
+
         return (new FcmMessage(notification: new FcmNotification(
             title: 'New Complaint Submitted',
             body: 'A new complaint has been submitted by Officer ' . $this->officer->name,
@@ -38,6 +54,7 @@ class ComplaintNotification extends Notification
                 'complaint_id' => $this->complaint->id,
                 'officer_name' => $this->officer->name,
             ])
+            ->to($tokens->toArray()) // Specify tokens to send to
             ->custom([
                 'android' => [
                     'notification' => [
@@ -46,13 +63,6 @@ class ComplaintNotification extends Notification
                 ],
             ]);
     }
-
-    public function toDatabase($notifiable)
-    {
-        return [
-            'complaint_id' => $this->complaint->id,
-            'officer_name' => $this->officer->name,
-            'message' => 'A new complaint has been submitted by Officer ' . $this->officer->name,
-        ];
-    }
 }
+
+

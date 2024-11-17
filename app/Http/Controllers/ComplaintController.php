@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller; 
 use App\Models\Complaint;
 use App\Models\Cleaner;
 use App\Models\User;

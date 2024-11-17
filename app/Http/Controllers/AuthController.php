@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use App\Models\NotificationToken;
 
 
     class AuthController extends Controller
@@ -96,4 +97,28 @@ use Illuminate\Validation\ValidationException;
 
         return response()->json(['message' => 'Successfully logged out.']);
     }
+
+    public function storeNotificationToken(Request $request)
+{
+    $request->validate([
+        'device_token' => 'required',
+        'device_id' => 'required',
+        'device_type' => 'required',
+    ]);
+
+    NotificationToken::updateOrCreate(
+        [
+            'user_id' => auth()->id(), // Assuming Sanctum is used for authentication
+            'device_id' => $request->device_id,
+        ],
+        [
+            'device_token' => $request->device_token,
+            'device_type' => $request->device_type,
+        ]
+    );
+
+    return response()->json(['message' => 'Device token saved successfully.']);
+}
+
+
 }
