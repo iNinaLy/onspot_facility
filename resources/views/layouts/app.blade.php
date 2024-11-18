@@ -60,12 +60,38 @@
         .font-sans {
             font-family: 'figtree', sans-serif;
         }
+
+        .notification-card {
+            border-radius: 12px;
+            background: linear-gradient(90deg, #ffffff 0%, #f9f9f9 100%);
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .notification-card:hover {
+            background-color: #f0f0f0;
+        }
+
+        a.no-underline:hover {
+            text-decoration: none;
+        }
+
+        .notification-bell .badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            border-radius: 50%;
+        }
+
     </style>
 </head>
+
 <body class="font-sans antialiased">
     <div class="min-h-screen bg-white-100 dark:bg-white-900">
         <!-- Navbar -->
-        @include('layouts.navigation')
+        @include('components.navbar')
 
         <!-- Page Heading -->
         @isset($header)
@@ -82,4 +108,23 @@
         </main>
     </div>
 </body>
+
+<script>
+
+    function toggleNotificationDropdown() {
+        const dropdown = document.getElementById('notificationDropdown');
+        dropdown.classList.toggle('hidden');
+    }
+
+
+    function redirectAndMarkAsRead(notification) {
+        fetch(`/supervisor/notifications/read/${notification.id}`, { method: 'GET' })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = `/supervisor/complaints/${notification.data.complaint_id}`;
+                }
+            });
+    }
+</script>
+
 </html>

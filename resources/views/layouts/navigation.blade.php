@@ -1,4 +1,4 @@
-<nav x-data="{ open: false, notificationOpen: false }" 
+<nav x-data="{ open: false, notificationOpen: false, notifications: @js($unreadNotifications) }" 
     class="bg-white/80 backdrop-blur-md fixed w-full z-10 transition duration-300 shadow-lg">
     <div class="max-w-7xl mx-auto px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
@@ -12,19 +12,19 @@
                 <!-- Navigation Links -->
                 <div class="hidden sm:flex space-x-8">
                     <x-nav-link :href="route('supervisor.dashboard')" :active="request()->routeIs('supervisor.dashboard')" 
-                        class="text-black transition-colors hover:text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('supervisor.dashboard') ? 'shadow-md' : '' }}">
+                        class="text-black font-semibold transition hover:text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 {{ request()->routeIs('supervisor.dashboard') ? 'bg-gray-200' : '' }}">
                         {{ __('Home') }}
                     </x-nav-link>
                     <x-nav-link :href="route('supervisor.cleaners')" :active="request()->routeIs('supervisor.cleaners')" 
-                        class="text-black transition-colors hover:text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('supervisor.cleaners') ? 'shadow-md' : '' }}">
+                        class="text-black font-semibold transition hover:text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 {{ request()->routeIs('supervisor.cleaners') ? 'bg-gray-200' : '' }}">
                         {{ __('Cleaners') }}
                     </x-nav-link>
                     <x-nav-link :href="route('supervisor.complaints.index')" :active="request()->routeIs('supervisor.complaints.index')" 
-                        class="text-black transition-colors hover:text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('supervisor.complaints.index') ? 'shadow-md' : '' }}">
+                        class="text-black font-semibold transition hover:text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 {{ request()->routeIs('supervisor.complaints.index') ? 'bg-gray-200' : '' }}">
                         {{ __('Complaints') }}
                     </x-nav-link>
                     <x-nav-link :href="route('supervisor.history')" :active="request()->routeIs('supervisor.history')" 
-                        class="text-black transition-colors hover:text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('supervisor.history') ? 'shadow-md' : '' }}">
+                        class="text-black font-semibold transition hover:text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 {{ request()->routeIs('supervisor.history') ? 'bg-gray-200' : '' }}">
                         {{ __('History') }}
                     </x-nav-link>
                 </div>
@@ -35,29 +35,45 @@
                 <!-- Notification Bell -->
                 <div class="relative">
                     <button @click="notificationOpen = !notificationOpen" 
-                        class="relative text-black hover:text-gray-900 transition duration-300 focus:outline-none">
+                        class="relative text-black hover:text-gray-700 transition duration-300 focus:outline-none">
                         <i class="fa fa-bell text-xl"></i>
-                        @if(auth()->user()->unreadNotifications->count() > 0)
+                        <template x-if="notifications.length > 0">
                             <span class="absolute top-0 right-0 w-3 h-3 bg-red-600 rounded-full"></span>
-                        @endif
+                        </template>
                     </button>
 
                     <!-- Notification Dropdown -->
                     <div x-show="notificationOpen" 
                         @click.away="notificationOpen = false" 
-                        class="absolute right-0 mt-3 w-64 bg-white rounded-lg shadow-lg z-50 overflow-hidden transition-all duration-300"
+                        class="absolute right-0 mt-3 w-96 bg-white rounded-xl shadow-lg z-50 overflow-hidden transition-all duration-300"
                         x-cloak>
-                        <div class="divide-y divide-gray-100">
-                            @if(auth()->user()->unreadNotifications->count() > 0)
-                                @foreach(auth()->user()->unreadNotifications as $notification)
-                                    <div class="px-4 py-3 hover:bg-gray-50">
-                                        <p class="text-sm font-medium text-black">{{ $notification->data['comp_desc'] }}</p>
-                                        <p class="text-xs text-gray-400">{{ $notification->created_at->diffForHumans() }}</p>
-                                    </div>
-                                @endforeach
-                            @else
-                                <div class="px-4 py-3 text-sm text-gray-500">No new notifications</div>
-                            @endif
+                        <div class="py-3 px-4 bg-gray-100 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
+                        </div>
+                        <div class="divide-y divide-gray-100 max-h-72 overflow-y-auto">
+                            <template x-if="notifications.length > 0">
+                                <template x-for="notification in notifications" :key="notification.id">
+                                    <a @click.prevent="redirectAndMarkAsRead(notification)" 
+                                        class="block px-5 py-4 hover:bg-gray-50 transition flex items-center no-underline notification-item">
+                                        <div class="flex-shrink-0 bg-blue-100 text-blue-600 rounded-full h-12 w-12 flex items-center justify-center shadow-inner">
+                                            <i class="fa fa-exclamation-circle text-lg"></i>
+                                        </div>
+                                        <div class="ml-4 flex-1">
+                                            <p class="text-sm font-medium text-gray-800 notification-title">
+                                                New Complaint Received
+                                            </p>
+                                            <p class="text-sm text-gray-500 notification-subtitle">
+                                                Made by: <span class="font-semibold" x-text="notification.data.officer_name ?? 'Unknown Officer'"></span>
+                                            </p>
+                                            <p class="text-xs text-gray-400 notification-time" x-text="new Date(notification.created_at).toLocaleString()"></p>
+                                        </div>
+                                        <i class="fa fa-chevron-right text-gray-400"></i>
+                                    </a>
+                                </template>
+                            </template>
+                            <template x-if="notifications.length === 0">
+                                <div class="px-4 py-5 text-sm text-gray-500 text-center">No new notifications</div>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -65,9 +81,9 @@
                 <!-- User Dropdown -->
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
-                        <button class="flex items-center text-black hover:text-gray-900 focus:outline-none transition">
+                        <button class="flex items-center text-black hover:text-gray-700 focus:outline-none transition">
                             <span>{{ Auth::user()->name }}</span>
-                            <svg class="ms-2 w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <svg class="ms-2 w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path fill-rule="evenodd" 
                                     d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" 
                                     clip-rule="evenodd" />
@@ -94,7 +110,7 @@
             </div>
 
             <!-- Mobile Menu Button -->
-            <button @click="open = !open" class="sm:hidden text-black hover:text-gray-900 focus:outline-none">
+            <button @click="open = !open" class="sm:hidden text-black hover:text-gray-700 focus:outline-none">
                 <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                         d="M4 6h16M4 12h16M4 18h16" />
@@ -102,40 +118,42 @@
             </button>
         </div>
     </div>
-
-    <!-- Responsive Navigation Menu -->
-    <div :class="{ 'block': open, 'hidden': !open }" class="hidden sm:hidden">
-        <div class="space-y-1 pt-2 pb-3">
-            <x-responsive-nav-link :href="route('supervisor.dashboard')" :active="request()->routeIs('supervisor.dashboard')" class="text-black">
-                {{ __('Home') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('supervisor.cleaners')" :active="request()->routeIs('supervisor.cleaners')" class="text-black">
-                {{ __('Cleaners') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('supervisor.complaints.index')" :active="request()->routeIs('supervisor.complaints.index')" class="text-black">
-                {{ __('Complaints') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('supervisor.history')" :active="request()->routeIs('supervisor.history')" class="text-black">
-                {{ __('History') }}
-            </x-responsive-nav-link>
-        </div>
-    </div>
 </nav>
 
+<script>
+    function redirectAndMarkAsRead(notification) {
+        fetch(`/supervisor/notifications/read/${notification.id}`, { method: 'GET' })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = `/supervisor/complaints/${notification.data.complaint_id}`;
+                }
+            });
+    }
+</script>
+
 <style>
-    @media (prefers-color-scheme: dark) {
-        .dark\:text-gray-100 {
-            --tw-text-opacity: 1;
-            color: rgb(75 78 86);
-        }
+    .notification-card {
+        border-radius: 12px;
+        background: linear-gradient(90deg, #ffffff 0%, #f9f9f9 100%);
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     }
 
-    @media (prefers-color-scheme: dark) {
-        .dark\:text-gray-300 {
-            --tw-text-opacity: 1;
-            color: rgb(15 16 17);
-        }
+    .notification-item:hover {
+        background-color: #f9f9f9;
+    }
+
+    .notification-time {
+        color: #9ca3af;
+    }
+
+    .notification-title {
+        color: #1f2937;
+    }
+
+    .notification-subtitle {
+        color: #6b7280;
     }
 </style>
+
 <!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">

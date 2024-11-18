@@ -71,63 +71,70 @@
                 <h4 class="mb-4 text-primary">Assign Cleaners</h4>
                 
                 @if ($complaint->comp_status == 'pending')
-                    <form action="{{ route('supervisor.assign.cleaner', ['id' => $complaint->id]) }}" method="POST">
-                        @csrf
-                        <!-- Number of Cleaners Selection -->
-                        <div class="d-flex gap-3 mb-4 align-items-center">
-                            <label for="no_of_cleaners" class="form-label mb-0 fw-semibold text-secondary">Number of Cleaners:</label>
-                            <select class="form-select w-25 shadow-sm" name="no_of_cleaners" id="no_of_cleaners" required style="border-radius: 8px;">
-                                <option selected disabled>Number of cleaners</option>
-                                @for ($i = 1; $i <= $availableCleaners->count(); $i++)
-                                    <option value="{{ $i }}">{{ $i }}</option>
-                                @endfor
-                            </select>
-                            <button type="button" id="proceed-button" class="btn btn-primary shadow-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#cleanerModal">Select Cleaners</button>
+                    <!-- Check if there are no available cleaners -->
+                    @if($availableCleaners->isEmpty())
+                        <div class="alert alert-warning shadow-sm rounded-3">
+                            No cleaners are available at the moment. Please check back later.
                         </div>
+                    @else
+                        <form action="{{ route('supervisor.assign.cleaner', ['id' => $complaint->id]) }}" method="POST">
+                            @csrf
+                            <!-- Number of Cleaners Selection -->
+                            <div class="d-flex gap-3 mb-4 align-items-center">
+                                <label for="no_of_cleaners" class="form-label mb-0 fw-semibold text-secondary">Number of Cleaners:</label>
+                                <select class="form-select w-25 shadow-sm" name="no_of_cleaners" id="no_of_cleaners" required style="border-radius: 8px;">
+                                    <option selected disabled>Number of cleaners</option>
+                                    @for ($i = 1; $i <= $availableCleaners->count(); $i++)
+                                        <option value="{{ $i }}">{{ $i }}</option>
+                                    @endfor
+                                </select>
+                                <button type="button" id="proceed-button" class="btn btn-primary shadow-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#cleanerModal">Select Cleaners</button>
+                            </div>
 
-                        <!-- Modal for Cleaner Selection -->
-                        <div class="modal fade" id="cleanerModal" tabindex="-1" aria-labelledby="cleanerModalLabel" aria-hidden="true">
-                            <div class="modal-dialog modal-lg">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="cleanerModalLabel">Select Cleaners</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <ul class="cleaner-list list-unstyled" id="cleaner-grid">
-                                            @foreach ($availableCleaners as $cleaner)
-                                                <li class="cleaner-item d-flex align-items-center justify-content-between p-3 mb-2 shadow-sm rounded-3" style="background-color: #f7f9fc;">
-                                                    <div class="d-flex align-items-center">
-                                                        @if($cleaner->getFirstMediaUrl('profile_pictures'))
-                                                            <img src="{{ $cleaner->getFirstMediaUrl('profile_pictures') }}" alt="Profile Picture" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
-                                                        @else
-                                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; font-size: 1rem;">
-                                                                {{ strtoupper(substr($cleaner->cleaner_name, 0, 2)) }}
-                                                            </div>
-                                                        @endif
-                                                        <span class="text-secondary fw-semibold">{{ $cleaner->cleaner_name }}</span>
-                                                    </div>
-                                                    <div class="checkbox-wrapper-39">
-                                                        <label>
-                                                            <input type="checkbox" name="cleaners[]" value="{{ $cleaner->id }}" id="cleaner-{{ $cleaner->id }}">
-                                                            <span class="checkbox"></span>
-                                                        </label>
-                                                    </div>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-light shadow-sm rounded-pill px-3" data-bs-dismiss="modal">Close</button>
-                                        <button type="submit" class="btn btn-primary shadow-sm rounded-pill px-4">Assign Selected</button>
+                            <!-- Modal for Cleaner Selection -->
+                            <div class="modal fade" id="cleanerModal" tabindex="-1" aria-labelledby="cleanerModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="cleanerModalLabel">Select Cleaners</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <ul class="cleaner-list list-unstyled" id="cleaner-grid">
+                                                @foreach ($availableCleaners as $cleaner)
+                                                    <li class="cleaner-item d-flex align-items-center justify-content-between p-3 mb-2 shadow-sm rounded-3" style="background-color: #f7f9fc;">
+                                                        <div class="d-flex align-items-center">
+                                                            @if($cleaner->getFirstMediaUrl('profile_pictures'))
+                                                                <img src="{{ $cleaner->getFirstMediaUrl('profile_pictures') }}" alt="Profile Picture" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                                            @else
+                                                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; font-size: 1rem;">
+                                                                    {{ strtoupper(substr($cleaner->cleaner_name, 0, 2)) }}
+                                                                </div>
+                                                            @endif
+                                                            <span class="text-secondary fw-semibold">{{ $cleaner->cleaner_name }}</span>
+                                                        </div>
+                                                        <div class="checkbox-wrapper-39">
+                                                            <label>
+                                                                <input type="checkbox" name="cleaners[]" value="{{ $cleaner->id }}" id="cleaner-{{ $cleaner->id }}">
+                                                                <span class="checkbox"></span>
+                                                            </label>
+                                                        </div>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-light shadow-sm rounded-pill px-3" data-bs-dismiss="modal">Close</button>
+                                            <button type="submit" class="btn btn-primary shadow-sm rounded-pill px-4">Assign</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </form>
+                        </form>
+                    @endif
                 @else
                     <div class="alert alert-info mt-3 rounded-3 shadow-sm">
-                        Complaint is already <strong>{{ ucfirst($complaint->comp_status) }}</strong>.
+                        Cleaners have been assigned and notified. 
                     </div>
                     <h5 class="mt-4">Assigned Cleaners</h5>
                     <ul class="list-group list-group-flush rounded-3 shadow-sm">

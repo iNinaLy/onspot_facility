@@ -7,11 +7,9 @@ use App\Http\Controllers\SupervisorController;
 use App\Http\Controllers\CleanerController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\HistoryController;
-use App\Http\Controllers\HomeController;
 use App\Http\Controllers\UserController;
-use Illuminate\Support\Facades\Password;
-use App\Http\Controllers\Auth\PasswordResetController;
-
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NotificationTokenController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -82,7 +80,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 // Supervisor Routes
 Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supervisor.')->group(function () {
     Route::get('/dashboard', [SupervisorController::class, 'dashboard'])->name('dashboard');
-    
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/read/{id}', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::delete('/supervisor/notifications/remove-read', [NotificationController::class, 'removeReadNotifications'])
+    ->name('supervisor.notifications.removeRead');
+
     // Cleaner management
     Route::get('/cleaners', [SupervisorController::class, 'cleaners'])->name('cleaners');
     Route::get('/pending-complaints', [ComplaintController::class, 'getPendingComplaints']);
@@ -100,6 +102,11 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     Route::get('/complaints/{id}', [ComplaintController::class, 'show'])->name('complaints.show');
     Route::post('/complaints/{id}/assign-cleaner', [ComplaintController::class, 'assignCleaner'])->name('assign.cleaner');
     Route::post('/complaints/{id}/update-assignment', [ComplaintController::class, 'updateAssignment'])->name('complaints.updateAssignment');
+   
+    
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/update-device-token', [NotificationTokenController::class, 'updateToken']);
+    });
     
     // History page
     Route::get('/history', [SupervisorController::class, 'history'])->name('history');

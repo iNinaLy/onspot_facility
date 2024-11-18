@@ -330,15 +330,22 @@ class AdminController extends Controller
 
     public function supervisors(Request $request)
     {
-        $search = $request->query('search');
-        $supervisors = User::where('role', 'supervisor')
-            ->when($search, function ($query, $search) {
-                return $query->where('name', 'LIKE', "%{$search}%")
-                            ->orWhere('username', 'LIKE', "%{$search}%")
-                            ->orWhere('email', 'LIKE', "%{$search}%");
-            })
-            ->paginate(10);
+        $query = User::where('role', 'supervisor');
 
+        // Apply search filter if provided
+        if ($request->has('search')) {
+            $searchTerm = $request->input('search');
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('email', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('phone_no', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+
+        // Paginate the results
+        $supervisors = $query->paginate(10);
+
+        // Return the view with supervisors data
         return view('admin.supervisors.index', compact('supervisors'));
     }
 

@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Cleaner;
-use App\Models\Task;
 use App\Models\User; // For officer and supervisor roles
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -53,7 +52,6 @@ class Complaint extends Model implements HasMedia
             self::STATUS_COMPLETED,
         ];
     }
-
 
     /**
      * Register media collections for the complaint images.
@@ -122,11 +120,14 @@ class Complaint extends Model implements HasMedia
                     ->withTimestamps();
     }
 
-
     /**
-     * Define one-to-many relationship with Task model.
+     * Generic relationship for user association.
      */
-  
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'officer_id');
+    }
+
     /**
      * Update the status of the complaint.
      * Throws an exception if the status is invalid.
@@ -169,5 +170,6 @@ class Complaint extends Model implements HasMedia
         // Update the complaint status to on-going
         $this->updateStatus(self::STATUS_ONGOING);
     }
-
 }
+
+

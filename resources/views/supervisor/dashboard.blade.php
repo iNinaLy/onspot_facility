@@ -1,6 +1,4 @@
 <x-app-layout>
-    <x-slot name="header"></x-slot>
-
     <!-- Include custom fonts -->
     <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap">
 
@@ -16,7 +14,14 @@
             color: #1f2937;
         }
 
-        /* Button styling */
+        @media (prefers-color-scheme: dark) {
+            .dark\:text-gray-200 {
+                --tw-text-opacity: 1;
+                color: rgb(0 0 0);
+            }
+        }
+
+        /* Button styling with gradient and hover effect */
         .button-transition {
             transition: all 0.3s ease-in-out;
             transform: scale(1);
@@ -33,6 +38,10 @@
             transform: scale(1.05);
             background-color: #24445c;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .content-wrapper {
+            padding-top: 70px;
         }
 
         /* Fade-in effect */
@@ -218,7 +227,21 @@
             margin-top: 8px;
         }
 
-        /* Recent Complaint Card */
+        /* Complaints Management and Cleaners Cards - Borderless */
+        #complaints-card, .cleaners-card {
+            background: none;
+            box-shadow: none;
+        }
+
+        /* Divider Styling */
+        .section-divider {
+            border: none;
+            height: 1px;
+            background: rgba(0, 0, 0, 0.1);
+            margin: 40px 0;
+        }
+
+        /* Recent Complaint Card with hover effect */
         .recent-complaint-card {
             background-color: #ffffff;
             padding: 20px;
@@ -227,7 +250,7 @@
             display: flex;
             align-items: flex-start;
             gap: 1rem;
-            transition: transform 0.3s ease-in-out;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
             position: relative;
             overflow: hidden;
         }
@@ -280,42 +303,6 @@
             margin-right: 4px;
         }
 
-        /* Cleaners Card */
-        .cleaners-card {
-            background-color: #ffffff;
-            overflow: hidden;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-wrap: wrap;
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .cleaners-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .cleaners-card img {
-            width: 100%;
-            height: auto;
-            object-fit: cover;
-        }
-
-        /* Complaints Card */
-        #complaints-card {
-            background-color: #ffffff;
-            overflow: hidden;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-wrap: wrap;
-            transition: transform 0.3s ease-in-out;
-        }
-
-        #complaints-card:hover {
-            transform: translateY(-5px);
-        }
-
         /* Media Queries for Task Cards */
         @media (max-width: 768px) {
             .task-wrapper {
@@ -333,28 +320,48 @@
     <div class="container py-8">
         <div class="max-w-full mx-auto sm:px-6 lg:px-8">
 
+            <!-- Welcome Message at the Top -->
+            <div class="mb-6 text-2xl font-semibold text-gray-800 dark:text-gray-200">
+                Welcome, {{ Auth::user()->name }}!
+            </div>
+
             <!-- New Complaints Notification -->
             @if(isset($newComplaints) && is_countable($newComplaints) && count($newComplaints) > 0)
-                <div class="new-complaint-notification">
-                    <img src="{{ asset('img/svg/notification.svg') }}" class="notification-icon" alt="Notification Icon">
-                    <div class="notification-text">
-                        <strong>New Complaints Available!</strong>
-                        You have {{ count($newComplaints) }} new complaints.
-                        <a href="{{ route('supervisor.complaints.index') }}">View all complaints</a>
+                <div class="flex items-center p-4 bg-blue-100 border-l-4 border-blue-500 rounded-lg shadow-sm">
+                    <div class="flex-shrink-0">
+                        <img src="{{ asset('img/svg/notification.svg') }}" class="h-8 w-8" alt="Notification Icon">
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-semibold text-blue-900">
+                            New Complaints Available!
+                        </p>
+                        <p class="text-sm text-blue-700">
+                            You have {{ count($newComplaints) }} new complaints.
+                        </p>
+                        <a href="{{ route('supervisor.complaints.index') }}" class="text-sm font-medium text-blue-600 hover:underline">
+                            View all complaints
+                        </a>
                     </div>
                 </div>
             @else
-                <div class="new-complaint-notification">
-                    <img src="{{ asset('img/svg/notification.svg') }}" class="notification-icon" alt="Notification Icon">
-                    <div class="notification-text">
-                        <strong>No New Complaints</strong>
-                        There are currently no new complaints.
+                <div class="flex items-center p-4 bg-gray-100 border-l-4 border-gray-400 rounded-lg shadow-sm">
+                    <div class="flex-shrink-0">
+                        <img src="{{ asset('img/svg/notification.svg') }}" class="h-8 w-8" alt="Notification Icon">
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-semibold text-gray-900">
+                            No New Complaints
+                        </p>
+                        <p class="text-sm text-gray-700">
+                            There are currently no new complaints.
+                        </p>
                     </div>
                 </div>
             @endif
 
-            <!-- Complaints Management Card -->
-            <div class="flex bg-white overflow-hidden sm:rounded-lg mt-6" id="complaints-card">
+
+            <!-- Complaints Management Card (Assign Section - Borderless) -->
+            <div class="flex overflow-hidden sm:rounded-lg mt-6" id="complaints-card">
                 <div class="p-6 w-full md:w-1/2">
                     <h1 class="text-xl font-bold">Received Complaints?</h1>
                     <h2 class="text-lg mt-2">Start Assigning Cleaners</h2>
@@ -371,8 +378,11 @@
                 </div>
             </div>
 
-            <!-- Check Cleaners On Duty Section -->
-            <div class="flex items-center bg-white overflow-hidden sm:rounded-lg mt-6 cleaners-card fade-in">
+            <!-- Divider Between Assign and Cleaner Sections -->
+            <hr class="section-divider">
+
+            <!-- Check Cleaners On Duty Section (Borderless) -->
+            <div class="flex items-center overflow-hidden sm:rounded-lg cleaners-card fade-in">
                 <div class="w-full md:w-1/2">
                     <img src="{{ asset('/images/cleaner.png') }}" alt="Cleaner Image" class="w-full h-auto">
                 </div>
@@ -398,6 +408,9 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Divider Between Cleaner and Recent Complaint Sections -->
+            <hr class="section-divider">
 
             <!-- Recent Complaint Section -->
             <div class="mt-10">
@@ -430,7 +443,7 @@
             <div class="mt-10">
                 <h2 class="text-xl font-bold text-gray-800 mb-4">Tasks</h2>
                 <div class="task-wrapper">
-                    <!-- Task Card 1 -->
+                    <!-- Task Cards -->
                     <div class="task-card fade-in">
                         <img src="{{ asset('img/svg/mop.svg') }}" alt="Mopping Icon">
                         <div class="task-info">
@@ -438,8 +451,6 @@
                             <p>Ensure floors are spotless by mopping regularly.</p>
                         </div>
                     </div>
-
-                    <!-- Task Card 2 -->
                     <div class="task-card fade-in">
                         <img src="{{ asset('img/svg/wipe.svg') }}" alt="Wiping Icon">
                         <div class="task-info">
@@ -447,8 +458,6 @@
                             <p>Wipe surfaces to remove dust and grime.</p>
                         </div>
                     </div>
-
-                    <!-- Task Card 3 -->
                     <div class="task-card fade-in">
                         <img src="{{ asset('img/svg/toilet.svg') }}" alt="Toilet Cleaning Icon">
                         <div class="task-info">
@@ -456,8 +465,6 @@
                             <p>Maintain hygiene by cleaning restrooms thoroughly.</p>
                         </div>
                     </div>
-
-                    <!-- Task Card 4 -->
                     <div class="task-card fade-in">
                         <img src="{{ asset('img/svg/vacuuming.svg') }}" alt="Vacuuming Icon">
                         <div class="task-info">
@@ -465,8 +472,6 @@
                             <p>Keep carpets clean by regular vacuuming.</p>
                         </div>
                     </div>
-
-                    <!-- Task Card 5 -->
                     <div class="task-card fade-in">
                         <img src="{{ asset('img/svg/desk.svg') }}" alt="Organizing Icon">
                         <div class="task-info">
@@ -474,8 +479,6 @@
                             <p>Arrange items neatly to maintain order.</p>
                         </div>
                     </div>
-
-                    <!-- Task Card 6 -->
                     <div class="task-card fade-in">
                         <img src="{{ asset('img/svg/window.svg') }}" alt="Window Cleaning Icon">
                         <div class="task-info">
@@ -485,7 +488,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 

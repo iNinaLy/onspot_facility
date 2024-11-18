@@ -69,7 +69,7 @@
         <!-- Submit and Cancel Buttons -->
         <div class="flex justify-between mt-6">
             <a href="{{ route('admin.cleaners') }}" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-all">Cancel</a>
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all">Update Cleaner</button>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all">Save</button>
         </div>
     </form>
 </div>

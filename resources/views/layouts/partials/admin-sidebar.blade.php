@@ -2,10 +2,15 @@
 <html lang="en">
 
 <head>
+    <!-- Meta and Title -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Responsive Sidebar</title>
+
+    <!-- Tailwind CSS -->
     <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
+
+    <!-- Custom Styles -->
     <style>
         /* Sidebar Styling */
         #sidebar-container {
@@ -123,10 +128,12 @@
                             <img src="{{ asset('img/svg/manage.svg') }}" alt="Manage Icon" class="h-5 w-5 mr-3">
                             Manage
                         </span>
-                        <img id="arrow-icon" src="{{ asset('img/svg/chevron.svg') }}" alt="Arrow Icon" class="h-5 w-5 transition-transform">
+                        <!-- Made the arrow icon smaller by changing h-5 w-5 to h-3 w-3 -->
+                        <img id="arrow-icon" src="{{ asset('img/svg/chevron.svg') }}" alt="Arrow Icon" class="h-3 w-3 transition-transform">
                     </button>
 
                     <!-- Manage Submenu -->
+                    <!-- Ensure submenu is hidden by default -->
                     <div id="manageSubmenu" class="hidden pl-6 space-y-2">
                         <a href="{{ route('admin.officers') }}" class="menu-item p-2 block rounded-lg">
                             Officer
@@ -173,36 +180,28 @@
         </div>
     </div>
 
+    <!-- Main Content Area (optional) -->
+    <!-- Add your main content here -->
+
+    <!-- Scripts -->
     <script>
-        // Toggle submenu and store state in localStorage
+        // Toggle submenu without using localStorage
         function toggleSubmenu() {
             const submenu = document.getElementById('manageSubmenu');
             const arrowIcon = document.getElementById('arrow-icon');
-            
+
             submenu.classList.toggle('hidden');
             arrowIcon.classList.toggle('rotate-90'); // Toggle rotation class for animation
-            localStorage.setItem('submenuOpen', !submenu.classList.contains('hidden'));
         }
 
-        // Restore submenu state on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            const submenu = document.getElementById('manageSubmenu');
-            const arrowIcon = document.getElementById('arrow-icon');
-            const isOpen = localStorage.getItem('submenuOpen') === 'true';
-
-            if (isOpen) {
-                submenu.classList.remove('hidden');
-                arrowIcon.classList.add('rotate-90');
-            }
-        });
+        // Removed localStorage code to prevent submenu from opening automatically on page load
 
         // Toggle sidebar visibility
         document.getElementById('toggle-button').addEventListener('click', function () {
             const sidebar = document.getElementById('sidebar-container');
             const backdrop = document.getElementById('sidebar-backdrop');
             sidebar.classList.toggle('-translate-x-full');
-            backdrop.classList.toggle('sidebar-backdrop-visible');
-            backdrop.classList.toggle('sidebar-backdrop-hidden');
+            backdrop.classList.toggle('hidden');
         });
 
         // Close sidebar when clicking on the backdrop (mobile only)
@@ -210,8 +209,7 @@
             const sidebar = document.getElementById('sidebar-container');
             const backdrop = document.getElementById('sidebar-backdrop');
             sidebar.classList.add('-translate-x-full');
-            backdrop.classList.remove('sidebar-backdrop-visible');
-            backdrop.classList.add('sidebar-backdrop-hidden');
+            backdrop.classList.add('hidden');
         });
     </script>
 

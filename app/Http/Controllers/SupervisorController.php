@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Supervisor;
+use App\Models\User; // Use the User model instead of Supervisor
 use App\Models\Complaint;
 use App\Models\Cleaner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
-
 
 class SupervisorController extends Controller
 {
@@ -23,44 +22,61 @@ class SupervisorController extends Controller
         $availableCleaners = Cleaner::where('status', 'available')->count();
         $unavailableCleaners = Cleaner::where('status', 'unavailable')->count();
 
-        // Fetch the total number of supervisors
-        $totalSupervisors = Supervisor::count();
+        // Fetch the total number of supervisors from the users table where role is 'supervisor'
+        $totalSupervisors = User::where('role', 'supervisor')->count();
 
-        // Fetch the 5 most recent complaints
-        $recentComplaints = Complaint::orderBy('comp_date', 'desc')->limit(5)->get();
+        // Fetch the 5 most recent complaints, including related user and cleaner data
+        $recentComplaints = Complaint::with(['user', 'cleaners'])
+            ->orderBy('comp_date', 'desc')
+            ->limit(5)
+            ->get();
 
-        return view('supervisor.dashboard', compact('totalCleaners', 'availableCleaners', 'unavailableCleaners', 'totalSupervisors', 'recentComplaints'));
+        // Retrieve unread notifications for the authenticated user
+        $unreadNotifications = auth()->guard('web')->user()->unreadNotifications;
+
+
+        // Pass data to the view
+        return view('supervisor.dashboard', compact(
+            'totalCleaners',
+            'availableCleaners',
+            'unavailableCleaners',
+            'totalSupervisors',
+            'recentComplaints',
+            'unreadNotifications'
+        ));
     }
+
 
     /**
      * Show the history of complaints.
      */
-    
-    
-     public function history()
-        {
-            $supervisorId = Auth::id();
+    public function history()
+    {
+        $supervisorId = Auth::id();
 
-            // Fetch today's complaints with cleaner details
-            $todaysComplaints = Complaint::where('assigned_by', $supervisorId)
-                ->whereDate('comp_date', Carbon::today())
-                ->with(['cleaners' => function ($query) {
-                    $query->select('cleaners.id', 'cleaner_name', 'cleaner_phoneNo');
-                }])
-                ->orderBy('comp_date', 'desc')
-                ->get();
+        // Fetch today's complaints with 'ongoing' or 'pending' status
+        $todaysComplaints = Complaint::where('assigned_by', $supervisorId)
+            ->whereDate('comp_date', Carbon::today())
+            ->whereIn('comp_status', ['pending', 'ongoing']) // Include both pending and ongoing
+            ->with(['cleaners' => function ($query) {
+                $query->select('cleaners.id', 'cleaner_name', 'cleaner_phoneNo');
+            }])
+            ->orderBy('comp_date', 'desc')
+            ->get();
 
-            // Fetch past complaints with cleaner details
-            $pastComplaints = Complaint::where('assigned_by', $supervisorId)
-                ->whereDate('comp_date', '<', Carbon::today())
-                ->with(['cleaners' => function ($query) {
-                    $query->select('cleaners.id', 'cleaner_name', 'cleaner_phoneNo');
-                }])
-                ->orderBy('comp_date', 'desc')
-                ->get();
+        // Fetch past complaints with 'ongoing' or 'pending' status
+        $pastComplaints = Complaint::where('assigned_by', $supervisorId)
+            ->whereDate('comp_date', '<', Carbon::today())
+            ->whereIn('comp_status', ['pending', 'ongoing']) // Include both pending and ongoing
+            ->with(['cleaners' => function ($query) {
+                $query->select('cleaners.id', 'cleaner_name', 'cleaner_phoneNo');
+            }])
+            ->orderBy('comp_date', 'desc')
+            ->get();
 
-            return view('supervisor.history', compact('todaysComplaints', 'pastComplaints'));
-        }
+        return view('supervisor.history', compact('todaysComplaints', 'pastComplaints'));
+    }
+
 
 
     /**
@@ -88,7 +104,8 @@ class SupervisorController extends Controller
      */
     public function index()
     {
-        $supervisors = Supervisor::all();
+        // Fetch supervisors from users table where role is 'supervisor'
+        $supervisors = User::where('role', 'supervisor')->get();
         return response()->json(['success' => true, 'data' => $supervisors], 200);
     }
 
@@ -98,17 +115,19 @@ class SupervisorController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            's_email' => 'required|email|unique:supervisors',
-            's_pass' => 'required|min:8',
-            's_name' => 'required|string|max:255',
-            's_phoneNo' => 'required|string|max:15',
+            'email'     => 'required|email|unique:users',
+            'password'  => 'required|min:8',
+            'name'      => 'required|string|max:255',
+            'phone_no'  => 'required|string|max:15',
         ]);
 
-        $supervisor = Supervisor::create([
-            's_email' => $request->s_email,
-            's_pass' => bcrypt($request->s_pass),
-            's_name' => $request->s_name,
-            's_phoneNo' => $request->s_phoneNo,
+        // Create a new supervisor in the users table
+        $supervisor = User::create([
+            'email'     => $request->email,
+            'password'  => bcrypt($request->password),
+            'name'      => $request->name,
+            'phone_no'  => $request->phone_no,
+            'role'      => 'supervisor',
         ]);
 
         return response()->json(['success' => true, 'data' => $supervisor], 201);
@@ -119,7 +138,8 @@ class SupervisorController extends Controller
      */
     public function show($id)
     {
-        $supervisor = Supervisor::find($id);
+        // Find the supervisor in the users table where role is 'supervisor'
+        $supervisor = User::where('role', 'supervisor')->find($id);
 
         if (!$supervisor) {
             return response()->json(['success' => false, 'message' => 'Supervisor not found'], 404);
@@ -140,8 +160,10 @@ class SupervisorController extends Controller
     /**
      * Show the form for editing the specified supervisor.
      */
-    public function edit(Supervisor $supervisor)
+    public function edit($id)
     {
+        // Find the supervisor in the users table
+        $supervisor = User::where('role', 'supervisor')->findOrFail($id);
         return view('admin.supervisors.edit', compact('supervisor'));
     }
 
@@ -150,22 +172,20 @@ class SupervisorController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $supervisor = Supervisor::findOrFail($id);
+        $supervisor = User::where('role', 'supervisor')->findOrFail($id);
 
         $request->validate([
-            's_name' => 'required|string|max:255',
-            's_email' => 'required|email|max:255|unique:supervisors,s_email,' . $id,
-            's_phoneNo' => 'required|string|max:15',
-            'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            's_pass' => 'nullable|string|min:8|confirmed',
+            'name'         => 'required|string|max:255',
+            'email'        => 'required|email|max:255|unique:users,email,' . $id,
+            'phone_no'     => 'required|string|max:15',
+            'profile_pic'  => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'password'     => 'nullable|string|min:8|confirmed',
         ]);
 
         // Update supervisor data
-        $supervisor->update([
-            's_name' => $request->s_name,
-            's_email' => $request->s_email,
-            's_phoneNo' => $request->s_phoneNo,
-        ]);
+        $supervisor->name     = $request->name;
+        $supervisor->email    = $request->email;
+        $supervisor->phone_no = $request->phone_no;
 
         // Handle profile picture upload
         if ($request->hasFile('profile_pic')) {
@@ -179,8 +199,8 @@ class SupervisorController extends Controller
         }
 
         // Update password if provided
-        if ($request->filled('s_pass')) {
-            $supervisor->s_pass = bcrypt($request->s_pass);
+        if ($request->filled('password')) {
+            $supervisor->password = bcrypt($request->password);
         }
 
         $supervisor->save();
@@ -193,7 +213,7 @@ class SupervisorController extends Controller
      */
     public function destroy($id)
     {
-        $supervisor = Supervisor::findOrFail($id);
+        $supervisor = User::where('role', 'supervisor')->findOrFail($id);
 
         if ($supervisor->profile_pic && Storage::exists('public/' . $supervisor->profile_pic)) {
             Storage::delete('public/' . $supervisor->profile_pic);

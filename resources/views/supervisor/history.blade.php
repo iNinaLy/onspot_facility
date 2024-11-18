@@ -191,55 +191,11 @@
 
     <!-- Complaints Sections (Today's and Past Complaints) -->
     <div class="section">
-        <h2 class="section-heading">Recent Complaints</h2>
-        @forelse($todaysComplaints as $complaint)
-            <div class="list-item" data-status="{{ $complaint->comp_status }}" data-description="{{ strtolower($complaint->comp_desc) }}" data-date="{{ $complaint->comp_date }}">
-                <div class="list-item-header">
-                    <div class="list-item-title">Location: {{ $complaint->comp_location ?? 'N/A' }}</div>
-                    <small class="list-item-date">{{ \Carbon\Carbon::parse($complaint->comp_date)->format('H:i A') }}</small>
-                    @if($complaint->updated_at->diffInHours(now()) <= 24)
-                        <span class="badge badge-new">New</span>
-                    @endif
-                </div>
-                <div><strong>Description:</strong> {{ $complaint->comp_desc }}</div>
-                <div>
-                    <strong>Status:</strong>
-                    <span class="badge 
-                      {{ strtolower($complaint->comp_status) == 'pending' ? 'status-pending' : '' }}
-                      {{ strtolower($complaint->comp_status) == 'ongoing' ? 'status-ongoing' : '' }}
-                      {{ strtolower($complaint->comp_status) == 'completed' ? 'status-completed' : '' }}">
-                        {{ ucfirst($complaint->comp_status) }}
-                    </span>
-                </div>
-                <button class="btn-details" onclick="toggleDetails({{ $complaint->id }})">View Details</button>
-                <div id="details-{{ $complaint->id }}" class="toggle-content">
-                    <p><strong>Complaint by:</strong> {{ $complaint->officer->name ?? 'Unknown Officer' }}</p>
-                    <h6 class="mt-3">Assigned Cleaners:</h6>
-                    <ul class="cleaners-list">
-                        @forelse ($complaint->cleaners as $cleaner)
-                            <li>
-                                <strong>{{ $cleaner->cleaner_name }}</strong>
-                                <div class="phone-link">
-                                    <i class="fas fa-phone-alt"></i> {{ $cleaner->cleaner_phoneNo ?? 'N/A' }}
-                                </div>
-                            </li>
-                        @empty
-                            <li>No cleaners assigned.</li>
-                        @endforelse
-                    </ul>
-                </div>
-            </div>
-        @empty
-            <p>No recent complaints.</p>
-        @endforelse
-    </div>
-
-    <div class="section">
-        <h2 class="section-heading">Past Complaints</h2>
+        <h2 class="section-heading">Assigned Complaints</h2>
         @forelse($pastComplaints as $complaint)
             <div class="list-item" data-status="{{ $complaint->comp_status }}" data-description="{{ strtolower($complaint->comp_desc) }}" data-date="{{ $complaint->comp_date }}">
                 <div class="list-item-header">
-                    <div class="list-item-title">Floor: {{ $complaint->comp_location ?? 'N/A' }}</div>
+                    <div class="list-item-title">Location: {{ $complaint->comp_location ?? 'N/A' }}</div>
                     <small class="list-item-date">{{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}</small>
                 </div>
                 <div><strong>Description:</strong> {{ $complaint->comp_desc }}</div>
@@ -248,7 +204,7 @@
                     <span class="badge 
                       {{ strtolower($complaint->comp_status) == 'pending' ? 'status-pending' : '' }}
                       {{ strtolower($complaint->comp_status) == 'ongoing' ? 'status-ongoing' : '' }}
-                      {{ strtolower($complaint->comp_status) == 'completed' ? 'status-completed' : '' }}">
+                      {{ strtolower($complaint->comp_status) == 'completed' ? 'status-completed' : '' }} ">
                         {{ ucfirst($complaint->comp_status) }}
                     </span>
                 </div>
@@ -262,14 +218,19 @@
                                 <strong>{{ $cleaner->cleaner_name }}</strong>
                             </li>
                             <li>
-                            <div class="phone-link">
+                                <div class="phone-link">
                                     <i class="fas fa-phone-alt"></i> {{ $cleaner->cleaner_phoneNo ?? 'N/A' }}
-                            </div>
-                             </li>
+                                </div>
+                            </li>
                         @empty
                             <li>No cleaners assigned.</li>
                         @endforelse
                     </ul>
+                    <!-- Added Assigned Date and Time -->
+                    <div class="mt-3">
+                        <p><strong>Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') ?? 'N/A' }}</p>
+                        <p><strong>Assigned Time:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('h:i A') ?? 'N/A' }}</p>
+                    </div>
                 </div>
             </div>
         @empty
