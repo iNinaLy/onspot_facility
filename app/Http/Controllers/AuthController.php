@@ -103,7 +103,7 @@ use App\Models\NotificationToken;
     $request->validate([
         'device_token' => 'required',
         'device_id' => 'required',
-        'device_type' => 'required',
+        'device_type' => 'required',                                                                            
     ]);
 
     NotificationToken::updateOrCreate(

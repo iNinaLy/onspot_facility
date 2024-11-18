@@ -104,10 +104,10 @@ class ComplaintCleanerController extends Controller
             // Check if the complaint has an entry in `complaint_cleaner` table
             $hasCleanerAssignment = DB::table('complaint_cleaner')->where('complaint_id', $id)->exists();
     
+            $compImageUrl = $complaint->getFirstMediaUrl('complaint_images') ?: null;
+    
             if (!$hasCleanerAssignment) {
                 // No entry in `complaint_cleaner`, fetch basic details for officer
-                $compImageUrl = $complaint->getFirstMediaUrl('complaint_images') ? url($complaint->getFirstMediaUrl('complaint_images')) : null;
-    
                 $complaintDetails = [
                     'id' => $complaint->id,
                     'comp_date' => $complaint->comp_date,
@@ -122,17 +122,19 @@ class ComplaintCleanerController extends Controller
                     'comp_status' => $complaint->comp_status,
                     'created_at' => $complaint->created_at,
                     'updated_at' => $complaint->updated_at,
+                    'cleaners' => [], // Empty cleaners list
                 ];
     
                 return response()->json($complaintDetails, 200);
-    
             } else {
-                // Entry exists in `complaint_cleaner`, fetch extended details with relationships for supervisors/cleaners
-                $complaint = Complaint::with(['cleaners', 'officer', 'supervisor'])
-                    ->findOrFail($id);
+                // Fetch cleaner details from the users table
+                $cleaners = DB::table('complaint_cleaner')
+                    ->join('users', 'complaint_cleaner.cleaner_id', '=', 'users.id')
+                    ->where('complaint_cleaner.complaint_id', $id)
+                    ->select('users.id as cleaner_id', 'users.name as cleaner_name')
+                    ->get();
     
-                $compImageUrl = $complaint->getFirstMediaUrl('complaint_images') ?: null;
-    
+                // Prepare the extended complaint details
                 $complaintDetails = [
                     'id' => $complaint->id,
                     'comp_date' => $complaint->comp_date,
@@ -147,11 +149,11 @@ class ComplaintCleanerController extends Controller
                     'comp_status' => $complaint->comp_status,
                     'created_at' => $complaint->created_at,
                     'updated_at' => $complaint->updated_at,
+                    'cleaners' => $cleaners, // List of cleaner details
                 ];
     
                 return response()->json($complaintDetails, 200);
             }
-    
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
@@ -159,5 +161,5 @@ class ComplaintCleanerController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-    }
+    }    
 }

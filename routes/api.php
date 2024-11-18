@@ -38,8 +38,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Complaint routes
     Route::post('/complaints', [ComplaintController::class, 'apistore']);
     Route::get('/complaints-history', [ComplaintController::class, 'getOfficerComplaints']);
-    Route::get('/complaints-recent', [ComplaintController::class, 'recentComplaint']); //not working
+    Route::get('/complaints-recent', [ComplaintController::class, 'recentComplaint']);
     Route::get('/complaints/{id}/details', [ComplaintCleanerController::class, 'getComplaintDetailsConditional']);
+    Route::post('/complaints/{id}/complete', [ComplaintController::class, 'completeComplaint']); 
 });
 
 Route::get('/test', function () {

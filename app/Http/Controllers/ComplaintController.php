@@ -285,25 +285,26 @@ use App\Notifications\ComplaintNotification;
         }
 
     
+        // assign complaint to cleaner
         public function AssignTask(Request $request, $id)
         {
-            // Retrieve the complaint details from the `complaints` table
+            // Retrieve the complaint details from the complaints table
             $complaint = Complaint::select('id', 'comp_location', 'comp_date', 'comp_desc', 'officer_id', 'comp_status')
                 ->where('id', $id) // Filter by the specific complaint ID
                 ->whereNull('assigned_by') // Include only unassigned complaints
                 ->first();
-        
+
             // Check if complaint was found
             if (!$complaint) {
                 return response()->json(['message' => 'Complaint not found'], 404);
             }
-        
-            // Retrieve officer name from `users` table
+
+            // Retrieve officer name from users table
             $user = User::select('name')
                 ->where('id', $complaint->officer_id)
                 ->first();
             $officerName = $user ? $user->name : 'Unknown Officer';
-        
+
             // Retrieve available cleaners' IDs and names
             $availableCleaners = Cleaner::select('id', 'cleaner_name')
                 ->where('status', 'available')
@@ -314,7 +315,7 @@ use App\Notifications\ComplaintNotification;
                     'cleaner_name' => $cleaner->cleaner_name
                 ];
             })->toArray();
-        
+
             // Prepare data to send to frontend
             $complaintData = [
                 'id' => (string) $complaint->id,
@@ -325,7 +326,7 @@ use App\Notifications\ComplaintNotification;
                 'available_cleaners' => $cleaners,
                 'comp_status' => $complaint->comp_status,
             ];
-        
+
             // Check if there's data to be inserted (if provided in the request)
             if ($request->has('cleaner_ids') && $request->has('no_of_cleaners') && $request->has('assigned_by')) {
                 $assignedDate = now();
@@ -339,20 +340,20 @@ use App\Notifications\ComplaintNotification;
                         'assigned_by' => $request->input('assigned_by'),
                         'assigned_date' => $assignedDate,
                     ]);
-        
+
                     // Update cleaner status to "unavailable"
                     Cleaner::where('id', $cleanerId)->update(['status' => 'unavailable']);
                 }
-        
+
                 // Update the complaints table with assignment details and change status to "ongoing"
                 $complaint->update([
-                    'comp_status' => 'ongoing',
+                    'comp_status' => Complaint::STATUS_ON_GOING,
                     'assigned_by' => $request->input('assigned_by'),
                     'assigned_date' => $assignedDate,
                     'no_of_cleaners' => $request->input('no_of_cleaners'),
                 ]);
             }
-        
+
             // Retrieve assigned cleaners for the response
             $assignedCleaners = ComplaintCleaner::where('complaint_id', $complaint->id)
                 ->join('cleaners', 'complaint_cleaner.cleaner_id', '=', 'cleaners.id')
@@ -366,7 +367,7 @@ use App\Notifications\ComplaintNotification;
                         'status' => $cleaner->status,
                     ];
                 });
-        
+
             // Return both the retrieved data and success message
             return response()->json([
                 'complaint_data' => $complaintData,
@@ -471,6 +472,35 @@ use App\Notifications\ComplaintNotification;
 
             return response()->json($responseData);
         } 
-
+        public function completeComplaint(Request $request, $id)
+        {
+            // Find the complaint and ensure it exists
+            $complaint = Complaint::findOrFail($id);
+        
+            // Validate the current status of the complaint
+            if ($complaint->comp_status !== 'ongoing') {
+                return response()->json(['error' => 'Only ongoing complaints can be marked as complete.'], 400);
+            }
+        
+            DB::transaction(function () use ($complaint) {
+                // Update the complaint's status to 'completed'
+                $complaint->update([
+                    'comp_status' => 'completed',
+                    'completed_by' => Auth::id(), // Optional: Track who marked it as completed
+                    'completed_at' => now(), // Optional: Add timestamp for completion
+                ]);
+        
+                // Update all assigned cleaners' status to 'available'
+                $cleaners = $complaint->cleaners; // Assuming a relationship exists
+                foreach ($cleaners as $cleaner) {
+                    $cleaner->update(['status' => 'available']);
+                }
+            });
+        
+            return response()->json([
+                'message' => 'Complaint marked as completed, and cleaners updated to available.',
+                'complaint' => $complaint,
+            ]);
+        }        
 
     }
