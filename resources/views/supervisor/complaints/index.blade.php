@@ -1,249 +1,255 @@
-<x-app-layout>
-  <style>
-    /* General Container Styles */
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 2rem;
-    }
+@extends('layouts.app')
 
-    /* Header with Filters on the Right */
-    .header-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-    }
+@section('title', 'Recent Complaints')
 
-    .heading {
-      font-size: 2rem;
-      font-weight: bold;
-      color: #2E5675;
-    }
+@push('styles')
+<style>
+  /* General Container Styles */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
 
-    /* Filter Form Styles */
-    .filter-container {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-      flex-wrap: wrap;
-    }
+  /* Header with Filters on the Right */
+  .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 3rem;
+  }
 
-    .filter-container select,
-    .filter-container input {
-      padding: 0.5rem;
-      border-radius: 0.5rem;
-      border: 1px solid #d1d5db;
-      font-size: 0.875rem;
-      width: 150px;
-    }
+  .heading {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2E5675;
+  }
 
-    .view-details-btn, .edit-btn {
-      background-color: #2E5675;
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      font-weight: 600;
-      transition: background-color 0.3s ease;
-      border: none;
-      cursor: pointer;
-    }
+  /* Filter Form Styles */
+  .filter-container {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
 
-    .view-details-btn:hover, .edit-btn:hover {
-      background-color: #1f3c52;
-    }
+  .filter-container select,
+  .filter-container input {
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #d1d5db;
+    font-size: 0.875rem;
+    width: 150px;
+  }
 
-    /* Complaint Card Styles */
-    .complaint-card {
-      display: flex;
-      background-color: white;
-      border-radius: 1rem;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
-      transition: transform 0.3s, box-shadow 0.3s;
-      margin-bottom: 1.5rem;
-      position: relative; /* For "New" Badge Positioning */
-    }
+  .view-details-btn, .edit-btn {
+    background-color: #2E5675;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+    border: none;
+    cursor: pointer;
+  }
 
-    .complaint-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
-    }
+  .view-details-btn:hover, .edit-btn:hover {
+    background-color: #1f3c52;
+  }
 
-    .complaint-image-container {
-      flex: 0 0 220px;
-      height: 220px;
-      background-color: #e5e7eb;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+  /* Complaint Card Styles */
+  .complaint-card {
+    display: flex;
+    background-color: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+    margin-bottom: 1.5rem;
+    position: relative; /* For "New" Badge Positioning */
+  }
 
-    .complaint-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+  .complaint-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+  }
 
-    .complaint-details {
-      flex-grow: 1;
-      padding: 1.5rem;
-    }
+  .complaint-image-container {
+    flex: 0 0 220px;
+    height: 220px;
+    background-color: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-    .complaint-title {
-      font-size: 1.25rem;
-      font-weight: bold;
-      margin-bottom: 0.5rem;
-      color: #1f2937;
-    }
+  .complaint-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 
-    .complaint-meta {
-      color: #6b7280;
-      font-size: 0.875rem;
-      margin-bottom: 0.5rem;
-    }
+  .complaint-details {
+    flex-grow: 1;
+    padding: 1.5rem;
+  }
 
-    .complaint-status {
-      display: inline-block;
-      padding: 0.5rem 1rem;
-      font-size: 0.875rem;
-      border-radius: 9999px;
-      margin-top: 0.5rem;
-    }
+  .complaint-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #1f2937;
+  }
 
-    /* Updated Status Styles */
-    .status-pending {
-      background-color: #fee2e2;
-      color: #b91c1c;
-    }
+  .complaint-meta {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
 
-    .status-ongoing {
-      background-color: #fef3c7;
-      color: #ca8a04;
-    }
+  .complaint-status {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 9999px;
+    margin-top: 0.5rem;
+  }
 
-    .status-completed {
-      background-color: #d1fae5;
-      color: #065f46;
-    }
+  /* Updated Status Styles */
+  .status-pending {
+    background-color: #fee2e2;
+    color: #b91c1c;
+  }
 
-    /* New Badge Styles */
-    .new-badge {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background-color: #cce5ff;
-      color: #004085;
-      padding: 0.25rem 0.75rem;
-      font-size: 0.75rem;
-      font-weight: bold;
-      border-radius: 0.5rem;
-    }
+  .status-ongoing {
+    background-color: #fef3c7;
+    color: #ca8a04;
+  }
 
-    /* Pagination Styles */
-    .pagination {
-      display: flex;
-      justify-content: center;
-      list-style: none;
-      padding: 0;
-    }
+  .status-completed {
+    background-color: #d1fae5;
+    color: #065f46;
+  }
 
-    .pagination li {
-      margin: 0 5px;
-    }
+  /* New Badge Styles */
+  .new-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #cce5ff;
+    color: #004085;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+    border-radius: 0.5rem;
+  }
 
-    .pagination a,
-    .pagination span {
-      color: #2E5675;
-      padding: 8px 12px;
-      text-decoration: none;
-      border: 1px solid #d1d5db;
-      border-radius: 5px;
-    }
+  /* Pagination Styles */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    padding: 0;
+  }
 
-    .pagination .active span {
-      background-color: #2E5675;
-      color: white;
-      border-color: #2E5675;
-    }
+  .pagination li {
+    margin: 0 5px;
+  }
 
-    .pagination a:hover {
-      background-color: #f0f0f0;
-    }
-  </style>
+  .pagination a,
+  .pagination span {
+    color: #2E5675;
+    padding: 8px 12px;
+    text-decoration: none;
+    border: 1px solid #d1d5db;
+    border-radius: 5px;
+  }
 
-  <div class="container">
-    <!-- Header with Filters on the Right -->
-    <div class="header-container">
-      <h1 class="heading">Recent Complaints</h1>
+  .pagination .active span {
+    background-color: #2E5675;
+    color: white;
+    border-color: #2E5675;
+  }
 
-      <!-- Filter Form -->
-      <form id="filter-form" class="filter-container" method="GET" action="{{ route('supervisor.complaints.index') }}">
-        <label for="status-filter">Status:</label>
-        <select id="status-filter" name="status">
-          <option value="">All</option>
-          <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-          <option value="ongoing" {{ request('status') == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
-          <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
-        </select>
+  .pagination a:hover {
+    background-color: #f0f0f0;
+  }
+</style>
+@endpush
 
-        <label for="date-filter">Date:</label>
-        <input type="date" id="date-filter" name="date" value="{{ request('date') }}" />
+@section('content')
+<div class="container">
+  <!-- Header with Filters on the Right -->
+  <div class="header-container">
+    <h1 class="heading">Recent Complaints</h1>
 
-        <button type="submit" class="view-details-btn">Filter</button>
-      </form>
-    </div>
+    <!-- Filter Form -->
+    <form id="filter-form" class="filter-container" method="GET" action="{{ route('supervisor.complaints.index') }}">
+      <label for="status-filter">Status:</label>
+      <select id="status-filter" name="status">
+        <option value="">All</option>
+        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+        <option value="ongoing" {{ request('status') == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
+        <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+      </select>
 
-    <!-- Complaints List -->
-    @foreach($complaints as $complaint)
-      <div class="complaint-card"
-           data-complaint-id="{{ $complaint->id }}"
-           data-status="{{ strtolower($complaint->comp_status) }}"
-           data-date="{{ $complaint->comp_date }}">
+      <label for="date-filter">Date:</label>
+      <input type="date" id="date-filter" name="date" value="{{ request('date') }}" />
 
-        <!-- New Badge for Complaints Updated in Last 24 Hours -->
-        @if($complaint->updated_at->diffInHours(now()) <= 24)
-          <div class="new-badge">New</div>
-        @endif
-
-        <div class="complaint-image-container">
-            @if ($complaint->comp_image)
-              <img src="{{ $complaint->getFirstMediaUrl('complaint_images') }}" alt="Complaint Image" class="complaint-image" />
-            @else
-              <span>No Image Available</span>
-            @endif
-        </div>
-
-        <div class="complaint-details">
-          <h3 class="complaint-title">{{ $complaint->comp_desc }}</h3>
-          <p class="complaint-meta">Location: {{ $complaint->comp_location }}</p>
-          <p class="complaint-meta">Date: {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}</p>
-
-          <span class="complaint-status
-            @if(strtolower($complaint->comp_status) == 'pending') status-pending
-            @elseif(strtolower($complaint->comp_status) == 'ongoing') status-ongoing
-            @elseif(strtolower($complaint->comp_status) == 'completed') status-completed
-            @endif">
-            {{ ucfirst($complaint->comp_status) }}
-          </span>
-
-          <a href="{{ route('supervisor.complaints.show', $complaint->id) }}" class="view-details-btn">View Details</a>
-
-          <!-- Show Edit Button if the logged-in supervisor assigned the complaint -->
-          @if($complaint->cleaners->isNotEmpty() && $complaint->cleaners->first()->pivot->assigned_by == Auth::id())
-            <a href="{{ route('supervisor.complaints.edit', $complaint->id) }}" class="edit-btn mt-2">Edit</a>
-          @endif
-        </div>
-      </div>
-    @endforeach
-
-    <!-- Pagination Links -->
-    <div class="mt-6">
-      {{ $complaints->appends(request()->query())->links() }}
-    </div>
+      <button type="submit" class="view-details-btn">Filter</button>
+    </form>
   </div>
 
-</x-app-layout>
+  <!-- Complaints List -->
+  @foreach($complaints as $complaint)
+    <div class="complaint-card"
+         data-complaint-id="{{ $complaint->id }}"
+         data-status="{{ strtolower($complaint->comp_status) }}"
+         data-date="{{ $complaint->comp_date }}">
+
+      <!-- New Badge for Complaints Updated in Last 24 Hours -->
+      @if($complaint->updated_at->diffInHours(now()) <= 24)
+        <div class="new-badge">New</div>
+      @endif
+
+      <div class="complaint-image-container">
+          @if ($complaint->comp_image)
+            <img src="{{ $complaint->getFirstMediaUrl('complaint_images') }}" alt="Complaint Image" class="complaint-image" />
+          @else
+            <span>No Image Available</span>
+          @endif
+      </div>
+
+      <div class="complaint-details">
+        <h3 class="complaint-title">{{ $complaint->comp_desc }}</h3>
+        <p class="complaint-meta">Location: {{ $complaint->comp_location }}</p>
+        <p class="complaint-meta">Date: {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}</p>
+
+        <span class="complaint-status
+          @if(strtolower($complaint->comp_status) == 'pending') status-pending
+          @elseif(strtolower($complaint->comp_status) == 'ongoing') status-ongoing
+          @elseif(strtolower($complaint->comp_status) == 'completed') status-completed
+          @endif">
+          {{ ucfirst($complaint->comp_status) }}
+        </span>
+
+        <a href="{{ route('supervisor.complaints.show', $complaint->id) }}" class="view-details-btn">View Details</a>
+
+        <!-- Show Edit Button if the logged-in supervisor assigned the complaint -->
+        @if($complaint->cleaners->isNotEmpty() && $complaint->cleaners->first()->pivot->assigned_by == Auth::id())
+          <a href="{{ route('supervisor.complaints.edit', $complaint->id) }}" class="edit-btn mt-2">Edit</a>
+        @endif
+      </div>
+    </div>
+  @endforeach
+
+  <!-- Pagination Links -->
+  <div class="mt-6">
+    {{ $complaints->appends(request()->query())->links() }}
+  </div>
+</div>
+@endsection

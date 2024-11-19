@@ -1,6 +1,10 @@
-<x-app-layout>
-    <!-- Include custom fonts -->
-    <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap">
+@extends('layouts.app')
+
+@section('title', 'Supervisor Dashboard')
+
+@push('styles')
+<!-- Include custom fonts -->
+<link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
 
     <style>
         /* Base styling */
@@ -365,7 +369,9 @@
 
 
     </style>
+    @endpush
 
+    @section('content')
     <div class="container py-8">
         <div class="max-w-full mx-auto sm:px-6 lg:px-8">
 
@@ -374,7 +380,6 @@
                 Welcome, {{ Auth::user()->name }}!
             </div>
 
-     
             <!-- New Complaints Notification -->
             @if(isset($newComplaints) && is_countable($newComplaints) && count($newComplaints) > 0)
                 <div class="flex items-center p-4 bg-blue-100 border-l-4 border-blue-500 rounded-lg shadow-sm">
@@ -386,10 +391,10 @@
                             New Complaints Available!
                         </p>
                         <p class="text-sm text-blue-700">
-                            You have {{ count($newComplaints) }} new complaints.
+                            You have received <strong>{{ count($newComplaints) }}</strong> new complaint{{ count($newComplaints) > 1 ? 's' : '' }}.
                         </p>
                         <a href="{{ route('supervisor.complaints.index') }}" class="text-sm font-medium text-blue-600 hover:underline">
-                            View all complaints
+                            View All Complaints
                         </a>
                     </div>
                 </div>
@@ -403,11 +408,13 @@
                             No New Complaints
                         </p>
                         <p class="text-sm text-gray-700">
-                            There are currently no new complaints.
+                            There are currently no new complaints received.
                         </p>
                     </div>
                 </div>
-            @endif
+@endif
+
+
 
 
             <!-- Complaints Management Card (Assign Section - Borderless) -->
@@ -567,8 +574,9 @@
         </div>
     </div>
 
-    <x-footer />
+    @endsection
 
+    @push('scripts')
     <!-- Include Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Include custom scripts -->
@@ -594,5 +602,4 @@
             details.style.display = details.style.display === 'none' || details.style.display === '' ? 'block' : 'none';
         }
     </script>
-
-</x-app-layout>
+@endpush
