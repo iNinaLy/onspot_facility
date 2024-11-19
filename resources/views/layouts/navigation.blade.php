@@ -32,12 +32,13 @@
 
             <!-- Right Section: Notifications & User Settings -->
             <div class="hidden sm:flex items-center space-x-6">
-                <!-- Notification Bell -->
+              
+            <!-- Notification Bell -->
                 <div class="relative">
                     <button @click="notificationOpen = !notificationOpen" 
                         class="relative text-black hover:text-gray-700 transition duration-300 focus:outline-none">
                         <i class="fa fa-bell text-xl"></i>
-                        <template x-if="notifications.length > 0">
+                        <template x-if="notifications.some(notification => !notification.read_at)">
                             <span class="absolute top-0 right-0 w-3 h-3 bg-red-600 rounded-full"></span>
                         </template>
                     </button>
@@ -53,22 +54,26 @@
                         <div class="divide-y divide-gray-100 max-h-72 overflow-y-auto">
                             <template x-if="notifications.length > 0">
                                 <template x-for="notification in notifications" :key="notification.id">
-                                    <a @click.prevent="redirectAndMarkAsRead(notification)" 
-                                        class="block px-5 py-4 hover:bg-gray-50 transition flex items-center no-underline notification-item">
-                                        <div class="flex-shrink-0 bg-blue-100 text-blue-600 rounded-full h-12 w-12 flex items-center justify-center shadow-inner">
-                                            <i class="fa fa-exclamation-circle text-lg"></i>
-                                        </div>
-                                        <div class="ml-4 flex-1">
-                                            <p class="text-sm font-medium text-gray-800 notification-title">
-                                                New Complaint Received
-                                            </p>
-                                            <p class="text-sm text-gray-500 notification-subtitle">
-                                                Made by: <span class="font-semibold" x-text="notification.data.officer_name ?? 'Unknown Officer'"></span>
-                                            </p>
-                                            <p class="text-xs text-gray-400 notification-time" x-text="new Date(notification.created_at).toLocaleString()"></p>
-                                        </div>
-                                        <i class="fa fa-chevron-right text-gray-400"></i>
-                                    </a>
+                                <a 
+                                    :href="notification.data.comp_id ? `{{ route('supervisor.complaints.show', ['id' => '__ID__']) }}`.replace('__ID__', notification.data.comp_id) : '#'" 
+                                    @click.prevent="notification.data.comp_id ? markAsRead(notification.id, notification.data.comp_id) : alert('Invalid Complaint ID')" 
+                                    class="block px-5 py-4 hover:bg-gray-50 transition flex items-center no-underline notification-item"
+                                    :class="{ 'bg-blue-100': !notification.read_at }">
+                                    <div class="flex-shrink-0 bg-blue-100 text-blue-600 rounded-full h-12 w-12 flex items-center justify-center shadow-inner">
+                                        <i class="fa fa-exclamation-circle text-lg"></i>
+                                    </div>
+                                    <div class="ml-4 flex-1">
+                                        <p class="text-sm font-medium text-gray-800 notification-title">
+                                            New Complaint Received
+                                        </p>
+                                        <p class="text-sm text-gray-500 notification-subtitle">
+                                            Made by: <span class="font-semibold" x-text="notification.data.officer_name ?? 'Unknown Officer'"></span>
+                                        </p>
+                                        <p class="text-xs text-gray-400 notification-time" x-text="new Date(notification.created_at).toLocaleString()"></p>
+                                    </div>
+                                    <i class="fa fa-chevron-right text-gray-400"></i>
+                                </a>
+
                                 </template>
                             </template>
                             <template x-if="notifications.length === 0">
@@ -77,6 +82,7 @@
                         </div>
                     </div>
                 </div>
+
 
                 <!-- User Dropdown -->
                 <x-dropdown align="right" width="48">
@@ -121,17 +127,30 @@
 </nav>
 
 <script>
-    function redirectAndMarkAsRead(notification) {
-        fetch(`/supervisor/notifications/read/${notification.id}`, { method: 'GET' })
+
+    function markAsRead(notificationId, compId) {
+        fetch(`/supervisor/notifications/read/${notificationId}`, { method: 'GET' })
             .then(response => {
                 if (response.ok) {
-                    window.location.href = `/supervisor/complaints/${notification.data.complaint_id}`;
+                    // Redirect to the complaint details page after marking as read
+                    window.location.href = `/supervisor/complaints/${compId}`;
+                } else {
+                    console.error('Failed to mark notification as read:', response.status);
                 }
-            });
+            })
+            .catch(error => console.error('Error in markAsRead:', error));
     }
+
+
 </script>
 
 <style>
+    @media (prefers-color-scheme: dark) {
+        .dark\:text-gray-100 {
+            --tw-text-opacity: 1;
+            color: rgb(55 57 60);
+        }
+    }
     .notification-card {
         border-radius: 12px;
         background: linear-gradient(90deg, #ffffff 0%, #f9f9f9 100%);
@@ -140,6 +159,14 @@
 
     .notification-item:hover {
         background-color: #f9f9f9;
+    }
+
+    .bg-blue-100 {
+        background-color: #e0f2fe;
+    }
+
+    .bg-blue-100:hover {
+        background-color: #bae6fd;
     }
 
     .notification-time {

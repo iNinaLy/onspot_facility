@@ -12,8 +12,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\ComplaintNotification;
-use App\Notifications\CleanerNotification;
-use App\Notifications\OfficerNotification;
 
 class ComplaintController extends Controller
 {
@@ -29,6 +27,40 @@ class ComplaintController extends Controller
         $complaints = $query->with(['officer', 'supervisor'])->paginate(10);
         return view('admin.complaints.index', compact('complaints'));
     }
+
+    //Submit Complaint
+    public function submitComplaint(Request $request)
+    {
+        // Validate the request data
+        $request->validate([
+            'comp_desc' => 'required|string',
+            'comp_location' => 'required|string',
+            'comp_date' => 'required|date',
+            'comp_time' => 'required',
+        ]);
+
+        // Create the complaint
+        $complaint = Complaint::create([
+            'comp_desc' => $request->input('comp_desc'),
+            'comp_location' => $request->input('comp_location'),
+            'comp_date' => $request->input('comp_date'),
+            'comp_time' => $request->input('comp_time'),
+            'officer_id' => Auth::id(),
+            'comp_status' => 'pending',
+        ]);
+
+        // Get the officer who submitted the complaint
+        $officer = Auth::user();
+
+        // Notify supervisors about the new complaint
+        $supervisors = User::role('supervisor')->get();
+        foreach ($supervisors as $supervisor) {
+            $supervisor->notify(new ComplaintNotification($complaint, $officer));
+        }
+
+        return response()->json(['message' => 'Complaint submitted successfully.']);
+    }
+
 
     // Store a new complaint (Web)
     public function store(Request $request)
@@ -67,74 +99,72 @@ class ComplaintController extends Controller
     }
 
     // Assign cleaners to the complaint (Web)
+   
     public function assignCleaner(Request $request, $id)
-{
-    $validated = $request->validate([
-        'no_of_cleaners' => 'required|integer|min:1|max:3',
-        'cleaners' => 'required|array|size:' . $request->no_of_cleaners,
-        'cleaners.*' => 'exists:users,id',
-    ]);
+    {
+        $validated = $request->validate([
+            'no_of_cleaners' => 'required|integer|min:1|max:3',
+            'cleaners' => 'required|array|size:' . $request->no_of_cleaners,
+            'cleaners.*' => 'exists:users,id',
+        ]);
 
-    $complaint = Complaint::findOrFail($id);
+        $complaint = Complaint::findOrFail($id);
 
-    if ($complaint->cleaners()->exists()) {
-        return redirect()->route('supervisor.complaints.show', $id)
-            ->withErrors('Cleaners have already been assigned for this complaint.');
-    }
+        if ($complaint->cleaners()->exists()) {
+            return redirect()->route('supervisor.complaints.show', $id)
+                ->withErrors('Cleaners have already been assigned for this complaint.');
+        }
 
-    try {
-        DB::transaction(function () use ($validated, $complaint) {
-            $assignments = [];
+        try {
+            DB::transaction(function () use ($validated, $complaint) {
+                $assignments = [];
 
-            foreach ($validated['cleaners'] as $cleanerId) {
-                $assignments[$cleanerId] = [
+                foreach ($validated['cleaners'] as $cleanerId) {
+                    $assignments[$cleanerId] = [
+                        'assigned_by' => Auth::id(),
+                        'assigned_date' => now(),
+                        'no_of_cleaners' => $validated['no_of_cleaners'],
+                    ];
+
+                    // Update cleaner status to unavailable
+                    Cleaner::where('id', $cleanerId)->update(['status' => 'unavailable']);
+                }
+
+                // Attach cleaners to the complaint
+                $complaint->cleaners()->attach($assignments);
+
+                // Update complaint details
+                $complaint->update([
+                    'comp_status' => 'ongoing',
+                    'no_of_cleaners' => $validated['no_of_cleaners'],
                     'assigned_by' => Auth::id(),
                     'assigned_date' => now(),
-                    'no_of_cleaners' => $validated['no_of_cleaners'],
-                ];
+                ]);
+            });
+
+            // Notify cleaners and officer (existing logic)
+            foreach ($validated['cleaners'] as $cleanerId) {
+                $cleaner = User::find($cleanerId);
+                $cleaner->notify(new ComplaintNotification($complaint, Auth::user(), true, true));
             }
 
-            // Attach cleaners to the complaint
-            $complaint->cleaners()->attach($assignments);
+            if ($complaint->officer) {
+                $complaint->officer->notify(new ComplaintNotification($complaint, Auth::user(), null, true));
+            }
 
-            // Update complaint details
-            $complaint->update([
-                'comp_status' => 'ongoing',
-                'no_of_cleaners' => $validated['no_of_cleaners'],
-                'assigned_by' => Auth::id(),
-                'assigned_date' => now(),
+            return redirect()->route('supervisor.complaints.show', $id)
+                ->with('success', 'Cleaners assigned successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error assigning cleaners to complaint ID: ' . $id, [
+                'error' => $e->getMessage(),
             ]);
 
-            // Notify cleaners
-            $cleaners = User::whereIn('id', $validated['cleaners'])->get();
-            foreach ($cleaners as $cleaner) {
-                $cleaner->notify(new CleanerNotification($complaint));
-            }
-
-            // Notify the officer who created the complaint
-            if ($complaint->officer) {
-                $complaint->officer->notify(new OfficerNotification($complaint));
-            }
-        });
-
-        // Log success
-        Log::info('Cleaners assigned successfully to complaint ID: ' . $id, [
-            'assigned_by' => Auth::id(),
-            'cleaners' => $validated['cleaners']
-        ]);
-
-        return redirect()->route('supervisor.complaints.show', $id)
-            ->with('success', 'Cleaners assigned successfully.');
-    } catch (\Exception $e) {
-        // Log error
-        Log::error('Error assigning cleaners to complaint ID: ' . $id, [
-            'error' => $e->getMessage(),
-        ]);
-
-        return redirect()->route('supervisor.complaints.show', $id)
-            ->withErrors('An error occurred while assigning cleaners. Please try again.');
+            return redirect()->route('supervisor.complaints.show', $id)
+                ->withErrors('An error occurred while assigning cleaners. Please try again.');
+        }
     }
-}
+
+    
 
     // Supervisor: List complaints (Web)
     public function supervisorIndex(Request $request)
@@ -182,6 +212,37 @@ class ComplaintController extends Controller
         Complaint::findOrFail($id)->delete();
         return response()->json(null, 204);
     }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $complaint = Complaint::findOrFail($id);
+
+        $validated = $request->validate([
+            'comp_status' => 'required|in:pending,ongoing,completed',
+        ]);
+
+        try {
+            DB::transaction(function () use ($validated, $complaint) {
+                $complaint->update(['comp_status' => $validated['comp_status']]);
+
+                // If the status is completed, mark all assigned cleaners as available
+                if ($validated['comp_status'] === 'completed') {
+                    $complaint->cleaners()->update(['status' => 'available']);
+                }
+            });
+
+            return redirect()->route('supervisor.complaints.show', $id)
+                ->with('success', 'Complaint status updated successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error updating complaint status for ID: ' . $id, [
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->route('supervisor.complaints.show', $id)
+                ->withErrors('An error occurred while updating the complaint status. Please try again.');
+        }
+    }
+
 
     // API Functions
 

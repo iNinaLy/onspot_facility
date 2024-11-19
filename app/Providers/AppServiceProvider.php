@@ -22,8 +22,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        View::composer('components.navbar', function ($view) {
-            $view->with('unreadNotifications', Auth::check() ? Auth::user()->unreadNotifications : []);
+        View::composer('*', function ($view) {
+            $view->with('unreadNotifications', Auth::user()->unreadNotifications ?? []);
         });
     }
 

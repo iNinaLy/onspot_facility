@@ -141,9 +141,8 @@
                         @forelse ($complaint->cleaners as $cleaner)
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 {{ $cleaner->cleaner_name }} 
-                                <span class="text-muted small">Assigned by: {{ \App\Models\User::find($cleaner->pivot->assigned_by)->name ?? 'N/A' }},
-                                Date: {{ \Carbon\Carbon::parse($cleaner->pivot->assigned_date)->format('d M Y h:i A') }}</span>
-                            </li>
+                                <span Date: {{ \Carbon\Carbon::parse($cleaner->pivot->assigned_date)->format('d M Y h:i A') }}</span>
+                            </li
                         @empty
                             <li class="list-group-item text-muted">No cleaners assigned.</li>
                         @endforelse

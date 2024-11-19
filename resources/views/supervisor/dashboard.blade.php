@@ -242,65 +242,112 @@
         }
 
         /* Recent Complaint Card with hover effect */
-        .recent-complaint-card {
-            background-color: #ffffff;
-            padding: 20px;
+       
+        .ios-card {
+        background-color: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 1.5rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .ios-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .ios-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .ios-card-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #1c1c1e;
+        }
+
+        .ios-card-date {
+            font-size: 14px;
+            color: #8e8e93;
+        }
+
+        .ios-card-content {
+            font-size: 14px;
+            color: #3a3a3c;
+            margin-bottom: 1rem;
+        }
+
+        .ios-card-status {
+            font-size: 14px;
+            margin-bottom: 1rem;
+        }
+
+        .ios-badge {
+            font-size: 12px;
+            padding: 5px 10px;
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
-            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .recent-complaint-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-        }
-
-        .recent-complaint-card::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 8px;
-            background-color: #2e5675;
-        }
-
-        .recent-complaint-card .info {
-            flex: 1;
-        }
-
-        .recent-complaint-card .info h2 {
-            font-size: 1.2rem;
+            text-transform: capitalize;
+            background-color: #dff6ff;
+            color: #007aff;
             font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
         }
 
-        .recent-complaint-card .info h2 img {
-            margin-right: 8px;
+        .ios-button-small {
+            display: inline-block;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            background-color: #e0e0e0;
+            color: #333333;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            margin-top: 10px;
         }
 
-        .recent-complaint-card .info p {
-            color: #4b5563;
-            margin-bottom: 8px;
+        .ios-button-small:hover {
+            background-color: #cccccc;
         }
 
-        .recent-complaint-card .timestamp {
-            font-size: 0.9rem;
-            color: #9ca3af;
-            display: flex;
-            align-items: center;
+        .ios-details {
+            margin-top: 1rem;
+            background-color: #f2f2f7;
+            border-radius: 12px;
+            padding: 15px;
+            display: none;
         }
 
-        .recent-complaint-card .timestamp img {
-            margin-right: 4px;
+        .ios-cleaners-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+        }
+
+        .ios-cleaner-item {
+            font-size: 14px;
+            color: #1c1c1e;
+            margin-bottom: 10px;
+        }
+
+        .ios-phone-link {
+            font-size: 12px;
+            color: #007aff;
+        }
+
+        .ios-phone-link i {
+            margin-right: 5px;
+        }
+
+        .ios-empty-state {
+            font-size: 14px;
+            color: #8e8e93;
+            text-align: center;
+            margin-top: 20px;
         }
 
         /* Media Queries for Task Cards */
@@ -315,6 +362,8 @@
                 grid-template-columns: 1fr;
             }
         }
+
+
     </style>
 
     <div class="container py-8">
@@ -325,6 +374,7 @@
                 Welcome, {{ Auth::user()->name }}!
             </div>
 
+     
             <!-- New Complaints Notification -->
             @if(isset($newComplaints) && is_countable($newComplaints) && count($newComplaints) > 0)
                 <div class="flex items-center p-4 bg-blue-100 border-l-4 border-blue-500 rounded-lg shadow-sm">
@@ -412,32 +462,58 @@
             <!-- Divider Between Cleaner and Recent Complaint Sections -->
             <hr class="section-divider">
 
-            <!-- Recent Complaint Section -->
             <div class="mt-10">
                 <div class="section-title">
-                    <h2>Recent Complaint</h2>
-                    <a href="{{ route('supervisor.complaints.index') }}">See all</a>
+                    <h2 class="ios-heading">Assigned Task</h2>
+                    <a href="{{ route('supervisor.history') }}" class="ios-link">See all</a>
                 </div>
                 <div class="w-full max-w-lg mx-auto mt-4">
-                    @if($recentComplaints->isNotEmpty())
-                        <div class="recent-complaint-card">
-                            <div class="info">
-                                <h2>
-                                    <img src="{{ asset('img/svg/location.svg') }}" class="inline w-5 h-5" alt="Location Icon">
-                                    {{ $recentComplaints->first()->comp_location }}
-                                </h2>
-                                <p>{{ $recentComplaints->first()->comp_desc }}</p>
-                                <p class="timestamp">
-                                    <img src="{{ asset('img/svg/calendar.svg') }}" class="inline w-4 h-4" alt="Calendar Icon">
-                                    {{ \Carbon\Carbon::parse($recentComplaints->first()->comp_date)->format('Y-m-d') }} at {{ $recentComplaints->first()->comp_time }}
+                    @if($recentOngoingComplaint)
+                        <div class="ios-card">
+                            <div class="ios-card-header">
+                                <div class="ios-card-title">
+                                    <strong>Location:</strong> {{ $recentOngoingComplaint->comp_location ?? 'N/A' }}
+                                </div>
+                                <small class="ios-card-date">
+                                    {{ \Carbon\Carbon::parse($recentOngoingComplaint->comp_date)->format('d M Y') }}
+                                </small>
+                            </div>
+                            <div class="ios-card-content">
+                                <p><strong>Description:</strong> {{ $recentOngoingComplaint->comp_desc }}</p>
+                            </div>
+                            <div class="ios-card-status">
+                                <p>
+                                    <strong>Status:</strong>
+                                    <span class="ios-badge ios-status-ongoing">
+                                        Ongoing
+                                    </span>
                                 </p>
+                            </div>
+                            <button class="ios-button-small" onclick="toggleDetails({{ $recentOngoingComplaint->id }})">
+                                View Details
+                            </button>
+                            <div id="details-{{ $recentOngoingComplaint->id }}" class="ios-details">
+                                <h6 class="mt-3">Assigned Cleaners:</h6>
+                                <ul class="ios-cleaners-list">
+                                    @forelse ($recentOngoingComplaint->cleaners as $cleaner)
+                                        <li class="ios-cleaner-item">
+                                            <strong>{{ $cleaner->cleaner_name }}</strong>
+                                            <div class="ios-phone-link">
+                                                <i class="fas fa-phone-alt"></i> {{ $cleaner->cleaner_phoneNo ?? 'N/A' }}
+                                            </div>
+                                        </li>
+                                    @empty
+                                        <li class="ios-cleaner-item">No cleaners assigned.</li>
+                                    @endforelse
+                                </ul>
                             </div>
                         </div>
                     @else
-                        <p class="text-gray-600 text-center">No recent complaints available.</p>
+                        <p class="ios-empty-state">All task completed.</p>
                     @endif
                 </div>
             </div>
+
 
             <!-- Tasks Section -->
             <div class="mt-10">
@@ -511,4 +587,12 @@
             observer.observe(element);
         });
     </script>
+
+    <script>
+        function toggleDetails(id) {
+            const details = document.getElementById(`details-${id}`);
+            details.style.display = details.style.display === 'none' || details.style.display === '' ? 'block' : 'none';
+        }
+    </script>
+
 </x-app-layout>

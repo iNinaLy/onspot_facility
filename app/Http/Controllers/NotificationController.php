@@ -7,17 +7,15 @@ use Illuminate\Http\Request;
 class NotificationController extends Controller
 {
     /**
-     * Display all notifications for the authenticated user.
-     *
-     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     * Display all notifications and unread notifications for the user.
      */
     public function index()
     {
         $user = auth('web')->user();
 
         if ($user) {
-            $notifications = $user->notifications; // Fetch all notifications
-            $unreadNotifications = $user->unreadNotifications; // Fetch unread notifications
+            $notifications = $user->notifications()->latest()->paginate(10); // Paginate all notifications
+            $unreadNotifications = $user->unreadNotifications;               // Fetch unread notifications
 
             return view('notifications.index', compact('notifications', 'unreadNotifications'));
         }
@@ -25,47 +23,51 @@ class NotificationController extends Controller
         return redirect()->route('login')->with('error', 'User not authenticated.');
     }
 
+    public function fetchAll(Request $request)
+    {
+        $user = auth('web')->user();
+
+        if ($user) {
+            $notifications = $user->notifications()->latest()->paginate(10); // Fetch all notifications, paginated
+            return response()->json($notifications);
+        }
+
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
+
     /**
-     * Mark a notification as read and remove it.
+     * Mark a specific notification as read without deleting it.
      *
      * @param string $id
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function markAsRead($id)
     {
-        $user = auth('web')->user();
-
-        if (!$user) {
-            return redirect()->route('login')->with('error', 'User not authenticated.');
-        }
-
-        $notification = $user->notifications()->find($id);
-
+        $notification = auth('web')->user()->notifications()->find($id);
         if ($notification) {
             $notification->markAsRead();
-            $notification->delete();
-
-            return redirect()->route('supervisor.notifications.index')->with('success', 'Notification marked as read and removed.');
+            return response()->json(['message' => 'Notification marked as read.']);
         }
-
-        return redirect()->route('supervisor.notifications.index')->with('error', 'Notification not found.');
+        return response()->json(['error' => 'Notification not found.'], 404);
     }
 
+
     /**
-     * Remove all read notifications for the authenticated user.
+     * Mark all unread notifications as read without deleting them.
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function removeReadNotifications()
+    public function markAllAsRead()
     {
         $user = auth('web')->user();
 
-        if (!$user) {
-            return redirect()->route('login')->with('error', 'User not authenticated.');
+        if ($user) {
+            $user->unreadNotifications->markAsRead();
+
+            return response()->json(['success' => true, 'message' => 'All notifications marked as read.']);
         }
 
-        $user->readNotifications()->delete();
-
-        return redirect()->back()->with('success', 'All read notifications have been removed.');
+        return response()->json(['success' => false, 'message' => 'User not authenticated.'], 401);
     }
 }

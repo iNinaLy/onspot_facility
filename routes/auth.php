@@ -71,4 +71,9 @@ Route::prefix('supervisor')->name('supervisor.')->group(function () {
         Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
         Route::put('password', [PasswordController::class, 'update'])->name('password.update');
     });
+
+    Route::get('/auth-test', function () {
+        return 'Auth routes loaded successfully.';
+    });
+    
 });

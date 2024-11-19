@@ -81,7 +81,6 @@
         .btn-toggle-all:hover {
             background-color: #1f3c52;
         }
-        /* Remaining Styles */
         .list-item {
             background-color: #ffffff;
             border: 1px solid #e1e5ea;
@@ -106,7 +105,6 @@
             font-size: 0.85rem;
             color: #6b7280;
         }
-        /* Badge Styling */
         .badge {
             font-size: 0.85rem;
             padding: 0.4em 0.7em;
@@ -117,7 +115,6 @@
         .status-pending { background-color: #fce8e8; color: #c0392b; }
         .status-ongoing { background-color: #fff5db; color: #e67e22; }
         .status-completed { background-color: #e8f5e9; color: #27ae60; }
-        .badge-new { background-color: #cce5ff; color: #004085; }
         .btn-details {
             background-color: #2E5675;
             color: white;
@@ -132,7 +129,6 @@
             transition: background-color 0.2s ease;
         }
         .btn-details:hover { background-color: #1f3c52; }
-        /* Toggle Content */
         .toggle-content {
             padding: 1.5rem;
             font-size: 1rem;
@@ -152,21 +148,20 @@
             color: #2E5675;
             margin-bottom: 10px;
         }
-        /* Phone Link Styling */
         .phone-link {
             display: inline-flex;
             align-items: center;
-            color: rgba(46, 86, 117, 0.6); /* Low opacity color */
-            font-size: 0.85rem; /* Smaller font size */
+            color: rgba(46, 86, 117, 0.6);
+            font-size: 0.85rem;
             text-decoration: none;
-            margin-top: 4px; /* Adds space under cleaner's name */
+            margin-top: 4px;
         }
         .phone-link i {
             margin-right: 4px;
-            color: rgba(39, 174, 96, 0.6); /* Icon color with low opacity */
+            color: rgba(39, 174, 96, 0.6);
         }
         .phone-link:hover {
-            color: rgba(31, 60, 82, 0.8); /* Slightly darker color on hover */
+            color: rgba(31, 60, 82, 0.8);
         }
     </style>
 </head>
@@ -189,10 +184,10 @@
         <button id="toggleAllBtn" class="btn-toggle-all">Expand All</button>
     </div>
 
-    <!-- Complaints Sections (Today's and Past Complaints) -->
+    <!-- Section for Ongoing Complaints -->
     <div class="section">
-        <h2 class="section-heading">Assigned Complaints</h2>
-        @forelse($pastComplaints as $complaint)
+        <h2 class="section-heading">Ongoing Complaints</h2>
+        @forelse($ongoingComplaints as $complaint)
             <div class="list-item" data-status="{{ $complaint->comp_status }}" data-description="{{ strtolower($complaint->comp_desc) }}" data-date="{{ $complaint->comp_date }}">
                 <div class="list-item-header">
                     <div class="list-item-title">Location: {{ $complaint->comp_location ?? 'N/A' }}</div>
@@ -201,12 +196,7 @@
                 <div><strong>Description:</strong> {{ $complaint->comp_desc }}</div>
                 <div>
                     <strong>Status:</strong>
-                    <span class="badge 
-                      {{ strtolower($complaint->comp_status) == 'pending' ? 'status-pending' : '' }}
-                      {{ strtolower($complaint->comp_status) == 'ongoing' ? 'status-ongoing' : '' }}
-                      {{ strtolower($complaint->comp_status) == 'completed' ? 'status-completed' : '' }} ">
-                        {{ ucfirst($complaint->comp_status) }}
-                    </span>
+                    <span class="badge status-ongoing">Ongoing</span>
                 </div>
                 <button class="btn-details" onclick="toggleDetails({{ $complaint->id }})">View Details</button>
                 <div id="details-{{ $complaint->id }}" class="toggle-content">
@@ -214,9 +204,7 @@
                     <h6 class="mt-3">Assigned Cleaners:</h6>
                     <ul class="cleaners-list">
                         @forelse ($complaint->cleaners as $cleaner)
-                            <li>
-                                <strong>{{ $cleaner->cleaner_name }}</strong>
-                            </li>
+                            <li><strong>{{ $cleaner->cleaner_name }}</strong></li>
                             <li>
                                 <div class="phone-link">
                                     <i class="fas fa-phone-alt"></i> {{ $cleaner->cleaner_phoneNo ?? 'N/A' }}
@@ -226,7 +214,6 @@
                             <li>No cleaners assigned.</li>
                         @endforelse
                     </ul>
-                    <!-- Added Assigned Date and Time -->
                     <div class="mt-3">
                         <p><strong>Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') ?? 'N/A' }}</p>
                         <p><strong>Assigned Time:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('h:i A') ?? 'N/A' }}</p>
@@ -234,12 +221,52 @@
                 </div>
             </div>
         @empty
-            <p>No past complaints found.</p>
+            <p>No ongoing complaints found.</p>
+        @endforelse
+    </div>
+
+    <!-- Section for Completed Complaints -->
+    <div class="section">
+        <h2 class="section-heading">Completed Complaints</h2>
+        @forelse($completedComplaints as $complaint)
+            <div class="list-item" data-status="{{ $complaint->comp_status }}" data-description="{{ strtolower($complaint->comp_desc) }}" data-date="{{ $complaint->comp_date }}">
+                <div class="list-item-header">
+                    <div class="list-item-title">Location: {{ $complaint->comp_location ?? 'N/A' }}</div>
+                    <small class="list-item-date">{{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}</small>
+                </div>
+                <div><strong>Description:</strong> {{ $complaint->comp_desc }}</div>
+                <div>
+                    <strong>Status:</strong>
+                    <span class="badge status-completed">Completed</span>
+                </div>
+                <button class="btn-details" onclick="toggleDetails({{ $complaint->id }})">View Details</button>
+                <div id="details-{{ $complaint->id }}" class="toggle-content">
+                    <p><strong>Complaint by:</strong> {{ $complaint->officer->name ?? 'Unknown Officer' }}</p>
+                    <h6 class="mt-3">Assigned Cleaners:</h6>
+                    <ul class="cleaners-list">
+                        @forelse ($complaint->cleaners as $cleaner)
+                            <li><strong>{{ $cleaner->cleaner_name }}</strong></li>
+                            <li>
+                                <div class="phone-link">
+                                    <i class="fas fa-phone-alt"></i> {{ $cleaner->cleaner_phoneNo ?? 'N/A' }}
+                                </div>
+                            </li>
+                        @empty
+                            <li>No cleaners assigned.</li>
+                        @endforelse
+                    </ul>
+                    <div class="mt-3">
+                        <p><strong>Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') ?? 'N/A' }}</p>
+                        <p><strong>Assigned Time:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('h:i A') ?? 'N/A' }}</p>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <p>No completed complaints found.</p>
         @endforelse
     </div>
 </div>
 
-<!-- Custom JavaScript for filter, toggle, and search functionality -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     function toggleDetails(id) {

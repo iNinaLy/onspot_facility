@@ -115,9 +115,9 @@ class Complaint extends Model implements HasMedia
      */
     public function cleaners()
     {
-        return $this->belongsToMany(Cleaner::class, 'complaint_cleaner', 'complaint_id', 'cleaner_id')
-                    ->withPivot('no_of_cleaners')
-                    ->withTimestamps();
+        return $this->belongsToMany(Cleaner::class, 'complaint_cleaner')
+            ->withPivot('assigned_by', 'assigned_date', 'no_of_cleaners')
+            ->withTimestamps();
     }
 
     /**

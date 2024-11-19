@@ -80,10 +80,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 // Supervisor Routes
 Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supervisor.')->group(function () {
     Route::get('/dashboard', [SupervisorController::class, 'dashboard'])->name('dashboard');
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::get('/notifications/read/{id}', [NotificationController::class, 'markAsRead'])->name('notifications.read');
-    Route::delete('/supervisor/notifications/remove-read', [NotificationController::class, 'removeReadNotifications'])
-    ->name('supervisor.notifications.removeRead');
+    
+// Notication routes
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/notifications/all', [NotificationController::class, 'fetchAll'])->name('notifications.all');
+        Route::post('/notifications/mark-as-read/{id}', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
+        Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
+    
 
     // Cleaner management
     Route::get('/cleaners', [SupervisorController::class, 'cleaners'])->name('cleaners');
@@ -101,13 +104,20 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     Route::get('/complaints', [ComplaintController::class, 'supervisorIndex'])->name('complaints.index');
     Route::get('/complaints/{id}', [ComplaintController::class, 'show'])->name('complaints.show');
     Route::post('/complaints/{id}/assign-cleaner', [ComplaintController::class, 'assignCleaner'])->name('assign.cleaner');
-    Route::post('/complaints/{id}/update-assignment', [ComplaintController::class, 'updateAssignment'])->name('complaints.updateAssignment');
-   
+    Route::get('/complaints/assigned', [ComplaintController::class, 'getAssignedComplaints'])->name('complaints.assigned');
+    Route::get('/complaints/ongoing', [ComplaintController::class, 'getOngoingComplaints'])->name('complaints.ongoing');
+    Route::get('/complaints/completed', [ComplaintController::class, 'getCompletedComplaints'])->name('complaints.completed');
+    Route::patch('/complaints/{id}/status', [ComplaintController::class, 'updateStatus'])->name('complaints.updateStatus');
+    Route::delete('/complaints/{id}', [ComplaintController::class, 'destroy'])->name('complaints.destroy');
     
+    // Route for submitting a complaint
+    Route::post('/complaints/submit', [ComplaintController::class, 'submitComplaint'])
+        ->name('complaints.submit');
+
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/update-device-token', [NotificationTokenController::class, 'updateToken']);
     });
-    
+
     // History page
     Route::get('/history', [SupervisorController::class, 'history'])->name('history');
 
@@ -115,6 +125,7 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
 
 
 

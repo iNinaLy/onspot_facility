@@ -20,6 +20,13 @@ class Cleaner extends Model implements HasMedia
         'user_id',   // Reference to the user table if each cleaner has a user profile
     ];
 
+
+    public function scopeAvailable($query)
+    {
+        return $query->where('status', 'available');
+    }
+
+
     /**
      * Many-to-many relationship with the Complaint model.
      * Cleaners can be assigned to multiple complaints.

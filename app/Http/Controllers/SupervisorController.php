@@ -17,6 +17,8 @@ class SupervisorController extends Controller
      */
     public function dashboard()
     {
+        $supervisorId = Auth::id();
+
         // Retrieve cleaner stats
         $totalCleaners = Cleaner::count();
         $availableCleaners = Cleaner::where('status', 'available')->count();
@@ -25,15 +27,15 @@ class SupervisorController extends Controller
         // Fetch the total number of supervisors from the users table where role is 'supervisor'
         $totalSupervisors = User::where('role', 'supervisor')->count();
 
-        // Fetch the 5 most recent complaints, including related user and cleaner data
-        $recentComplaints = Complaint::with(['user', 'cleaners'])
-            ->orderBy('comp_date', 'desc')
-            ->limit(5)
-            ->get();
+        // Fetch the most recent ongoing complaint assigned by the supervisor
+        $recentOngoingComplaint = Complaint::with(['user', 'cleaners'])
+            ->where('comp_status', 'ongoing') // Filter for ongoing complaints
+            ->where('assigned_by', $supervisorId) // Only complaints assigned by the current supervisor
+            ->orderBy('comp_date', 'desc') // Sort by the most recent complaint date
+            ->first(); // Get only the most recent complaint
 
         // Retrieve unread notifications for the authenticated user
         $unreadNotifications = auth()->guard('web')->user()->unreadNotifications;
-
 
         // Pass data to the view
         return view('supervisor.dashboard', compact(
@@ -41,11 +43,10 @@ class SupervisorController extends Controller
             'availableCleaners',
             'unavailableCleaners',
             'totalSupervisors',
-            'recentComplaints',
+            'recentOngoingComplaint', // Pass the most recent ongoing complaint
             'unreadNotifications'
         ));
     }
-
 
     /**
      * Show the history of complaints.
@@ -53,28 +54,46 @@ class SupervisorController extends Controller
     public function history()
     {
         $supervisorId = Auth::id();
-
-        // Fetch today's complaints with 'ongoing' or 'pending' status
+        
+        // Fetch today's complaints with 'completed' status
         $todaysComplaints = Complaint::where('assigned_by', $supervisorId)
             ->whereDate('comp_date', Carbon::today())
-            ->whereIn('comp_status', ['pending', 'ongoing']) // Include both pending and ongoing
+            ->where('comp_status', 'completed')
             ->with(['cleaners' => function ($query) {
                 $query->select('cleaners.id', 'cleaner_name', 'cleaner_phoneNo');
             }])
             ->orderBy('comp_date', 'desc')
             ->get();
-
-        // Fetch past complaints with 'ongoing' or 'pending' status
+        
+        // Fetch past complaints with 'completed' status
         $pastComplaints = Complaint::where('assigned_by', $supervisorId)
             ->whereDate('comp_date', '<', Carbon::today())
-            ->whereIn('comp_status', ['pending', 'ongoing']) // Include both pending and ongoing
+            ->where('comp_status', 'completed')
+            ->with(['cleaners' => function ($query) {
+                $query->select('cleaners.id', 'cleaner_name', 'cleaner_phoneNo');
+            }])
+            ->orderBy('comp_date', 'desc')
+            ->get();
+        
+        // Fetch all ongoing complaints, regardless of date
+        $ongoingComplaints = Complaint::where('assigned_by', $supervisorId)
+            ->where('comp_status', 'ongoing')
             ->with(['cleaners' => function ($query) {
                 $query->select('cleaners.id', 'cleaner_name', 'cleaner_phoneNo');
             }])
             ->orderBy('comp_date', 'desc')
             ->get();
 
-        return view('supervisor.history', compact('todaysComplaints', 'pastComplaints'));
+        // Combine all completed complaints (today's and past) into one variable
+        $completedComplaints = $todaysComplaints->merge($pastComplaints);
+
+        // Pass the fetched data to the view
+        return view('supervisor.history', compact(
+            'todaysComplaints', 
+            'pastComplaints', 
+            'ongoingComplaints',
+            'completedComplaints' // Add this to the view
+        ));
     }
 
 
