@@ -1,118 +1,64 @@
-<style>
-/* Container styling */
-.form-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    padding: 1.5rem;
-    background-color: #ffffff;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+<section>
+    <header>
+        <h2 class="text-lg font-medium text-gray-900">
+            {{ __('Profile Information') }}
+        </h2>
 
-/* Group spacing */
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
+        <p class="mt-1 text-sm text-gray-600">
+            {{ __("Update your account's profile information and email address.") }}
+        </p>
+    </header>
 
-/* Labels */
-.form-label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #4a5568;
-}
+    <form id="send-verification" method="post" action="{{ route('verification.send') }}">
+        @csrf
+    </form>
 
-/* Input fields */
-.form-input {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-    background-color: #f9fafb;
-    color: #2d3748;
-    outline: none;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
+    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
+        @csrf
+        @method('patch')
 
-.form-input::placeholder {
-    color: #a0aec0;
-}
+        <div>
+            <x-input-label for="name" :value="__('Name')" />
+            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
+            <x-input-error class="mt-2" :messages="$errors->get('name')" />
+        </div>
 
-.form-input:focus {
-    border-color: #63b3ed;
-    box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.5);
-}
+        <div>
+            <x-input-label for="email" :value="__('Email')" />
+            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
+            <x-input-error class="mt-2" :messages="$errors->get('email')" />
 
-/* Submit Button */
-.form-submit {
-    text-align: center;
-}
+            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+                <div>
+                    <p class="text-sm mt-2 text-gray-800">
+                        {{ __('Your email address is unverified.') }}
 
-.form-button {
-    width: 100%;
-    padding: 0.75rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #ffffff;
-    background-color: #4299e1;
-    border: none;
-    border-radius: 0.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
-    transition: background-color 0.2s, box-shadow 0.2s;
-}
+                        <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {{ __('Click here to re-send the verification email.') }}
+                        </button>
+                    </p>
 
-.form-button:hover {
-    background-color: #3182ce;
-}
+                    @if (session('status') === 'verification-link-sent')
+                        <p class="mt-2 font-medium text-sm text-green-600">
+                            {{ __('A new verification link has been sent to your email address.') }}
+                        </p>
+                    @endif
+                </div>
+            @endif
+        </div>
 
-.form-button:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
-}
-</style>
+        <div class="flex items-center gap-4">
+            <x-primary-button>{{ __('Save') }}</x-primary-button>
 
-<form method="POST" action="{{ route('profile.update') }}" class="form-container">
-    @csrf
-    @method('PATCH')
-
-    <!-- Name -->
-    <div class="form-group">
-        <label for="name" class="form-label">{{ __('Name') }}</label>
-        <input 
-            id="name" 
-            type="text" 
-            name="name" 
-            value="{{ old('name', Auth::user()->name) }}" 
-            required 
-            autofocus
-            class="form-input"
-            placeholder="Your Name"
-        />
-    </div>
-
-    <!-- Email -->
-    <div class="form-group">
-        <label for="email" class="form-label">{{ __('Email') }}</label>
-        <input 
-            id="email" 
-            type="email" 
-            name="email" 
-            value="{{ old('email', Auth::user()->email) }}" 
-            required
-            class="form-input"
-            placeholder="you@example.com"
-        />
-    </div>
-
-    <!-- Submit Button -->
-    <div class="form-submit">
-        <button type="submit" class="form-button">
-            {{ __('Save Changes') }}
-        </button>
-    </div>
-</form>
+            @if (session('status') === 'profile-updated')
+                <p
+                    x-data="{ show: true }"
+                    x-show="show"
+                    x-transition
+                    x-init="setTimeout(() => show = false, 2000)"
+                    class="text-sm text-gray-600"
+                >{{ __('Saved.') }}</p>
+            @endif
+        </div>
+    </form>
+</section>

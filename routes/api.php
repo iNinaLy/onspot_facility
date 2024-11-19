@@ -39,4 +39,3 @@ Route::post('/attendance', [AttendanceController::class, 'markAttendance']);
 Route::get('/test', function () {
     return response()->json(['message' => 'API is working']);
 });
-

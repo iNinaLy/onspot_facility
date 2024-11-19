@@ -7,6 +7,7 @@ use App\Models\Complaint;
 use App\Models\Cleaner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -47,6 +48,49 @@ class SupervisorController extends Controller
             'unreadNotifications'
         ));
     }
+
+    public function editProfile(Request $request)
+    {
+        $user = $request->user();
+        return view('supervisor.profile.edit', compact('user'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $request->user()->id,
+            'password' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        $user = $request->user();
+        $user->name = $request->input('name');
+        $user->email = $request->input('email');
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->input('password'));
+        }
+
+        $user->save();
+
+        return redirect()->route('supervisor.profile.edit')->with('success', 'Profile updated successfully.');
+    }
+
+    public function destroyProfile(Request $request)
+    {
+        $request->validate(['password' => ['required', 'current_password']]);
+
+        $user = $request->user();
+        Auth::logout();
+
+        $user->delete();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/')->with('success', 'Account deleted successfully.');
+    }
+
 
     /**
      * Show the history of complaints.

@@ -370,7 +370,7 @@
         <div class="max-w-full mx-auto sm:px-6 lg:px-8">
 
             <!-- Welcome Message at the Top -->
-            <div class="mb-6 text-2xl font-semibold text-gray-800 dark:text-gray-200">
+            <div class="mb-6 text-2xl font-semibold text-gray-800">
                 Welcome, {{ Auth::user()->name }}!
             </div>
 

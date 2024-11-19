@@ -11,21 +11,26 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NotificationTokenController;
 
+// Redirect root to login
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Profile routes (shared among all authenticated users)
-Route::middleware('auth')->group(function () {
+// General Profile Routes (for any authenticated user)
+Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
-// Admin routes
+
+// ===================
+// Admin Routes
+// ===================
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Dashboard
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
-    // Cleaners
+    // Cleaners Management
     Route::get('/cleaners', [AdminController::class, 'cleaners'])->name('cleaners');
     Route::get('/cleaners/create', [AdminController::class, 'createCleaner'])->name('cleaners.create');
     Route::post('/cleaners', [AdminController::class, 'storeCleaner'])->name('cleaners.store');
@@ -33,23 +38,19 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/cleaners/{cleaner}/edit', [AdminController::class, 'editCleaner'])->name('cleaners.edit');
     Route::put('/cleaners/{cleaner}', [AdminController::class, 'updateCleaner'])->name('cleaners.update');
     Route::delete('/cleaners/{cleaner}', [AdminController::class, 'destroyCleaner'])->name('cleaners.destroy');
-
-    // Cleaner-specific actions
     Route::patch('/cleaners/{id}/update-status', [CleanerController::class, 'updateStatus'])->name('cleaners.updateStatus');
     Route::patch('/cleaners/{id}/reset-password', [CleanerController::class, 'resetPassword'])->name('cleaners.resetPassword');
-    
-    // Officers
+
+    // Officers Management
     Route::get('/officers', [AdminController::class, 'officers'])->name('officers');
-    Route::get('/officers/search', [AdminController::class, 'searchOfficers']);
     Route::get('/officers/create', [AdminController::class, 'createOfficer'])->name('officers.create');
     Route::post('/officers', [AdminController::class, 'storeOfficer'])->name('officers.store');
     Route::get('/officers/{officer}/edit', [AdminController::class, 'editOfficer'])->name('officers.edit');
     Route::put('/officers/{officer}', [AdminController::class, 'updateOfficer'])->name('officers.update');
     Route::delete('/officers/{officer}', [AdminController::class, 'destroyOfficer'])->name('officers.destroy');
-    Route::get('/officers/{officer}', [AdminController::class, 'showOfficer'])->name('officers.show');
     Route::patch('/officers/{id}/reset-password', [AdminController::class, 'resetOfficerPassword'])->name('officers.resetPassword');
 
-    // Supervisors
+    // Supervisors Management
     Route::get('/supervisors', [AdminController::class, 'supervisors'])->name('supervisors.index');
     Route::get('/supervisors/create', [AdminController::class, 'createSupervisor'])->name('supervisors.create');
     Route::post('/supervisors', [AdminController::class, 'storeSupervisor'])->name('supervisors.store');
@@ -58,12 +59,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('/supervisors/{supervisor}', [AdminController::class, 'destroySupervisor'])->name('supervisors.destroy');
     Route::patch('/supervisors/{id}/reset-password', [AdminController::class, 'resetSupervisorPassword'])->name('supervisors.resetPassword');
 
-    // Users
-    Route::get('/users', [UserController::class, 'index'])->name('users.index'); // List users
-    Route::get('/users/create', [UserController::class, 'create'])->name('users.create'); // Show the form
-    Route::post('/users', [UserController::class, 'store'])->name('users.store'); // Handle form submission
-   
-    // Complaints
+    // Users Management
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+
+    // Complaints Management
     Route::get('/complaints', [AdminController::class, 'complaints'])->name('complaints');
     Route::post('/complaints/batch-update', [AdminController::class, 'batchUpdate'])->name('complaints.batchUpdate');
     Route::get('/complaints/search', [AdminController::class, 'searchComplaints'])->name('complaints.search');
@@ -71,73 +72,72 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/complaints/{complaint}/edit', [AdminController::class, 'editComplaint'])->name('complaints.edit');
     Route::delete('/complaints/{complaint}', [AdminController::class, 'destroyComplaint'])->name('complaints.destroy');
 
-    // Profile
-    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/edit', [AdminController::class, 'editProfile'])->name('edit');
+        Route::patch('/', [AdminController::class, 'updateProfile'])->name('update');
+        Route::delete('/', [AdminController::class, 'destroyProfile'])->name('destroy');
+    });
 });
 
+// ===================
 // Supervisor Routes
+// ===================
 Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supervisor.')->group(function () {
+    // Dashboard
     Route::get('/dashboard', [SupervisorController::class, 'dashboard'])->name('dashboard');
-    
-// Notication routes
-        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-        Route::get('/notifications/all', [NotificationController::class, 'fetchAll'])->name('notifications.all');
-        Route::post('/notifications/mark-as-read/{id}', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
-        Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
-    
 
-    // Cleaner management
-    Route::get('/cleaners', [SupervisorController::class, 'cleaners'])->name('cleaners');
-    Route::get('/pending-complaints', [ComplaintController::class, 'getPendingComplaints']);
-    Route::post('/assign-cleaner', [ComplaintController::class, 'assignCleanerToComplaint']);
-  
-    Route::get('/complaints/pending', [ComplaintController::class, 'getPendingComplaints']);
-    Route::post('/complaints/assign', [ComplaintController::class, 'assignCleaner']);
-
-    // API routes for fetching available cleaners
-    Route::get('/api/cleaners', [CleanerController::class, 'getAvailableCleaners']);
-    Route::get('/api/cleaners/search', [CleanerController::class, 'searchCleaners']);
-
-    // Complaint routes
-    Route::get('/complaints', [ComplaintController::class, 'supervisorIndex'])->name('complaints.index');
-    Route::get('/complaints/{id}', [ComplaintController::class, 'show'])->name('complaints.show');
-    Route::post('/complaints/{id}/assign-cleaner', [ComplaintController::class, 'assignCleaner'])->name('assign.cleaner');
-    Route::get('/complaints/assigned', [ComplaintController::class, 'getAssignedComplaints'])->name('complaints.assigned');
-    Route::get('/complaints/ongoing', [ComplaintController::class, 'getOngoingComplaints'])->name('complaints.ongoing');
-    Route::get('/complaints/completed', [ComplaintController::class, 'getCompletedComplaints'])->name('complaints.completed');
-    Route::patch('/complaints/{id}/status', [ComplaintController::class, 'updateStatus'])->name('complaints.updateStatus');
-    Route::delete('/complaints/{id}', [ComplaintController::class, 'destroy'])->name('complaints.destroy');
-    
-    // Route for submitting a complaint
-    Route::post('/complaints/submit', [ComplaintController::class, 'submitComplaint'])
-        ->name('complaints.submit');
-
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/update-device-token', [NotificationTokenController::class, 'updateToken']);
+    // Notifications
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::get('/all', [NotificationController::class, 'fetchAll'])->name('all');
+        Route::post('/mark-as-read/{id}', [NotificationController::class, 'markAsRead'])->name('mark-as-read');
+        Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-as-read');
     });
 
-    // History page
+    // Cleaner Management
+    Route::prefix('cleaners')->group(function () {
+        Route::get('/', [SupervisorController::class, 'cleaners'])->name('cleaners');
+        Route::get('/api', [CleanerController::class, 'getAvailableCleaners'])->name('api.available');
+        Route::get('/api/search', [CleanerController::class, 'searchCleaners'])->name('api.search');
+    });
+
+    // Complaints
+    Route::prefix('complaints')->name('complaints.')->group(function () {
+        Route::get('/', [ComplaintController::class, 'supervisorIndex'])->name('index');
+        Route::get('/pending', [ComplaintController::class, 'getPendingComplaints'])->name('pending');
+        Route::get('/assigned', [ComplaintController::class, 'getAssignedComplaints'])->name('assigned');
+        Route::get('/ongoing', [ComplaintController::class, 'getOngoingComplaints'])->name('ongoing');
+        Route::get('/completed', [ComplaintController::class, 'getCompletedComplaints'])->name('completed');
+        Route::get('/{id}', [ComplaintController::class, 'show'])->name('show');
+        Route::post('/submit', [ComplaintController::class, 'submitComplaint'])->name('submit');
+        Route::post('/{id}/assign-cleaner', [ComplaintController::class, 'assignCleaner'])->name('assign-cleaner');
+        Route::patch('/{id}/status', [ComplaintController::class, 'updateStatus'])->name('update-status');
+        Route::delete('/{id}', [ComplaintController::class, 'destroy'])->name('destroy');
+    });
+
+    // History
     Route::get('/history', [SupervisorController::class, 'history'])->name('history');
 
-    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Profile Management
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/edit', [SupervisorController::class, 'editProfile'])->name('edit');
+        Route::patch('/', [SupervisorController::class, 'updateProfile'])->name('update');
+        Route::delete('/', [SupervisorController::class, 'destroyProfile'])->name('destroy');
+    });
 });
 
 
+// ===================
+// General Public Routes
+// ===================
+Route::get('/cleaners', [CleanerController::class, 'index'])->name('cleaners'); // Public cleaner route
+Route::get('/cleaner/my-tasks', [CleanerController::class, 'myTasks'])->name('cleaner.tasks');
+Route::get('/history', [HistoryController::class, 'index'])->name('history'); // General history
 
+// Authentication Routes
+require __DIR__ . '/auth.php';
 
-// General routes
-Route::get('/cleaners', [CleanerController::class, 'index'])->name('cleaners'); // Public route
-Route::get('/cleaner/my-tasks', [CleanerController::class, 'myTasks'])->name('cleaner.tasks'); // Cleaner-specific route
-Route::get('/history', [HistoryController::class, 'index'])->name('history'); // History route
-
-// Auth routes
-require __DIR__.'/auth.php';
-
-// Test image route
+// Test Image Route
 Route::get('/test-image', function () {
     return view('test_image');
 });
