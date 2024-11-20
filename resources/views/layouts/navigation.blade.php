@@ -54,26 +54,25 @@
                         <div class="divide-y divide-gray-100 max-h-72 overflow-y-auto">
                             <template x-if="notifications.length > 0">
                                 <template x-for="notification in notifications" :key="notification.id">
-                                <a 
-                                    :href="notification.data.comp_id ? `{{ route('supervisor.complaints.show', ['id' => '__ID__']) }}`.replace('__ID__', notification.data.comp_id) : '#'" 
-                                    @click.prevent="notification.data.comp_id ? markAsRead(notification.id, notification.data.comp_id) : alert('Invalid Complaint ID')" 
-                                    class="block px-5 py-4 hover:bg-gray-50 transition flex items-center no-underline notification-item"
-                                    :class="{ 'bg-blue-100': !notification.read_at }">
-                                    <div class="flex-shrink-0 bg-blue-100 text-blue-600 rounded-full h-12 w-12 flex items-center justify-center shadow-inner">
-                                        <i class="fa fa-exclamation-circle text-lg"></i>
-                                    </div>
-                                    <div class="ml-4 flex-1">
-                                        <p class="text-sm font-medium text-gray-800 notification-title">
-                                            New Complaint Received
-                                        </p>
-                                        <p class="text-sm text-gray-500 notification-subtitle">
-                                            Made by: <span class="font-semibold" x-text="notification.data.officer_name ?? 'Unknown Officer'"></span>
-                                        </p>
-                                        <p class="text-xs text-gray-400 notification-time" x-text="new Date(notification.created_at).toLocaleString()"></p>
-                                    </div>
-                                    <i class="fa fa-chevron-right text-gray-400"></i>
-                                </a>
-
+                                    <a 
+                                        :href="notification.data.comp_id ? `/supervisor/complaints/${notification.data.comp_id}` : '#'" 
+                                        @click.prevent="notification.data.comp_id ? markAsRead(notification.id, notification.data.comp_id) : alert('Invalid Complaint ID')" 
+                                        class="block px-5 py-4 hover:bg-gray-50 transition flex items-center no-underline notification-item"
+                                        :class="{ 'bg-blue-100': !notification.read_at }">
+                                        <div class="flex-shrink-0 bg-blue-100 text-blue-600 rounded-full h-12 w-12 flex items-center justify-center shadow-inner">
+                                            <i class="fa fa-exclamation-circle text-lg"></i>
+                                        </div>
+                                        <div class="ml-4 flex-1">
+                                            <p class="text-sm font-medium text-gray-800 notification-title">
+                                                New Complaint Received
+                                            </p>
+                                            <p class="text-sm text-gray-500 notification-subtitle">
+                                                Made by: <span class="font-semibold" x-text="notification.data.officer_name ?? 'Unknown Officer'"></span>
+                                            </p>
+                                            <p class="text-xs text-gray-400 notification-time" x-text="new Date(notification.created_at).toLocaleString()"></p>
+                                        </div>
+                                        <i class="fa fa-chevron-right text-gray-400"></i>
+                                    </a>
                                 </template>
                             </template>
                             <template x-if="notifications.length === 0">
@@ -81,6 +80,7 @@
                             </template>
                         </div>
                     </div>
+
                 </div>
 
 
@@ -132,15 +132,14 @@
         fetch(`/supervisor/notifications/read/${notificationId}`, { method: 'GET' })
             .then(response => {
                 if (response.ok) {
-                    // Redirect to the complaint details page after marking as read
-                    window.location.href = `/supervisor/complaints/${compId}`;
+                    // You can either reload the page or leave it as it is, 
+                    // as the redirection happens when the notification is clicked
                 } else {
                     console.error('Failed to mark notification as read:', response.status);
                 }
             })
             .catch(error => console.error('Error in markAsRead:', error));
     }
-
 
 </script>
 

@@ -1,238 +1,338 @@
-<x-app-layout>
-    <div class="container my-5">
-        <!-- Breadcrumb with SVG Back Icon -->
-        <div class="d-flex align-items-center mb-4">
-            <!-- Back Button with SVG Image -->
-            <a href="{{ route('supervisor.complaints.index') }}" class="me-2 d-flex align-items-center text-decoration-none" style="color: #2E5675; padding: 0.375rem;">
-                <!-- SVG Image for Back Button -->
-                <img src="{{ asset('img/svg/back-arrow.svg') }}" alt="Back" style="width: 24px; height: 24px;">
-            </a>
-            <h6 class="text-muted m-0">Complaints / Details</h6>
-        </div>
+@extends('layouts.app')
 
-        <!-- Messages Section -->
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show shadow-sm rounded-3" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
+@section('title', 'Complaint Details')
 
-        @if ($errors->any())
-            <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-3" role="alert">
-                <ul class="mb-0">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
+@push('styles')
+<style>
+  /* Global Styles */
+  body {
+    background-color: #f8f9fa;
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    padding-top: 0px;
+  }
 
-        <div class="row gx-5">
-            <!-- Image Section -->
-            <div class="col-lg-6">
-                <div class="image-section bg-light rounded-3 shadow-sm p-3 d-flex align-items-center justify-content-center" style="height: 300px;">
-                    @if($complaint->getFirstMediaUrl('complaint_images'))
-                        <img src="{{ $complaint->getFirstMediaUrl('complaint_images') }}" alt="Complaint Image" class="img-fluid rounded-3" style="max-height: 100%; object-fit: cover;">
-                    @else
-                        <div class="placeholder-image text-muted">No Image Available</div>
-                    @endif
-                </div>
-            </div>
+  .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background-color: #ffffff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    height: 70px; /* Adjust this height if your navbar changes */
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    }
 
-            <!-- Details Section -->
-            <div class="col-lg-6">
-                <div class="details-section bg-white rounded-3 shadow-sm p-4">
-                    <h4 class="mb-3 fw-bold text-primary">{{ $complaint->comp_desc }}</h4>
-                    <ul class="list-unstyled mb-3 text-secondary">
-                        <li><strong>Location:</strong> {{ $complaint->comp_location }}</li>
-                        <li><strong>Date:</strong> {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}</li>
-                        <li><strong>Time:</strong> {{ \Carbon\Carbon::parse($complaint->comp_time)->format('h:i A') }}</li>
-                        <li><strong>Status:</strong> 
-                            <span class="badge rounded-pill 
-                                         @if($complaint->comp_status == 'completed') status-completed 
-                                         @elseif($complaint->comp_status == 'ongoing') status-ongoing 
-                                         @else status-pending @endif">
-                                {{ ucfirst($complaint->comp_status) }}
-                            </span>
-                        </li>
-                    </ul>
+    .navbar-spacer {
+    height: 70px; /* Same height as the navbar */
+    width: 100%;
+    }
 
-                    <div class="bg-light p-3 rounded-3 mb-3 shadow-sm">
-                        <textarea class="form-control bg-transparent border-0" rows="3" readonly>{{ $complaint->comp_desc }}</textarea>
-                    </div>
-                </div>
-            </div>
-        </div>
+    .container {
+        max-width: 1200px;
+        margin: 30px auto 0; /* Add margin equal to the navbar height */
+        padding: 1rem;
+        background-color: white;
+        border-radius: 12px;
+    }
 
-        @if (Auth::user()->role == 'supervisor')
-            <div class="assign-section mt-5 p-4 bg-white rounded-3 shadow-sm">
-                <h4 class="mb-4 text-primary">Assign Cleaners</h4>
-                
-                @if ($complaint->comp_status == 'pending')
-                    <!-- Check if there are no available cleaners -->
-                    @if($availableCleaners->isEmpty())
-                        <div class="alert alert-warning shadow-sm rounded-3">
-                            No cleaners are available at the moment. Please check back later.
-                        </div>
-                    @else
-                        <form action="{{ route('supervisor.assign.cleaner', ['id' => $complaint->id]) }}" method="POST">
-                            @csrf
-                            <!-- Number of Cleaners Selection -->
-                            <div class="d-flex gap-3 mb-4 align-items-center">
-                                <label for="no_of_cleaners" class="form-label mb-0 fw-semibold text-secondary">Number of Cleaners:</label>
-                                <select class="form-select w-25 shadow-sm" name="no_of_cleaners" id="no_of_cleaners" required style="border-radius: 8px;">
-                                    <option selected disabled>Number of cleaners</option>
-                                    @for ($i = 1; $i <= $availableCleaners->count(); $i++)
-                                        <option value="{{ $i }}">{{ $i }}</option>
-                                    @endfor
-                                </select>
-                                <button type="button" id="proceed-button" class="btn btn-primary shadow-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#cleanerModal">Select Cleaners</button>
-                            </div>
 
-                            <!-- Modal for Cleaner Selection -->
-                            <div class="modal fade" id="cleanerModal" tabindex="-1" aria-labelledby="cleanerModalLabel" aria-hidden="true">
-                                <div class="modal-dialog modal-lg">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="cleanerModalLabel">Select Cleaners</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <ul class="cleaner-list list-unstyled" id="cleaner-grid">
-                                                @foreach ($availableCleaners as $cleaner)
-                                                    <li class="cleaner-item d-flex align-items-center justify-content-between p-3 mb-2 shadow-sm rounded-3" style="background-color: #f7f9fc;">
-                                                        <div class="d-flex align-items-center">
-                                                            @if($cleaner->getFirstMediaUrl('profile_pictures'))
-                                                                <img src="{{ $cleaner->getFirstMediaUrl('profile_pictures') }}" alt="Profile Picture" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
-                                                            @else
-                                                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; font-size: 1rem;">
-                                                                    {{ strtoupper(substr($cleaner->cleaner_name, 0, 2)) }}
-                                                                </div>
-                                                            @endif
-                                                            <span class="text-secondary fw-semibold">{{ $cleaner->cleaner_name }}</span>
-                                                        </div>
-                                                        <div class="checkbox-wrapper-39">
-                                                            <label>
-                                                                <input type="checkbox" name="cleaners[]" value="{{ $cleaner->id }}" id="cleaner-{{ $cleaner->id }}">
-                                                                <span class="checkbox"></span>
-                                                            </label>
-                                                        </div>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-light shadow-sm rounded-pill px-3" data-bs-dismiss="modal">Close</button>
-                                            <button type="submit" class="btn btn-primary shadow-sm rounded-pill px-4">Assign</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-                    @endif
-                @else
-                    <div class="alert alert-info mt-3 rounded-3 shadow-sm">
-                        Cleaners have been assigned and notified. 
-                    </div>
-                    <h5 class="mt-4">Assigned Cleaners</h5>
-                    <ul class="list-group list-group-flush rounded-3 shadow-sm">
-                        @forelse ($complaint->cleaners as $cleaner)
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                {{ $cleaner->cleaner_name }} 
-                                <span Date: {{ \Carbon\Carbon::parse($cleaner->pivot->assigned_date)->format('d M Y h:i A') }}</span>
-                            </li
-                        @empty
-                            <li class="list-group-item text-muted">No cleaners assigned.</li>
-                        @endforelse
-                    </ul>
-                @endif
-            </div>
-        @else
-            <div class="alert alert-warning mt-5 rounded-3 shadow-sm">
-                You do not have permission to assign cleaners. Only supervisors can assign cleaners.
-            </div>
-        @endif
+
+  /* Header with iOS-Style Back Button */
+  .header-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .back-button {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #464c50;
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 0.5rem 0;
+    gap: 0.5rem;
+    transition: color 0.3s ease;
+  }
+
+  .back-button img {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+  }
+
+  .back-button:hover {
+    color: #1c3d5a;
+  }
+
+  .heading {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #495057;
+    margin: 0;
+  }
+
+  /* Flash Messages */
+  .alert {
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    border-left: 5px solid;
+    font-size: 0.9rem;
+  }
+
+  .alert-success {
+    background-color: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+  }
+
+  .alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffc107;
+    color: #856404;
+  }
+
+  .alert-danger {
+    background-color: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+  }
+
+  .complaint-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 2rem;
+  }
+
+  .image-section {
+    background-color: #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    height: 100%;
+  }
+
+  .image-section img {
+    max-width: 100%;
+    max-height: 300px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .details-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .details-section h2 {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #495057;
+    margin-bottom: 0.5rem;
+  }
+
+  .details-section .meta {
+    font-size: 0.85rem;
+    color: #6c757d;
+  }
+
+  .details-section textarea {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    background-color: #f8f9fa;
+    resize: none;
+  }
+
+  .complaint-by {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+  }
+
+  .complaint-by img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #e9ecef;
+  }
+
+  /* Status Badge */
+  .badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 20px;
+    text-transform: capitalize;
+    font-weight: bold;
+  }
+
+  .status-pending {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+
+  .status-ongoing {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+
+  .status-completed {
+    background-color: #d4edda;
+    color: #155724;
+  }
+
+  .assign-section {
+    margin-top: 2rem;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background-color: white;
+  }
+
+  .assign-section h3 {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #2E5675;
+    margin-bottom: 1rem;
+  }
+
+  .assign-form {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .form-select, .btn-primary {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+
+  .form-select {
+    border: 1px solid #dee2e6;
+    color: #495057;
+  }
+
+  .btn-primary {
+    background-color: #2E5675;
+    color: white;
+    border: none;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover {
+    background-color: #234859;
+  }
+</style>
+@endpush
+
+@section('content')
+<div class="navbar-spacer"></div> <!-- Spacer to push content below the navbar -->
+<div class="container">
+  <!-- Header -->
+  <div class="header-container">
+    <a href="{{ route('supervisor.complaints.index') }}" class="back-button">
+      <img src="{{ asset('img/svg/back-arrow.svg') }}" alt="Back">
+      Complaint / Details
+    </a>
+   
+  </div>
+
+  <!-- Flash Messages -->
+  @if(session('success'))
+  <div class="alert alert-success">
+    {{ session('success') }}
+  </div>
+  @endif
+
+  @if($errors->any())
+  <div class="alert alert-danger">
+    <ul>
+      @foreach($errors->all() as $error)
+      <li>{{ $error }}</li>
+      @endforeach
+    </ul>
+  </div>
+  @endif
+
+  <!-- Complaint Layout -->
+  <div class="complaint-layout">
+    <!-- Image Section -->
+    <div class="image-section">
+      @if($complaint->getFirstMediaUrl('complaint_images'))
+      <img src="{{ $complaint->getFirstMediaUrl('complaint_images') }}" alt="Complaint Image">
+      @else
+      <span>No Image Available</span>
+      @endif
     </div>
 
-    <!-- Custom Styles for Status Badge, Buttons, and Checkboxes -->
-    <style>
-        /* Status Badge Styles */
-        .badge {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-            border-radius: 9999px;
-            margin-top: 0.5rem;
-        }
+    <!-- Details Section -->
+    <div class="details-section">
+      <h2>{{ $complaint->comp_desc }}</h2>
+      <p class="meta"><strong>Location:</strong> {{ $complaint->comp_location }}</p>
+      <p class="meta"><strong>Date:</strong> {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}</p>
+      <p class="meta"><strong>Status:</strong> 
+        <span class="badge {{ $complaint->comp_status == 'pending' ? 'status-pending' : ($complaint->comp_status == 'ongoing' ? 'status-ongoing' : 'status-completed') }}">
+          {{ ucfirst($complaint->comp_status) }}
+        </span>
+      </p>
+      <textarea rows="4" readonly>{{ $complaint->comp_desc }}</textarea>
 
-        .status-pending {
-            background-color: #fee2e2;
-            color: #b91c1c;
-        }
+      <!-- Complaint By Section -->
+      <div class="complaint-by">
+      Complaint by:
+      <img src="{{ asset('img/profile_pic') }}" alt="User Profile">
+        <span>{{ $complaint->user->name ?? 'Unknown User' }}</span>
+        
+      </div>
+    </div>
+  </div>
 
-        .status-ongoing {
-            background-color: #fef3c7;
-            color: #ca8a04;
-        }
-
-        .status-completed {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
-
-        /* Checkbox Styles */
-        .checkbox-wrapper-39 label {
-            display: block;
-            width: 25px;
-            height: 25px;
-            cursor: pointer;
-        }
-
-        .checkbox-wrapper-39 input {
-            visibility: hidden;
-            display: none;
-        }
-
-        .checkbox-wrapper-39 input:checked ~ .checkbox {
-            transform: rotate(45deg);
-            width: 12px;
-            margin-left: 8px;
-            border-color: #24c78e;
-            border-top-color: transparent;
-            border-left-color: transparent;
-            border-radius: 0;
-        }
-
-        .checkbox-wrapper-39 .checkbox {
-            display: block;
-            width: 100%;
-            height: 100%;
-            border: 2px solid #434343;
-            border-radius: 4px;
-            transition: all 0.375s;
-        }
-
-        /* Button Styles */
-        .btn-primary {
-            color: #fff;
-            background-color: #374e66;
-            border-color: #e7eaed;
-        }
-
-        .btn-primary:hover {
-            background-color: #2e5675;
-            border-color: #2e5675;
-        }
-
-        .bg-primary {
-            background-color: #2c5472 !important;
-            margin-right: 10px;
-        }
-
-        .text-primary {
-            color: #1f2832 !important;
-        }
-    </style>
-</x-app-layout>
+  <!-- Assign Section -->
+  @if (Auth::user()->role == 'supervisor' && $complaint->comp_status == 'pending')
+  <div class="assign-section">
+    <h3>Assign Cleaners</h3>
+    @if($availableCleaners->isEmpty())
+    <div class="alert alert-warning">
+      Opps! No cleaners are currently available. Please try again later.
+    </div>
+    @else
+    <p>Available cleaners: <strong>{{ $availableCleaners->count() }}</strong></p>
+    <form action="{{ route('supervisor.complaints.assign-cleaner', $complaint->id) }}" method="POST">
+      @csrf
+      <div class="assign-form">
+        <select name="no_of_cleaners" class="form-select">
+          @for ($i = 1; $i <= $availableCleaners->count(); $i++)
+          <option value="{{ $i }}">{{ $i }}</option>
+          @endfor
+        </select>
+        <button type="submit" class="btn-primary">Assign</button>
+      </div>
+    </form>
+    @endif
+  </div>
+  @endif
+</div>
+@endsection
