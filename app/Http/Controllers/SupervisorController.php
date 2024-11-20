@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User; // Use the User model instead of Supervisor
+use App\Models\User;
 use App\Models\Complaint;
 use App\Models\Cleaner;
 use Illuminate\Http\Request;
@@ -28,15 +28,17 @@ class SupervisorController extends Controller
         // Fetch the total number of supervisors from the users table where role is 'supervisor'
         $totalSupervisors = User::where('role', 'supervisor')->count();
 
+        // Notifications
+        $user = Auth::user();
+        $unreadNotifications = $user->unreadNotifications;
+        $notifications = $user->notifications->sortByDesc('created_at')->take(10);
+        
         // Fetch the most recent ongoing complaint assigned by the supervisor
         $recentOngoingComplaint = Complaint::with(['user', 'cleaners'])
-            ->where('comp_status', 'ongoing') // Filter for ongoing complaints
-            ->where('assigned_by', $supervisorId) // Only complaints assigned by the current supervisor
-            ->orderBy('comp_date', 'desc') // Sort by the most recent complaint date
-            ->first(); // Get only the most recent complaint
-
-        // Retrieve unread notifications for the authenticated user
-        $unreadNotifications = auth()->guard('web')->user()->unreadNotifications;
+            ->where('comp_status', 'ongoing')
+            ->where('assigned_by', $supervisorId)
+            ->orderBy('comp_date', 'desc')
+            ->first();
 
         // Pass data to the view
         return view('supervisor.dashboard', compact(
@@ -44,8 +46,9 @@ class SupervisorController extends Controller
             'availableCleaners',
             'unavailableCleaners',
             'totalSupervisors',
-            'recentOngoingComplaint', // Pass the most recent ongoing complaint
-            'unreadNotifications'
+            'recentOngoingComplaint',
+            'unreadNotifications',
+            'notifications'
         ));
     }
 
@@ -91,14 +94,13 @@ class SupervisorController extends Controller
         return redirect('/')->with('success', 'Account deleted successfully.');
     }
 
-
     /**
      * Show the history of complaints.
      */
     public function history()
     {
         $supervisorId = Auth::id();
-        
+
         // Fetch today's complaints with 'completed' status
         $todaysComplaints = Complaint::where('assigned_by', $supervisorId)
             ->whereDate('comp_date', Carbon::today())
@@ -108,7 +110,7 @@ class SupervisorController extends Controller
             }])
             ->orderBy('comp_date', 'desc')
             ->get();
-        
+
         // Fetch past complaints with 'completed' status
         $pastComplaints = Complaint::where('assigned_by', $supervisorId)
             ->whereDate('comp_date', '<', Carbon::today())
@@ -118,7 +120,7 @@ class SupervisorController extends Controller
             }])
             ->orderBy('comp_date', 'desc')
             ->get();
-        
+
         // Fetch all ongoing complaints, regardless of date
         $ongoingComplaints = Complaint::where('assigned_by', $supervisorId)
             ->where('comp_status', 'ongoing')
@@ -133,14 +135,12 @@ class SupervisorController extends Controller
 
         // Pass the fetched data to the view
         return view('supervisor.history', compact(
-            'todaysComplaints', 
-            'pastComplaints', 
+            'todaysComplaints',
+            'pastComplaints',
             'ongoingComplaints',
-            'completedComplaints' // Add this to the view
+            'completedComplaints'
         ));
     }
-
-
 
     /**
      * Show all cleaners, with optional search filtering.

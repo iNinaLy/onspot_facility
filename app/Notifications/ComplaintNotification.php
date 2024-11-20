@@ -11,72 +11,89 @@ class complaintNotification extends Notification
 {
     protected $complaint;
     protected $officer;
-    protected $cleaners; // For notifying assigned cleaners
-    protected $isAssignment; // Flag to differentiate assignment notifications
+    protected $cleaners;
+    protected $isAssignment;
 
-    // Constructor to initialize the complaint, officer, and optionally the cleaners
+    /**
+     * Initialize the notification with complaint, officer, cleaners, and assignment flag.
+     */
     public function __construct($complaint, $officer, $cleaners = null, $isAssignment = false)
     {
         $this->complaint = $complaint;
         $this->officer = $officer;
-        $this->cleaners = $cleaners; // Optional for assigned cleaners
-        $this->isAssignment = $isAssignment; // Flag to check assignment notifications
+        $this->cleaners = $cleaners;
+        $this->isAssignment = $isAssignment;
     }
 
-    // Define the channels the notification should be sent through
+    /**
+     * Define the delivery channels for the notification.
+     */
     public function via($notifiable)
     {
-        return [
-            'database', // Save to database notifications table
-            FcmChannel::class, // Send FCM push notifications
-        ];
+        return ['database', FcmChannel::class];
     }
 
-    // Store the notification in the database table
+    /**
+     * Store the notification in the database table.
+     */
     public function toDatabase($notifiable)
     {
-        // Check if it's an assignment notification to cleaners
+        // Include 'type' to distinguish notification types
         if ($this->cleaners && $this->isAssignment) {
+            // Assignment notification for cleaners
             return [
+                'type' => 'cleaner_assignment',
                 'complaint_id' => $this->complaint->id,
                 'message' => 'You have been assigned to Complaint #' . $this->complaint->id,
+                'comp_location' => $this->complaint->comp_location,
+                'assigned_date' => $this->complaint->assigned_date,
             ];
-        } 
-        // Check if it's a notification for the officer about cleaner assignment
-        elseif ($this->isAssignment) {
+        } elseif ($this->isAssignment) {
+            // Notification for officers about cleaner assignment
             return [
+                'type' => 'officer_assignment',
                 'complaint_id' => $this->complaint->id,
                 'message' => 'Cleaners have been assigned to your Complaint #' . $this->complaint->id,
+                'no_of_cleaners' => $this->complaint->no_of_cleaners,
+                'assigned_by' => $this->complaint->assigned_by,
             ];
-        } 
-        // Default notification for a new complaint submitted by officer
-        else {
+        } else {
+            // Default notification for supervisors about new complaints
             return [
+                'type' => 'new_complaint',
                 'complaint_id' => $this->complaint->id,
                 'officer_name' => $this->officer->name,
                 'message' => 'A new complaint has been submitted by Officer ' . $this->officer->name,
+                'comp_desc' => $this->complaint->comp_desc,
+                'comp_location' => $this->complaint->comp_location,
+                'comp_date' => $this->complaint->comp_date,
+                'comp_time' => $this->complaint->comp_time,
             ];
         }
     }
 
-    // Send the FCM notification to devices
+    /**
+     * Send the notification via FCM.
+     */
     public function toFcm($notifiable): ?FcmMessage
     {
         $tokens = $notifiable->notificationTokens()->pluck('device_token');
 
         if ($tokens->isEmpty()) {
-            return null; // No tokens available to send notifications
+            return null;
         }
 
-        // If it's an assignment notification to cleaners
         if ($this->cleaners && $this->isAssignment) {
+            // Assignment notification for cleaners
             return (new FcmMessage(notification: new FcmNotification(
                 title: 'New Task Assigned',
-                body: 'You have been assigned to Complaint #' . $this->complaint->id,
-                image: null,
+                body: 'You have been assigned to Complaint #' . $this->complaint->id . ' at ' . $this->complaint->comp_location,
             )))
                 ->data([
-                    'complaint_id' => $this->complaint->id, // Send complaint_id in FCM payload
+                    'type' => 'cleaner_assignment',
+                    'complaint_id' => $this->complaint->id,
+                    'comp_location' => $this->complaint->comp_location,
+                    'assigned_date' => $this->complaint->assigned_date,
                 ])
                 ->to($tokens->toArray())
                 ->custom([
@@ -86,17 +103,16 @@ class complaintNotification extends Notification
                         ],
                     ],
                 ]);
-        }
-
-        // If it's for the officer, informing them about cleaner assignment
-        elseif ($this->isAssignment) {
+        } elseif ($this->isAssignment) {
+            // Notification for officers about cleaner assignment
             return (new FcmMessage(notification: new FcmNotification(
-                title: 'Cleaners Assigned to Your Complaint',
+                title: 'Cleaners Assigned',
                 body: 'Cleaners have been assigned to your Complaint #' . $this->complaint->id,
-                image: null,
             )))
                 ->data([
-                    'complaint_id' => $this->complaint->id, // Include complaint ID in data
+                    'type' => 'officer_assignment',
+                    'complaint_id' => $this->complaint->id,
+                    'no_of_cleaners' => $this->complaint->no_of_cleaners,
                 ])
                 ->to($tokens->toArray())
                 ->custom([
@@ -108,23 +124,32 @@ class complaintNotification extends Notification
                 ]);
         }
 
-        // If it's for supervisors about a new complaint
+        // Default notification for supervisors about new complaints
         return (new FcmMessage(notification: new FcmNotification(
             title: 'New Complaint Submitted',
             body: 'A new complaint has been submitted by Officer ' . $this->officer->name,
-            image: null,
         )))
-        ->data([
-            'complaint_id' => $this->complaint->id, // Pass complaint ID
-            'officer_name' => $this->officer->name, // Optional, for context
-        ])
-        ->to($tokens->toArray())
-        ->custom([
-            'android' => [
-                'notification' => [
-                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK', // Required for navigation
+            ->data([
+                'type' => 'new_complaint',
+                'complaint_id' => $this->complaint->id,
+                'officer_name' => $this->officer->name,
+            ])
+            ->to($tokens->toArray())
+            ->custom([
+                'android' => [
+                    'notification' => [
+                        'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                    ],
                 ],
-            ],
-        ]);
+            ]);
+    }
+
+    /**
+     * Convert the notification to an array representation.
+     */
+    public function toArray($notifiable)
+    {
+        // This method is used for broadcasting and can be useful for JSON representation
+        return $this->toDatabase($notifiable);
     }
 }

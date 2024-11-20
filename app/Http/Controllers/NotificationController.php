@@ -3,71 +3,49 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
     /**
-     * Display all notifications and unread notifications for the user.
+     * Display a listing of the notifications.
      */
     public function index()
     {
-        $user = auth('web')->user();
+        $user = Auth::user();
 
-        if ($user) {
-            $notifications = $user->notifications()->latest()->paginate(10); // Paginate all notifications
-            $unreadNotifications = $user->unreadNotifications;               // Fetch unread notifications
+        // Retrieve the latest 10 notifications using Eloquent query
+        $notifications = $user->notifications()
+            ->orderBy('created_at', 'desc')
+            ->paginate(10); // Use paginate for proper pagination
 
-            return view('notifications.index', compact('notifications', 'unreadNotifications'));
-        }
+        // Optionally, retrieve unread notifications count
+        $unreadNotificationsCount = $user->unreadNotifications->count();
 
-        return redirect()->route('login')->with('error', 'User not authenticated.');
+        return view('supervisor.notifications.index', compact('notifications', 'unreadNotificationsCount'));
     }
-
-    public function fetchAll(Request $request)
-    {
-        $user = auth('web')->user();
-
-        if ($user) {
-            $notifications = $user->notifications()->latest()->paginate(10); // Fetch all notifications, paginated
-            return response()->json($notifications);
-        }
-
-        return response()->json(['error' => 'Unauthorized'], 401);
-    }
-
 
     /**
-     * Mark a specific notification as read without deleting it.
-     *
-     * @param string $id
-     * @return \Illuminate\Http\JsonResponse
+     * Mark a specific notification as read.
      */
     public function markAsRead($id)
     {
-        $notification = auth('web')->user()->notifications()->find($id);
+        $notification = Auth::user()->unreadNotifications->find($id);
+
         if ($notification) {
             $notification->markAsRead();
-            return response()->json(['message' => 'Notification marked as read.']);
+            return response()->json(['status' => 'success']);
         }
-        return response()->json(['error' => 'Notification not found.'], 404);
+
+        return response()->json(['status' => 'error', 'message' => 'Notification not found'], 404);
     }
 
-
     /**
-     * Mark all unread notifications as read without deleting them.
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * Mark all notifications as read.
      */
     public function markAllAsRead()
     {
-        $user = auth('web')->user();
-
-        if ($user) {
-            $user->unreadNotifications->markAsRead();
-
-            return response()->json(['success' => true, 'message' => 'All notifications marked as read.']);
-        }
-
-        return response()->json(['success' => false, 'message' => 'User not authenticated.'], 401);
+        Auth::user()->unreadNotifications->markAsRead();
+        return response()->json(['status' => 'success']);
     }
 }

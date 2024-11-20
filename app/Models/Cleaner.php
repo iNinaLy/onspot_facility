@@ -35,12 +35,9 @@ class Cleaner extends Model implements HasMedia
      */
     public function complaints()
     {
-        return $this->belongsToMany(Complaint::class, 'complaint_cleaner')
-                    ->withPivot('no_of_cleaners', 'assigned_by', 'assigned_date')
-                    ->withTimestamps()
-                    ->with(['cleaners' => function ($query) {
-                        $query->select('id', 'cleaner_name', 'cleaner_phoneNo'); // Load name and phone number
-                    }]);
+        return $this->belongsToMany(Complaint::class, 'complaint_cleaner', 'cleaner_id', 'complaint_id')
+                    ->withPivot('assigned_by', 'assigned_date', 'no_of_cleaners')
+                    ->withTimestamps();
     }
 
     
