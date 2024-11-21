@@ -23,7 +23,10 @@ Route::middleware('auth:sanctum')->group(function () {
 // Authentication routes
 Route::post('/flutterlogin', [AuthController::class, 'login']);
 Route::post('/flutterregister', [AuthController::class, 'register']); 
+
+// Sanctum-protected routes
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/store-token', [AuthController::class, 'storeNotificationToken']); // Fix the typo here
     Route::post('/flutterlogout', [AuthController::class, 'logout']);
 });
 
