@@ -392,7 +392,7 @@
                                 <p class="complaint-date">
                                     <i class="fas fa-calendar-alt" aria-hidden="true"></i> <strong>Complaint Date:</strong> {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}
                                 </p>
-                                <p><strong><i class="fas fa-calendar-alt" aria-hidden="true"></i>Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') }}</p>
+                                <p><strong><i class="fas fa-calendar-alt" aria-hidden="true"></i> Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') }}</p>
                                 
                                 <h6>Assigned Cleaners:</h6>
                                 <ul>
@@ -441,7 +441,7 @@
                                 <p class="complaint-date">
                                     <i class="fas fa-calendar-alt" aria-hidden="true"></i> <strong>Complaint Date:</strong> {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}
                                 </p>
-                                <p><strong><i class="fas fa-calendar-alt" aria-hidden="true"></i>Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') }}</p>
+                                <p><strong><i class="fas fa-calendar-alt" aria-hidden="true"></i> Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') }}</p>
                                 
                                 <h6>Assigned Cleaners:</h6>
                                 <ul>
@@ -490,7 +490,7 @@
                                 <p class="complaint-date">
                                     <i class="fas fa-calendar-alt" aria-hidden="true"></i> <strong>Complaint Date:</strong> {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}
                                 </p>
-                                <p><strong><i class="fas fa-calendar-alt" aria-hidden="true"></i>Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') }}</p>
+                                <p><strong><i class="fas fa-calendar-alt" aria-hidden="true"></i> Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') }}</p>
                                 
                                 <h6>Assigned Cleaners:</h6>
                                 <ul>
@@ -548,7 +548,7 @@
                                 <p class="complaint-date">
                                     <i class="fas fa-calendar-alt" aria-hidden="true"></i> <strong>Complaint Date:</strong> {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}
                                 </p>
-                                <p><strong><i class="fas fa-calendar-alt" aria-hidden="true"></i>Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') }}</p>
+                                <p><strong><i class="fas fa-calendar-alt" aria-hidden="true"></i> Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') }}</p>
                                 
                                 <h6>Assigned Cleaners:</h6>
                                 <ul>

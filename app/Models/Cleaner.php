@@ -40,7 +40,24 @@ class Cleaner extends Model implements HasMedia
                     ->withTimestamps();
     }
 
-    
+    public function scopeWithOngoingComplaints($query)
+    {
+        return $query->where('status', 'unavailable')
+                     ->whereHas('complaints', function($q){
+                         $q->where('comp_status', 'ongoing');
+                     })
+                     ->with(['complaints' => function($q){
+                         $q->where('comp_status', 'ongoing');
+                     }]);
+    }
+
+    /**
+     * Get ongoing complaints
+     */
+    public function ongoingComplaints()
+    {
+        return $this->complaints()->where('comp_status', 'ongoing');
+    }
 
     /**
      * One-to-many relationship with Task model (if cleaners have specific tasks).

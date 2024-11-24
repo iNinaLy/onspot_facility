@@ -11,14 +11,15 @@ use Illuminate\Support\Facades\Hash;
 class CleanerController extends Controller
 {
     // Display all cleaners with additional counts
-    public function index()
+    public function index(Request $request)
     {
-        Log::info('Cleaners index accessed');
+        // Fetch cleaners with 'unavailable' status and assigned to ongoing complaints
+        $cleaners = Cleaner::withOngoingComplaints()
+                           ->paginate(10);
 
-        $cleaners = Cleaner::all(); // Retrieve all cleaners
+        $totalCleaners = Cleaner::count();
         $availableCount = Cleaner::where('status', 'available')->count();
         $unavailableCount = Cleaner::where('status', 'unavailable')->count();
-        $totalCleaners = $cleaners->count();
 
         return view('supervisor.cleaners.index', compact('cleaners', 'totalCleaners', 'availableCount', 'unavailableCount'));
     }
