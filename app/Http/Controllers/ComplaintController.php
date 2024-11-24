@@ -184,6 +184,8 @@ class ComplaintController extends Controller
         return view('supervisor.complaints.index', compact('complaints'));
     }
 
+    
+
     // Admin: Show recent complaint on the dashboard (Web)
     public function showDashboard()
     {

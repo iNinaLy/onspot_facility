@@ -1,408 +1,692 @@
+{{-- resources/views/history.blade.php --}}
+
 @extends('layouts.app')
 
-@section('title', 'Cleaners Management')
+@section('title', 'Complaint History')
 
 @push('styles')
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    @push('styles')
-<style>
-  /* General Body and Container Styling */
-  body {
-    background-color: #f3f6f9;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    color: #2E5675;
-  }
+    <style>
+        /* General Styling */
+        body {
+            background-color: #f2f4f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
 
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-  }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
 
-  /* Header with Filters on the Right */
-  .header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-top: 3rem;
-  }
+        .heading {
+            font-size: 2em;
+            font-weight: 700;
+            margin-top: 4rem;
+            margin-bottom: 2rem;
+            color: #2e5675;
+            text-align: left;
+        }
 
-  .heading {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #2E5675;
-    margin-top: 3rem;
-  }
+        .section-heading {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #2e3a59;
+            margin: 2rem 0 1rem;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 0.5rem;
+        }
 
-  /* Section Heading */
-  .section-heading {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #2E5675;
-    margin: 2rem 0 1rem;
-    border-bottom: 2px solid #d1d5db;
-    padding-bottom: 0.5rem;
-  }
+        .sub-heading {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2e3a59;
+            margin: 1rem 0;
+        }
 
-  /* Filter Form Styles */
-  .filter-container, .filter-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-  }
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
 
-  .filter-container select,
-  .filter-container input,
-  .filter-select,
-  .date-input {
-    padding: 0.5rem;
-    border-radius: 0.5rem;
-    border: 1px solid #d1d5db;
-    font-size: 0.875rem;
-    color: #555;
-    width: 150px;
-    background-color: #ffffff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
+        .filter-bar input {
+            flex: 1 1 300px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background: #fff;
+            transition: border-color 0.3s;
+        }
 
-  .search-container {
-    position: relative;
-    flex-grow: 1;
-    border-radius: 0.5rem;
-  }
+        .filter-bar input:focus {
+            border-color: #2e3a59;
+            outline: none;
+        }
 
-  .search-input {
-    width: 100%;
-    padding: 0.6rem 1.5rem 0.6rem 2.5rem;
-    border-radius: 8px;
-    background-color: #fff;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #555;
-    border: 1px solid #d1d5db;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: border-color 0.2s ease;
-  }
+        /* Button Group */
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
 
-  .search-input:focus {
-    outline: none;
-    border-color: #2E5675;
-    box-shadow: 0 2px 8px rgba(46, 86, 117, 0.2);
-  }
+        .btn-group button {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
 
-  .search-icon {
-    position: absolute;
-    top: 50%;
-    right: 0.8rem;
-    transform: translateY(-50%);
-    font-size: 1rem;
-    color: #888;
-  }
+        .btn-group button.active {
+            background-color: #2e5675;
+            color: #fff;
+        }
 
-  /* Buttons */
-  .view-details-btn,
-  .edit-btn,
-  .btn-toggle-all {
-    background-color: #2E5675;
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
+        .btn-group button.inactive {
+            background-color: #e0e0e0;
+            color: #2e3a59;
+        }
 
-  .view-details-btn:hover,
-  .edit-btn:hover,
-  .btn-toggle-all:hover {
-    background-color: #1f3c52;
-  }
+        .btn-group button:hover {
+            opacity: 0.9;
+        }
 
-  /* Card Styles */
-  .complaint-card, .list-item {
-    background-color: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    transition: transform 0.3s, box-shadow 0.3s;
-    position: relative;
-    margin-bottom: 1.5rem;
-  }
+        /* Card Styles */
+        .card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
 
-  .complaint-card:hover, .list-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
-  }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
 
-  .complaint-image-container {
-    flex: 0 0 220px;
-    height: 220px;
-    background-color: #e5e7eb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
 
-  .complaint-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+        .card-header h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2e3a59;
+            margin: 0;
+        }
 
-  .complaint-details {
-    flex-grow: 1;
-    padding: 1.5rem;
-  }
+        .card-header .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px; /* Pill shape */
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: background-color 0.3s, color 0.3s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
 
-  .list-item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-  }
+        /* Status Badge Colors */
+        .badge-completed {
+            background-color: #d4edda; /* Light Green */
+            color: #155724; /* Dark Green Text */
+            border: 1px solid #c3e6cb;
+        }
 
-  .list-item-title, .complaint-title {
-    font-size: 1.25rem;
-    font-weight: bold;
-    color: #1f2937;
-    margin-bottom: 0.5rem;
-  }
+        .badge-ongoing {
+            background-color: #d1ecf1; /* Light Blue */
+            color: #0c5460; /* Dark Blue Text */
+            border: 1px solid #bee5eb;
+        }
 
-  .list-item-date, .complaint-meta {
-    color: #6b7280;
-    font-size: 0.875rem;
-    margin-bottom: 0.5rem;
-  }
+        .description {
+            font-size: 1rem;
+            margin: 0.5rem 0 1rem;
+            color: #555;
+            line-height: 1.5;
+        }
 
-  .toggle-content {
-    display: none;
-    padding: 1.5rem;
-    font-size: 1rem;
-    color: #555;
-    background-color: #f9fafb;
-    border-top: 1px solid #e0e0e0;
-    margin-top: 0.75rem;
-    border-radius: 0 0 12px 12px;
-  }
+        /* Buttons */
+        .btn-details {
+            padding: 0.3rem 1.2rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            background-color: #2e5675;
+            color: #fff;
+            border: solid;
+            border-radius: 6rem;
+            cursor: pointer;
+            transition: background-color 0.3s, opacity 0.3s;
+        }
 
-  /* Status Badge Styles */
-  .complaint-status, .badge {
-    font-size: 0.85rem;
-    padding: 0.4em 0.7em;
-    border-radius: 9999px;
-    font-weight: 600;
-    text-transform: capitalize;
-  }
+        .btn-details:hover {
+            background-color: #1c3d55;
+            opacity: 0.9;
+        }
 
-  .status-pending {
-    background-color: #fee2e2;
-    color: #b91c1c;
-  }
+        /* Details Section */
+        .toggle-content {
+            display: none;
+            padding-top: 1rem;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.95rem;
+            color: #333;
+            line-height: 1.6;
+        }
 
-  .status-ongoing {
-    background-color: #fef3c7;
-    color: #ca8a04;
-  }
+        .toggle-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
 
-  .status-completed {
-    background-color: #d1fae5;
-    color: #065f46;
-  }
+        .toggle-content p {
+            margin: 0.5rem 0;
+        }
 
-  /* New Badge */
-  .new-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: #cce5ff;
-    color: #004085;
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: bold;
-    border-radius: 0.5rem;
-  }
+        .toggle-content h6 {
+            margin-top: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2e3a59;
+        }
 
-  /* Pagination */
-  .pagination {
-    display: flex;
-    justify-content: center;
-    list-style: none;
-    padding: 0;
-  }
+        .toggle-content ul {
+            list-style: disc inside;
+            padding-left: 1rem;
+        }
 
-  .pagination li {
-    margin: 0 5px;
-  }
+        .toggle-content ul li {
+            margin-bottom: 0.5rem;
+        }
 
-  .pagination a, .pagination span {
-    color: #2E5675;
-    padding: 8px 12px;
-    text-decoration: none;
-    border: 1px solid #d1d5db;
-    border-radius: 5px;
-  }
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
 
-  .pagination .active span {
-    background-color: #2E5675;
-    color: white;
-    border-color: #2E5675;
-  }
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            color: #555;
+            margin: 2rem 0;
+            font-size: 1rem;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
 
-  .pagination a:hover {
-    background-color: #f0f0f0;
-  }
-</style>
+        .empty-state-completed {
+            text-align: center;
+            color: #0c5460; /* Dark Teal for professionalism */
+            background-color: #d1ecf1; /* Light Blue Background for a calm tone */
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #bee5eb;
+            margin: 2rem 0;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .empty-state-completed i {
+            color: #0c5460; /* Match the text color */
+            font-size: 1.2rem;
+        }
+
+        .empty-state-ongoing {
+            text-align: center;
+            color: #555;
+            margin: 2rem 0;
+            font-size: 1rem;
+            font-style: italic;
+        }
+
+        /* Pagination Styling */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            padding: 1.5rem 0;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .pagination .page-item {
+            list-style: none;
+        }
+
+        .pagination .page-link {
+            display: block;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            color: #2e3a59;
+            text-decoration: none;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .pagination .page-link:hover {
+            background-color: #2e3a59;
+            color: #fff;
+        }
+
+        .pagination .active .page-link {
+            background-color: #2e3a59;
+            color: #fff;
+            border-color: #2e3a59;
+        }
+
+        .pagination .disabled .page-link {
+            color: #ccc;
+            pointer-events: none;
+            background-color: #f2f4f8;
+            border-color: #ccc;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-group button {
+                width: 100%;
+            }
+        }
+
+        /* Additional Styling for Phone Links */
+        .phone-link {
+            color: #0c5460; /* Dark Teal for consistency */
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .phone-link:hover {
+            color: #155724; /* Slightly darker on hover */
+        }
+
+        .phone-link i {
+            margin-right: 0.3rem;
+        }
+
+        /* Styling for Complaint Date */
+        .complaint-date {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin-top: 0.5rem;
+            color: #555;
+            font-size: 0.95rem;
+        }
+
+        .complaint-date i {
+            color: #2e3a59;
+        }
+    </style>
 @endpush
 
-
 @section('content')
-<div class="container">
-    <h1 class="heading">Complaint History</h1>
+    <div class="container">
+        <h1 class="heading">Complaint History</h1>
 
-    <!-- Filter and Expand/Collapse All Buttons -->
-    <div class="filter-bar">
-        <div class="search-container">
-            <i class="fas fa-search search-icon"></i>
-            <input type="text" id="searchInput" class="search-input" placeholder="Search complaints by description...">
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <input type="text" id="searchInput" placeholder="Search complaints...">
+            <input type="date" id="dateFilter">
         </div>
-        <input type="date" id="dateFilter" class="date-input" placeholder="Select date">
-        <select id="statusFilter" class="filter-select">
-            <option value="all">All Statuses</option>
-            <option value="ongoing">Ongoing</option>
-            <option value="completed">Completed</option>
-        </select>
-        <button id="toggleAllBtn" class="btn-toggle-all">Expand All</button>
-    </div>
 
-    <!-- Section for Ongoing Complaints -->
-    <div class="section">
-        <h2 class="section-heading">Ongoing Complaints</h2>
-        @forelse($ongoingComplaints as $complaint)
-            <div class="list-item" data-status="{{ $complaint->comp_status }}" data-description="{{ strtolower($complaint->comp_desc) }}" data-date="{{ $complaint->comp_date }}">
-                <div class="list-item-header">
-                    <div class="list-item-title">Location: {{ $complaint->comp_location ?? 'N/A' }}</div>
-                    <small class="list-item-date">{{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}</small>
-                </div>
-                <div><strong>Description:</strong> {{ $complaint->comp_desc }}</div>
-                <div>
-                    <strong>Status:</strong>
-                    <span class="badge status-ongoing">Ongoing</span>
-                </div>
-                <button class="btn-details" onclick="toggleDetails({{ $complaint->id }})">View Details</button>
-                <div id="details-{{ $complaint->id }}" class="toggle-content">
-                    <p><strong>Complaint by:</strong> {{ $complaint->officer->name ?? 'Unknown Officer' }}</p>
-                    <h6 class="mt-3">Assigned Cleaners:</h6>
-                    <ul class="cleaners-list">
-                        @forelse ($complaint->cleaners as $cleaner)
-                            <li><strong>{{ $cleaner->cleaner_name }}</strong></li>
-                            <li>
-                                <div class="phone-link">
-                                    <i class="fas fa-phone-alt"></i> {{ $cleaner->cleaner_phoneNo ?? 'N/A' }}
-                                </div>
-                            </li>
-                        @empty
-                            <li>No cleaners assigned.</li>
-                        @endforelse
-                    </ul>
-                    <div class="mt-3">
-                        <p><strong>Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') ?? 'N/A' }}</p>
-                        <p><strong>Assigned Time:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('h:i A') ?? 'N/A' }}</p>
-                    </div>
-                </div>
-            </div>
-        @empty
-            <p>No ongoing complaints found.</p>
-        @endforelse
-    </div>
+        <!-- Completed Complaints -->
+        <div class="section">
+            <h2 class="section-heading">Completed Complaints</h2>
 
-    <!-- Section for Completed Complaints -->
-    <div class="section">
-        <h2 class="section-heading">Completed Complaints</h2>
-        @forelse($completedComplaints as $complaint)
-            <div class="list-item" data-status="{{ $complaint->comp_status }}" data-description="{{ strtolower($complaint->comp_desc) }}" data-date="{{ $complaint->comp_date }}">
-                <div class="list-item-header">
-                    <div class="list-item-title">Location: {{ $complaint->comp_location ?? 'N/A' }}</div>
-                    <small class="list-item-date">{{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}</small>
-                </div>
-                <div><strong>Description:</strong> {{ $complaint->comp_desc }}</div>
-                <div>
-                    <strong>Status:</strong>
-                    <span class="badge status-completed">Completed</span>
-                </div>
-                <button class="btn-details" onclick="toggleDetails({{ $complaint->id }})">View Details</button>
-                <div id="details-{{ $complaint->id }}" class="toggle-content">
-                    <p><strong>Complaint by:</strong> {{ $complaint->officer->name ?? 'Unknown Officer' }}</p>
-                    <h6 class="mt-3">Assigned Cleaners:</h6>
-                    <ul class="cleaners-list">
-                        @forelse ($complaint->cleaners as $cleaner)
-                            <li><strong>{{ $cleaner->cleaner_name }}</strong></li>
-                            <li>
-                                <div class="phone-link">
-                                    <i class="fas fa-phone-alt"></i> {{ $cleaner->cleaner_phoneNo ?? 'N/A' }}
-                                </div>
-                            </li>
-                        @empty
-                            <li>No cleaners assigned.</li>
-                        @endforelse
-                    </ul>
-                    <div class="mt-3">
-                        <p><strong>Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') ?? 'N/A' }}</p>
-                        <p><strong>Assigned Time:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('h:i A') ?? 'N/A' }}</p>
-                    </div>
-                </div>
+            <!-- Button Group -->
+            <div class="btn-group">
+                <button class="active" id="showTodayBtn">Today</button>
+                <button class="inactive" id="showThisWeekBtn">This Week</button>
+                <button class="inactive" id="showOlderBtn">Older</button>
             </div>
-        @empty
-            <p>No completed complaints found.</p>
-        @endforelse
+
+            <!-- Completed Today -->
+            <div id="completedToday">
+                <h3 class="sub-heading">Today</h3>
+                @forelse($todaysComplaints as $complaint)
+                    <div class="card" data-description="{{ strtolower($complaint->comp_desc) }}" data-date="{{ $complaint->comp_date }}">
+                        <div class="card-header">
+                            <h3>{{ $complaint->comp_location ?? 'N/A' }}</h3>
+                            <span class="status badge-completed">
+                                <i class="fas fa-check-circle" aria-hidden="true"></i> Completed
+                            </span>
+                        </div>
+                        <div>
+                            <p class="description">{{ $complaint->comp_desc }}</p>
+                            <button class="btn-details" onclick="toggleDetails({{ $complaint->id }})">View Details</button>
+                            <div id="details-{{ $complaint->id }}" class="toggle-content">
+                                <p><strong>Complaint By:</strong> {{ $complaint->officer->name ?? 'Unknown Officer' }}</p>
+                                <p class="complaint-date">
+                                    <i class="fas fa-calendar-alt" aria-hidden="true"></i> <strong>Complaint Date:</strong> {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}
+                                </p>
+                                <p><strong><i class="fas fa-calendar-alt" aria-hidden="true"></i>Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') }}</p>
+                                
+                                <h6>Assigned Cleaners:</h6>
+                                <ul>
+                                    @forelse($complaint->cleaners as $cleaner)
+                                        <li>
+                                            {{ $cleaner->cleaner_name }} - 
+                                            @if($cleaner->cleaner_phoneNo)
+                                                <a href="tel:{{ $cleaner->cleaner_phoneNo }}" class="phone-link" aria-label="Call {{ $cleaner->cleaner_name }}">
+                                                    <i class="fas fa-phone" aria-hidden="true"></i> {{ $cleaner->cleaner_phoneNo }}
+                                                </a>
+                                            @else
+                                                N/A
+                                            @endif
+                                        </li>
+                                    @empty
+                                        <li>No cleaners assigned.</li>
+                                    @endforelse
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <p class="empty-state empty-state-completed">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i> 
+                        There are currently no completed tasks. Our cleaners are diligently handling their assignments. Please check back soon.
+                    </p>
+                @endforelse
+            </div>
+
+            <!-- Completed This Week -->
+            <div id="completedThisWeek" style="display: none;">
+                <h3 class="sub-heading">This Week</h3>
+                @forelse($thisWeeksComplaints as $complaint)
+                    <div class="card" data-description="{{ strtolower($complaint->comp_desc) }}" data-date="{{ $complaint->comp_date }}">
+                        <div class="card-header">
+                            <h3>{{ $complaint->comp_location ?? 'N/A' }}</h3>
+                            <span class="status badge-completed">
+                                <i class="fas fa-check-circle" aria-hidden="true"></i> Completed
+                            </span>
+                        </div>
+                        <div>
+                            <p class="description">{{ $complaint->comp_desc }}</p>
+                            <button class="btn-details" onclick="toggleDetails({{ $complaint->id }})">View Details</button>
+                            <div id="details-{{ $complaint->id }}" class="toggle-content">
+                                <p><strong>Complaint By:</strong> {{ $complaint->officer->name ?? 'Unknown Officer' }}</p>
+                                <p class="complaint-date">
+                                    <i class="fas fa-calendar-alt" aria-hidden="true"></i> <strong>Complaint Date:</strong> {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}
+                                </p>
+                                <p><strong><i class="fas fa-calendar-alt" aria-hidden="true"></i>Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') }}</p>
+                                
+                                <h6>Assigned Cleaners:</h6>
+                                <ul>
+                                    @forelse($complaint->cleaners as $cleaner)
+                                        <li>
+                                            {{ $cleaner->cleaner_name }} - 
+                                            @if($cleaner->cleaner_phoneNo)
+                                                <a href="tel:{{ $cleaner->cleaner_phoneNo }}" class="phone-link" aria-label="Call {{ $cleaner->cleaner_name }}">
+                                                    <i class="fas fa-phone" aria-hidden="true"></i> {{ $cleaner->cleaner_phoneNo }}
+                                                </a>
+                                            @else
+                                                N/A
+                                            @endif
+                                        </li>
+                                    @empty
+                                        <li>No cleaners assigned.</li>
+                                    @endforelse
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <p class="empty-state empty-state-completed">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i> 
+                        There are currently no completed tasks. Our cleaners are diligently handling their assignments. Please check back soon.
+                    </p>
+                @endforelse
+            </div>
+
+            <!-- Completed Older -->
+            <div id="completedOlder" style="display: none;">
+                <h3 class="sub-heading">Older</h3>
+                @forelse($olderComplaints as $complaint)
+                    <div class="card" data-description="{{ strtolower($complaint->comp_desc) }}" data-date="{{ $complaint->comp_date }}">
+                        <div class="card-header">
+                            <h3>{{ $complaint->comp_location ?? 'N/A' }}</h3>
+                            <span class="status badge-completed">
+                                <i class="fas fa-check-circle" aria-hidden="true"></i> Completed
+                            </span>
+                        </div>
+                        <div>
+                            <p class="description">{{ $complaint->comp_desc }}</p>
+                            <button class="btn-details" onclick="toggleDetails({{ $complaint->id }})">View Details</button>
+                            <div id="details-{{ $complaint->id }}" class="toggle-content">
+                                <p><strong>Complaint By:</strong> {{ $complaint->officer->name ?? 'Unknown Officer' }}</p>
+                                <p class="complaint-date">
+                                    <i class="fas fa-calendar-alt" aria-hidden="true"></i> <strong>Complaint Date:</strong> {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}
+                                </p>
+                                <p><strong><i class="fas fa-calendar-alt" aria-hidden="true"></i>Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') }}</p>
+                                
+                                <h6>Assigned Cleaners:</h6>
+                                <ul>
+                                    @forelse($complaint->cleaners as $cleaner)
+                                        <li>
+                                            {{ $cleaner->cleaner_name }} - 
+                                            @if($cleaner->cleaner_phoneNo)
+                                                <a href="tel:{{ $cleaner->cleaner_phoneNo }}" class="phone-link" aria-label="Call {{ $cleaner->cleaner_name }}">
+                                                    <i class="fas fa-phone" aria-hidden="true"></i> {{ $cleaner->cleaner_phoneNo }}
+                                                </a>
+                                            @else
+                                                N/A
+                                            @endif
+                                        </li>
+                                    @empty
+                                        <li>No cleaners assigned.</li>
+                                    @endforelse
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <p class="empty-state empty-state-completed">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i> 
+                        There are currently no completed tasks yet. Our cleaners are diligently handling their assignments. Check back soon!
+                    </p>
+                @endforelse
+
+                <!-- Pagination for Older Complaints -->
+                @if($olderComplaints->hasPages())
+                    <div class="pagination">
+                        {{ $olderComplaints->links() }}
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Ongoing Complaints -->
+        <div class="section">
+            <h2 class="section-heading">Ongoing Complaints</h2>
+            <div id="ongoingComplaints">
+                @forelse($ongoingComplaints as $complaint)
+                    <div class="card" data-description="{{ strtolower($complaint->comp_desc) }}" data-date="{{ $complaint->comp_date }}">
+                        <div class="card-header">
+                            <h3>{{ $complaint->comp_location ?? 'N/A' }}</h3>
+                            <span class="status badge-ongoing">
+                                <i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Ongoing
+                            </span>
+                        </div>
+                        <div>
+                            <p class="description">{{ $complaint->comp_desc }}</p>
+                            <button class="btn-details" onclick="toggleDetails({{ $complaint->id }})">View Details</button>
+                            <div id="details-{{ $complaint->id }}" class="toggle-content">
+                                <p><strong>Complaint By:</strong> {{ $complaint->officer->name ?? 'Unknown Officer' }}</p>
+                                <p class="complaint-date">
+                                    <i class="fas fa-calendar-alt" aria-hidden="true"></i> <strong>Complaint Date:</strong> {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}
+                                </p>
+                                <p><strong><i class="fas fa-calendar-alt" aria-hidden="true"></i>Assigned Date:</strong> {{ \Carbon\Carbon::parse($complaint->assigned_date)->format('d M Y') }}</p>
+                                
+                                <h6>Assigned Cleaners:</h6>
+                                <ul>
+                                    @forelse($complaint->cleaners as $cleaner)
+                                        <li>
+                                            {{ $cleaner->cleaner_name }} - 
+                                            @if($cleaner->cleaner_phoneNo)
+                                                <a href="tel:{{ $cleaner->cleaner_phoneNo }}" class="phone-link" aria-label="Call {{ $cleaner->cleaner_name }}">
+                                                    <i class="fas fa-phone" aria-hidden="true"></i> {{ $cleaner->cleaner_phoneNo }}
+                                                </a>
+                                            @else
+                                                N/A
+                                            @endif
+                                        </li>
+                                    @empty
+                                        <li>No cleaners assigned.</li>
+                                    @endforelse
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <p class="empty-state empty-state-ongoing">There are no ongoing complaints at the moment.</p>
+                @endforelse
+            </div>
+        </div>
     </div>
-</div>
 @endsection
 
 @push('scripts')
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    function toggleDetails(id) {
-        $('#details-' + id).toggle();
-    }
+    <script>
+        // Function to toggle the visibility of the details section
+        function toggleDetails(id) {
+            const details = document.getElementById(`details-${id}`);
+            details.classList.toggle('active');
+        }
 
-    let expanded = false;
-    $('#toggleAllBtn').click(function() {
-        expanded = !expanded;
-        $('.toggle-content').toggle(expanded);
-        $(this).text(expanded ? 'Collapse All' : 'Expand All');
-    });
+        // Button Group Functionality
+        const showTodayBtn = document.getElementById('showTodayBtn');
+        const showThisWeekBtn = document.getElementById('showThisWeekBtn');
+        const showOlderBtn = document.getElementById('showOlderBtn');
 
-    $('#statusFilter').change(function() {
-        let selectedStatus = $(this).val();
-        $('.list-item').each(function() {
-            let status = $(this).data('status');
-            $(this).toggle(selectedStatus === 'all' || status === selectedStatus);
+        showTodayBtn.addEventListener('click', function() {
+            document.getElementById('completedToday').style.display = 'block';
+            document.getElementById('completedThisWeek').style.display = 'none';
+            document.getElementById('completedOlder').style.display = 'none';
+
+            toggleActive(this, [showThisWeekBtn, showOlderBtn]);
         });
-    });
 
-    $('#dateFilter').change(function() {
-        let selectedDate = $(this).val();
-        $('.list-item').each(function() {
-            let date = $(this).data('date');
-            $(this).toggle(date.startsWith(selectedDate));
-        });
-    });
+        showThisWeekBtn.addEventListener('click', function() {
+            document.getElementById('completedToday').style.display = 'none';
+            document.getElementById('completedThisWeek').style.display = 'block';
+            document.getElementById('completedOlder').style.display = 'none';
 
-    $('#searchInput').on('input', function() {
-        let searchTerm = $(this).val().toLowerCase();
-        $('.list-item').each(function() {
-            let description = $(this).data('description');
-            $(this).toggle(description.includes(searchTerm));
+            toggleActive(this, [showTodayBtn, showOlderBtn]);
         });
-    });
-</script>
+
+        showOlderBtn.addEventListener('click', function() {
+            document.getElementById('completedToday').style.display = 'none';
+            document.getElementById('completedThisWeek').style.display = 'none';
+            document.getElementById('completedOlder').style.display = 'block';
+
+            toggleActive(this, [showTodayBtn, showThisWeekBtn]);
+        });
+
+        // Function to toggle active/inactive button states
+        function toggleActive(activeBtn, otherButtons) {
+            activeBtn.classList.remove('inactive');
+            activeBtn.classList.add('active');
+
+            otherButtons.forEach(button => {
+                button.classList.remove('active');
+                button.classList.add('inactive');
+            });
+        }
+
+        // Search Functionality Applied to All Complaints
+        document.getElementById('searchInput').addEventListener('input', function () {
+            const searchTerm = this.value.toLowerCase();
+            const allCards = document.querySelectorAll('.card'); // Select all cards in Completed and Ongoing sections
+
+            allCards.forEach(card => {
+                const description = card.dataset.description || ''; // Use the dataset description
+                card.style.display = description.includes(searchTerm) ? 'block' : 'none';
+            });
+
+            // Handle empty state messages if no cards are visible
+            const completedVisible = Array.from(document.querySelectorAll('#completedToday .card, #completedThisWeek .card, #completedOlder .card'))
+                .some(card => card.style.display === 'block');
+            const ongoingVisible = Array.from(document.querySelectorAll('#ongoingComplaints .card'))
+                .some(card => card.style.display === 'block');
+
+            // Show or hide empty state messages
+            const emptyStateCompleted = document.querySelector('.empty-state-completed');
+            const emptyStateOngoing = document.querySelector('.empty-state-ongoing');
+
+            if (emptyStateCompleted) {
+                emptyStateCompleted.style.display = completedVisible ? 'none' : 'flex';
+            }
+
+            if (emptyStateOngoing) {
+                emptyStateOngoing.style.display = ongoingVisible ? 'none' : 'block';
+            }
+        });
+
+        // Date Filter Functionality Applied to All Complaints
+        document.getElementById('dateFilter').addEventListener('change', function () {
+            const selectedDate = this.value;
+            const allCards = document.querySelectorAll('.card'); // Select all cards in Completed and Ongoing sections
+
+            allCards.forEach(card => {
+                const date = card.dataset.date || '';
+                if (selectedDate) {
+                    card.style.display = (date === selectedDate) ? 'block' : 'none';
+                } else {
+                    // If no date is selected, show all cards
+                    card.style.display = 'block';
+                }
+            });
+
+            // Handle empty state messages if no cards are visible
+            const completedVisible = Array.from(document.querySelectorAll('#completedToday .card, #completedThisWeek .card, #completedOlder .card'))
+                .some(card => card.style.display === 'block');
+            const ongoingVisible = Array.from(document.querySelectorAll('#ongoingComplaints .card'))
+                .some(card => card.style.display === 'block');
+
+            // Show or hide empty state messages
+            const emptyStateCompleted = document.querySelector('.empty-state-completed');
+            const emptyStateOngoing = document.querySelector('.empty-state-ongoing');
+
+            if (emptyStateCompleted) {
+                emptyStateCompleted.style.display = completedVisible ? 'none' : 'flex';
+            }
+
+            if (emptyStateOngoing) {
+                emptyStateOngoing.style.display = ongoingVisible ? 'none' : 'block';
+            }
+        });
+    </script>
 @endpush

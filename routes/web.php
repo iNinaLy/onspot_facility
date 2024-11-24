@@ -86,20 +86,24 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     // Dashboard
     Route::get('/dashboard', [SupervisorController::class, 'dashboard'])->name('dashboard');
 
-      // Notifications
-      Route::prefix('notifications')->name('notifications.')->group(function () {
+    // Notifications
+    Route::prefix('notifications')->name('notifications.')->group(function () {
         // Display notifications index
         Route::get('/', [NotificationController::class, 'index'])->name('index');
 
         // Fetch all notifications via AJAX
         Route::get('/all', [NotificationController::class, 'fetchAll'])->name('all');
 
-        // **Modified Route: Mark a specific notification as read**
+        // Mark a specific notification as read
         Route::get('/read/{id}', [NotificationController::class, 'markAsRead'])->name('markAsRead');
 
         // Mark all notifications as read
         Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('markAllAsRead');
+
+        // Clear all notifications
+        Route::post('/clear-all', [NotificationController::class, 'clearAll'])->name('clearAll');
     });
+
 
     // Cleaner Management
     Route::prefix('cleaners')->group(function () {

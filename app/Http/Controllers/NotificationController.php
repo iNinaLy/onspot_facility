@@ -48,4 +48,13 @@ class NotificationController extends Controller
         Auth::user()->unreadNotifications->markAsRead();
         return response()->json(['status' => 'success']);
     }
+
+    public function clearAll()
+    {
+        // Clear all notifications for the authenticated user
+        Auth::user()->notifications()->delete();
+
+        // Redirect back with a success message
+        return redirect()->back()->with('success', 'All notifications cleared successfully.');
+    }
 }

@@ -177,6 +177,11 @@
             font-weight: 600;
         }
 
+        .bg-red-600 {
+            --tw-bg-opacity: 1;
+            background-color: #b93f3f;
+        }
+        
         /* Container spacing */
         .container {
             max-width: 1200px;
@@ -380,39 +385,48 @@
                 Welcome, {{ Auth::user()->name }}!
             </div>
 
-            <!-- New Complaints Notification -->
-            @if(isset($newComplaints) && is_countable($newComplaints) && count($newComplaints) > 0)
-                <div class="flex items-center p-4 bg-blue-100 border-l-4 border-blue-500 rounded-lg shadow-sm">
-                    <div class="flex-shrink-0">
-                        <img src="{{ asset('img/svg/notification.svg') }}" class="h-8 w-8" alt="Notification Icon">
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-semibold text-blue-900">
-                            New Complaints Available!
-                        </p>
-                        <p class="text-sm text-blue-700">
-                            You have received <strong>{{ count($newComplaints) }}</strong> new complaint{{ count($newComplaints) > 1 ? 's' : '' }}.
-                        </p>
-                        <a href="{{ route('supervisor.complaints.index') }}" class="text-sm font-medium text-blue-600 hover:underline">
-                            View All Complaints
-                        </a>
+          <!-- Pending Complaints -->
+
+        @if($pendingComplaints > 0)
+            <div class="flex items-center p-6 bg-red-50 border-l-4 border-red-600 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="flex-shrink-0">
+                    <div class="flex items-center justify-center h-10 w-10 bg-red-100 rounded-full">
+                        <i class="fa fa-exclamation-circle text-red-600 text-lg"></i>
                     </div>
                 </div>
-            @else
-                <div class="flex items-center p-4 bg-gray-100 border-l-4 border-gray-400 rounded-lg shadow-sm">
-                    <div class="flex-shrink-0">
-                        <img src="{{ asset('img/svg/notification.svg') }}" class="h-8 w-8" alt="Notification Icon">
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-semibold text-gray-900">
-                            No New Complaints
-                        </p>
-                        <p class="text-sm text-gray-700">
-                            There are currently no new complaints received.
-                        </p>
+                <div class="ml-5 flex-1">
+                    <p class="text-lg font-bold text-red-800">
+                        Pending Complaints
+                    </p>
+                    <p class="text-sm text-red-700 mt-1">
+                        You have <strong>{{ $pendingComplaints }}</strong> pending complaint{{ $pendingComplaints > 1 ? 's' : '' }} that need your attention.
+                    </p>
+                </div>
+                <div>
+                    <a href="{{ route('supervisor.complaints.index') }}" 
+                    class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg shadow-md hover:bg-red-700 hover:shadow-lg transition duration-300">
+                        View Complaints
+                    </a>
+                </div>
+            </div>
+        @else
+            <div class="flex items-center p-6 bg-gray-50 border-l-4 border-gray-300 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="flex-shrink-0">
+                    <div class="flex items-center justify-center h-10 w-10 bg-gray-200 rounded-full">
+                        <i class="fa fa-check-circle text-gray-600 text-lg"></i>
                     </div>
                 </div>
-@endif
+                <div class="ml-5">
+                    <p class="text-lg font-bold text-gray-800">
+                        No Pending Complaints
+                    </p>
+                    <p class="text-sm text-gray-600 mt-1">
+                        You’re all caught up! Great job staying on top of things.
+                    </p>
+                </div>
+            </div>
+        @endif
+
 
 
 

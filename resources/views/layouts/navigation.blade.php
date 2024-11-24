@@ -45,7 +45,7 @@
                         <!-- Dropdown Header with "Mark All as Read" Button -->
                         <div class="py-3 px-4 bg-gray-100 border-b border-gray-200 flex items-center justify-between">
                             <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
-                            <button @click="markAllAsRead()" class="text-sm text-blue-500 hover:underline">Mark All as Read</button>
+                            
                         </div>
                         <div class="divide-y divide-gray-100 max-h-72 overflow-y-auto">
                             <!-- Loop Through Unread Notifications -->
@@ -74,6 +74,7 @@
                             <!-- No Unread Notifications Message -->
                             <template x-if="notifications.length === 0">
                                 <div class="px-4 py-5 text-sm text-gray-500 text-center">No new notifications</div>
+                                
                             </template>
                         </div>
                         <!-- "View All Notifications" Link -->

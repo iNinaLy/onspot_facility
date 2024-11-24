@@ -17,40 +17,44 @@ class SupervisorController extends Controller
      * Display the supervisor dashboard.
      */
     public function dashboard()
-    {
-        $supervisorId = Auth::id();
+{
+    $supervisorId = Auth::id();
 
-        // Retrieve cleaner stats
-        $totalCleaners = Cleaner::count();
-        $availableCleaners = Cleaner::where('status', 'available')->count();
-        $unavailableCleaners = Cleaner::where('status', 'unavailable')->count();
+    // Retrieve cleaner stats
+    $totalCleaners = Cleaner::count();
+    $availableCleaners = Cleaner::where('status', 'available')->count();
+    $unavailableCleaners = Cleaner::where('status', 'unavailable')->count();
 
-        // Fetch the total number of supervisors from the users table where role is 'supervisor'
-        $totalSupervisors = User::where('role', 'supervisor')->count();
+    // Fetch the total number of supervisors from the users table where role is 'supervisor'
+    $totalSupervisors = User::where('role', 'supervisor')->count();
 
-        // Notifications
-        $user = Auth::user();
-        $unreadNotifications = $user->unreadNotifications;
-        $notifications = $user->notifications->sortByDesc('created_at')->take(10);
-        
-        // Fetch the most recent ongoing complaint assigned by the supervisor
-        $recentOngoingComplaint = Complaint::with(['user', 'cleaners'])
-            ->where('comp_status', 'ongoing')
-            ->where('assigned_by', $supervisorId)
-            ->orderBy('comp_date', 'desc')
-            ->first();
+    // Notifications
+    $user = Auth::user();
+    $unreadNotifications = $user->unreadNotifications;
+    $notifications = $user->notifications->sortByDesc('created_at')->take(10);
+    
+    // Fetch the most recent ongoing complaint assigned by the supervisor
+    $recentOngoingComplaint = Complaint::with(['user', 'cleaners'])
+        ->where('comp_status', 'ongoing')
+        ->where('assigned_by', $supervisorId)
+        ->orderBy('comp_date', 'desc')
+        ->first();
 
-        // Pass data to the view
-        return view('supervisor.dashboard', compact(
-            'totalCleaners',
-            'availableCleaners',
-            'unavailableCleaners',
-            'totalSupervisors',
-            'recentOngoingComplaint',
-            'unreadNotifications',
-            'notifications'
-        ));
-    }
+    // Fetch count of pending complaints
+    $pendingComplaints = Complaint::where('comp_status', 'Pending')->count();
+
+    // Pass data to the view
+    return view('supervisor.dashboard', compact(
+        'totalCleaners',
+        'availableCleaners',
+        'unavailableCleaners',
+        'totalSupervisors',
+        'recentOngoingComplaint',
+        'unreadNotifications',
+        'notifications',
+        'pendingComplaints' // Pass the new variable
+    ));
+}
 
     public function editProfile(Request $request)
     {
@@ -100,47 +104,48 @@ class SupervisorController extends Controller
     public function history()
     {
         $supervisorId = Auth::id();
-
-        // Fetch today's complaints with 'completed' status
+    
+        // Fetch ongoing complaints assigned by the supervisor
+        $ongoingComplaints = Complaint::where('assigned_by', $supervisorId)
+            ->where('comp_status', 'ongoing')
+            ->with(['cleaners:id,cleaner_name,cleaner_phoneNo'])
+            ->orderBy('comp_date', 'desc')
+            ->get();
+    
+        // Fetch today's completed complaints assigned by the supervisor
         $todaysComplaints = Complaint::where('assigned_by', $supervisorId)
             ->whereDate('comp_date', Carbon::today())
             ->where('comp_status', 'completed')
-            ->with(['cleaners' => function ($query) {
-                $query->select('cleaners.id', 'cleaner_name', 'cleaner_phoneNo');
-            }])
+            ->with(['cleaners:id,cleaner_name,cleaner_phoneNo'])
             ->orderBy('comp_date', 'desc')
             ->get();
-
-        // Fetch past complaints with 'completed' status
-        $pastComplaints = Complaint::where('assigned_by', $supervisorId)
-            ->whereDate('comp_date', '<', Carbon::today())
+    
+        // Fetch this week's completed complaints assigned by the supervisor (excluding today)
+        $thisWeeksComplaints = Complaint::where('assigned_by', $supervisorId)
+            ->whereBetween('comp_date', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
             ->where('comp_status', 'completed')
-            ->with(['cleaners' => function ($query) {
-                $query->select('cleaners.id', 'cleaner_name', 'cleaner_phoneNo');
-            }])
+            ->whereDate('comp_date', '<>', Carbon::today())
+            ->with(['cleaners:id,cleaner_name,cleaner_phoneNo'])
             ->orderBy('comp_date', 'desc')
             ->get();
-
-        // Fetch all ongoing complaints, regardless of date
-        $ongoingComplaints = Complaint::where('assigned_by', $supervisorId)
-            ->where('comp_status', 'ongoing')
-            ->with(['cleaners' => function ($query) {
-                $query->select('cleaners.id', 'cleaner_name', 'cleaner_phoneNo');
-            }])
+    
+        // Fetch older completed complaints assigned by the supervisor with pagination
+        $olderComplaints = Complaint::where('assigned_by', $supervisorId)
+            ->whereDate('comp_date', '<', Carbon::now()->startOfWeek())
+            ->where('comp_status', 'completed')
+            ->with(['cleaners:id,cleaner_name,cleaner_phoneNo'])
             ->orderBy('comp_date', 'desc')
-            ->get();
-
-        // Combine all completed complaints (today's and past) into one variable
-        $completedComplaints = $todaysComplaints->merge($pastComplaints);
-
-        // Pass the fetched data to the view
+            ->paginate(5); // Adjust the number per page as needed
+    
+        // Pass all the data to the view without duplication
         return view('supervisor.history', compact(
-            'todaysComplaints',
-            'pastComplaints',
             'ongoingComplaints',
-            'completedComplaints'
+            'todaysComplaints',
+            'thisWeeksComplaints',
+            'olderComplaints'
         ));
     }
+    
 
     /**
      * Show all cleaners, with optional search filtering.
