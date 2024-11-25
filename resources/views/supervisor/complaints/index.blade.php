@@ -6,6 +6,7 @@
 <style>
   /* General Container Styles */
   .container {
+    width: 85%;
     max-width: 1200px;
     margin: 0 auto;
     padding: 2rem;
@@ -13,6 +14,7 @@
     flex-direction: column;
     gap: 2rem;
   }
+
 
   /* Header with Filters on the Right */
   .header-container {

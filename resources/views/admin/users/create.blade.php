@@ -3,6 +3,8 @@
 
 @extends('layouts.admin')
 
+@section('title', 'Add New User')
+
 @section('content')
 <div class="container mx-auto my-10 px-4 md:px-6 max-w-screen-xl">
     <!-- Page Title -->
@@ -114,7 +116,8 @@
     </div>
 </div>
 
-<!-- Password Validation Script -->
+@push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const passwordInput = document.getElementById('password');
@@ -154,9 +157,11 @@
         passwordInput.addEventListener('input', validatePassword);
         confirmPasswordInput.addEventListener('input', validatePassword);
     });
+    
+
 </script>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+@endpush
 
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet">
 @endsection

@@ -1,7 +1,40 @@
-<title>{{ config('app.name','OnSpot Facility') }}</title>
-<link rel="icon" href="{{ asset('images/favicon-32x32.png') }}" type="image/png">
-
 @extends('layouts.admin')
+
+@section('title', 'Manage Officers')
+
+@push('styles')
+<style>
+    .form-control {
+        background-color: #f9fafb;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        padding: 0.75rem;
+        padding-right: 2.5rem; /* Extra padding for the eye icon */
+        width: 100%;
+    }
+
+    .form-control:focus {
+        border-color: #4C7F9D;
+        box-shadow: 0 0 0 3px rgba(76, 127, 157, 0.3);
+    }
+
+    .toggle-password {
+        position: absolute;
+        top: 50%;
+        right: 15px;
+        transform: translateY(-50%);
+        cursor: pointer;
+    }
+
+    .btn {
+        transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+        opacity: 0.9;
+    }
+</style>
+@endpush
 
 @section('content')
 <div class="container mx-auto my-10 px-6 max-w-screen-md">
@@ -31,27 +64,33 @@
         @method('PUT')
 
         <!-- Username Field -->
-        <div class="mb-6">
+        <div class="mb-6 relative">
             <label for="username" class="block text-gray-700 font-medium mb-2">Username</label>
-            <input type="text" name="username" id="username" class="form-control border-gray-300 rounded-lg w-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{ old('username', $officer->username) }}" placeholder="Enter Username" required>
+            <input type="text" name="username" id="username" class="form-control" value="{{ old('username', $officer->username) }}" placeholder="Enter Username" required>
         </div>
 
         <!-- Name Field -->
-        <div class="mb-6">
+        <div class="mb-6 relative">
             <label for="name" class="block text-gray-700 font-medium mb-2">Name</label>
-            <input type="text" name="name" id="name" class="form-control border-gray-300 rounded-lg w-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{ old('name', $officer->name) }}" placeholder="Enter Name" required>
+            <input type="text" name="name" id="name" class="form-control" value="{{ old('name', $officer->name) }}" placeholder="Enter Name" required>
+        </div>
+
+        <!-- Email Field -->
+        <div class="mb-6 relative">
+            <label for="email" class="block text-gray-700 font-medium mb-2">Email</label>
+            <input type="email" name="email" id="email" class="form-control" value="{{ old('email', $officer->email) }}" placeholder="Enter Email" required>
         </div>
 
         <!-- Phone Number Field -->
-        <div class="mb-6">
+        <div class="mb-6 relative">
             <label for="phone_no" class="block text-gray-700 font-medium mb-2">Phone Number</label>
-            <input type="text" name="phone_no" id="phone_no" class="form-control border-gray-300 rounded-lg w-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{ old('phone_no', $officer->phone_no) }}" placeholder="Enter Phone Number" required>
+            <input type="text" name="phone_no" id="phone_no" class="form-control" value="{{ old('phone_no', $officer->phone_no) }}" placeholder="Enter Phone Number" required>
         </div>
 
         <!-- Profile Picture Field -->
-        <div class="mb-6">
+        <div class="mb-6 relative">
             <label for="profile_pic" class="block text-gray-700 font-medium mb-2">Profile Picture</label>
-            <input type="file" name="profile_pic" id="profile_pic" class="form-control border-gray-300 rounded-lg w-full px-4 py-2" onchange="previewImage(event)">
+            <input type="file" name="profile_pic" id="profile_pic" class="form-control" onchange="previewImage(event)">
 
             <!-- Preview selected image -->
             <div class="mt-4" id="profile-pic-container" style="display: none;">
@@ -79,7 +118,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="resetPasswordModalLabel">Reset Password</h5>
+                <h5 class="modal-title">Reset Password</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -91,7 +130,7 @@
                     <div class="form-floating mb-4 position-relative">
                         <input type="password" name="new_password" class="form-control" id="new_password" placeholder="New Password" required>
                         <label for="new_password">New Password</label>
-                        <span class="position-absolute toggle-password" data-target="new_password" style="top: 50%; right: 15px; transform: translateY(-50%); cursor: pointer;">
+                        <span class="position-absolute toggle-password" data-target="new_password">
                             <i class="bi bi-eye-slash"></i>
                         </span>
                         <small id="passwordFeedback" class="form-text text-danger d-none">
@@ -103,7 +142,7 @@
                     <div class="form-floating mb-4 position-relative">
                         <input type="password" name="new_password_confirmation" class="form-control" id="new_password_confirmation" placeholder="Confirm Password" required>
                         <label for="new_password_confirmation">Confirm Password</label>
-                        <span class="position-absolute toggle-password" data-target="new_password_confirmation" style="top: 50%; right: 15px; transform: translateY(-50%); cursor: pointer;">
+                        <span class="position-absolute toggle-password" data-target="new_password_confirmation">
                             <i class="bi bi-eye-slash"></i>
                         </span>
                         <small id="passwordMatchError" class="text-danger d-none">Passwords do not match.</small>
@@ -119,7 +158,7 @@
     </div>
 </div>
 
-<!-- Password Validation Script -->
+@push('scripts')
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const passwordInput = document.getElementById('new_password');
@@ -156,10 +195,7 @@
         passwordInput.addEventListener('input', validatePassword);
         confirmPasswordInput.addEventListener('input', validatePassword);
     });
-</script>
 
-<!-- Preview Image Script -->
-<script>
     function previewImage(event) {
         const reader = new FileReader();
         reader.onload = function(){
@@ -171,37 +207,5 @@
         reader.readAsDataURL(event.target.files[0]);
     }
 </script>
-
-<!-- Styling -->
-<style>
-    .form-control {
-        background-color: #f9fafb;
-        border: 1px solid #d1d5db;
-        border-radius: 0.375rem;
-        padding: 0.75rem;
-        padding-right: 2.5rem; /* Extra padding for the eye icon */
-        width: 100%;
-    }
-
-    .form-control:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-    }
-
-    .toggle-password {
-        position: absolute;
-        top: 50%;
-        right: 15px;
-        transform: translateY(-50%);
-        cursor: pointer;
-    }
-
-    .btn {
-        transition: all 0.3s ease;
-    }
-
-    .btn:hover {
-        opacity: 0.9;
-    }
-</style>
+@endpush
 @endsection

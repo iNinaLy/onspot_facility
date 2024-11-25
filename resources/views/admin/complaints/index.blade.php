@@ -1,9 +1,8 @@
-<title>{{ config('app.name','OnSpot Facility') }}</title>
-<link rel="icon" href="{{ asset('images/favicon-32x32.png') }}" type="image/png">
-
 @extends('layouts.admin')
 
-@section('content')
+@section('title', 'Complaints')
+
+@push('styles')
 
 <style>
     /* Custom Select Dropdown */
@@ -57,7 +56,9 @@
         text-decoration: none;
     }
 </style>
+@endpush
 
+@section('content')
 <div class="container my-5" style="max-width: 1200px;">
     <div class="text-center mb-4">
         <h1 style="font-weight: 600; font-size: 2.5rem; color: #333;">Manage Complaints</h1>

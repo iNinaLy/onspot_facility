@@ -1,7 +1,62 @@
-<title>{{ config('app.name','Cleaners') }}</title>
-<link rel="icon" href="{{ asset('images/favicon-32x32.png') }}" type="image/png">
-
 @extends('layouts.admin')
+
+@section('title', 'Manage Cleaners')
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+@push('styles')
+<style>
+    :root {
+        --custom-blue: #2e5675;
+        --custom-blue-dark: #23425b;
+        --custom-red: #e63946;
+    }
+
+    .search-input {
+        width: 100%;
+        padding-right: 40px;
+        border-radius: 9999px;
+        padding-left: 16px;
+        background: #f0f4f8;
+        transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+        box-shadow: 0 0 0 4px var(--custom-blue);
+        background: white;
+    }
+
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    tbody tr:hover {
+        background-color: #e9effa;
+        transition: background-color 0.2s ease;
+    }
+
+    .bg-custom-blue {
+        background-color: var(--custom-blue);
+    }
+
+    .hover\:bg-custom-blue-dark:hover {
+        background-color: var(--custom-blue-dark);
+    }
+
+    .text-custom-blue {
+        color: var(--custom-blue);
+    }
+
+    .hover\:text-custom-blue-dark:hover {
+        color: var(--custom-blue-dark);
+    }
+</style>
+@endpush
 
 @section('content')
 <div class="container mx-auto my-10 px-4 md:px-6 max-w-screen-xl">
@@ -32,7 +87,7 @@
 
             <!-- Filter Button -->
             <button id="filter-button" class="bg-custom-blue text-white px-4 py-2 rounded-full shadow hover:bg-custom-blue-dark focus:outline-none focus:ring-2 focus:ring-custom-blue">
-               Filter
+               Filter by Status
             </button>
         </div>
     </div>
@@ -198,80 +253,30 @@
     </div>
 </div>
 
-<!-- Styling Enhancements -->
-<style>
-    :root {
-        --custom-blue: #2e5675;
-        --custom-blue-dark: #23425b;
-        --custom-red: #e63946;
-    }
 
-    .search-input {
-        width: 100%;
-        padding-right: 40px;
-        border-radius: 9999px;
-        padding-left: 16px;
-        background: #f0f4f8;
-        transition: all 0.3s ease;
-    }
 
-    .search-input:focus {
-        box-shadow: 0 0 0 4px var(--custom-blue);
-        background: white;
-    }
+@push('scripts')
+    <script>
+        document.getElementById('filter-button').addEventListener('click', function() {
+            document.getElementById('filter-modal').classList.remove('hidden');
+        });
 
-    .animate-fade-in {
-        animation: fadeIn 0.3s ease;
-    }
+        document.getElementById('filter-close').addEventListener('click', function() {
+            document.getElementById('filter-modal').classList.add('hidden');
+        });
 
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
+        document.getElementById('filter-close-button').addEventListener('click', function() {
+            document.getElementById('filter-modal').classList.add('hidden');
+        });
 
-    tbody tr:hover {
-        background-color: #e9effa;
-        transition: background-color 0.2s ease;
-    }
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('input', function () {
+            if (searchInput.value === '') {
+                window.location.href = '{{ route('admin.cleaners') }}';
+            }
+        });
+    </script>
+@endpush
 
-    .bg-custom-blue {
-        background-color: var(--custom-blue);
-    }
-
-    .hover\:bg-custom-blue-dark:hover {
-        background-color: var(--custom-blue-dark);
-    }
-
-    .text-custom-blue {
-        color: var(--custom-blue);
-    }
-
-    .hover\:text-custom-blue-dark:hover {
-        color: var(--custom-blue-dark);
-    }
-</style>
-
-<!-- Script Enhancements -->
-<script>
-    document.getElementById('filter-button').addEventListener('click', function() {
-        document.getElementById('filter-modal').classList.remove('hidden');
-    });
-
-    document.getElementById('filter-close').addEventListener('click', function() {
-        document.getElementById('filter-modal').classList.add('hidden');
-    });
-
-    document.getElementById('filter-close-button').addEventListener('click', function() {
-        document.getElementById('filter-modal').classList.add('hidden');
-    });
-
-    const searchInput = document.getElementById('search-input');
-    searchInput.addEventListener('input', function () {
-        if (searchInput.value === '') {
-            window.location.href = '{{ route('admin.cleaners') }}';
-        }
-    });
-</script>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 
 @endsection

@@ -6,20 +6,28 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Support\Facades\Hash;
+
 
 class Cleaner extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
 
     // Define the fillable fields
-    protected $fillable = [
-        'cleaner_username',
-        'cleaner_name',
-        'cleaner_phoneNo',
-        'status',    // Track cleaner availability status
-        'user_id',   // Reference to the user table if each cleaner has a user profile
-    ];
+    use InteractsWithMedia;
 
+    protected $fillable = [
+        'cleaner_name',
+        'cleaner_username',
+        'cleaner_phoneNo',
+        'cleaner_password',
+        'building',
+        'status',
+    ];
+    public function setCleanerPasswordAttribute($value)
+    {
+        $this->attributes['cleaner_password'] = Hash::make($value);
+    }
 
     public function scopeAvailable($query)
     {
@@ -87,4 +95,6 @@ class Cleaner extends Model implements HasMedia
     {
         return $this->getFirstMediaUrl('profile_pictures') ?: asset('default-profile.png');
     }
+
+    
 }

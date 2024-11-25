@@ -1,7 +1,96 @@
-<title>{{ config('app.name','OnSpot Facility') }}</title>
-<link rel="icon" href="{{ asset('images/favicon-32x32.png') }}" type="image/png">
-
 @extends('layouts.admin')
+
+@section('title', 'Manage Officers')
+
+@push('styles')
+<style>
+    :root {
+        --custom-blue: #2e5675;
+        --custom-blue-dark: #23425b;
+        --custom-red: #e63946;
+    }
+
+    /* Enhanced search input */
+    .search-input {
+        width: 100%;
+        padding-right: 40px;
+        border-radius: 9999px;
+        padding-left: 16px;
+        background: #f0f4f8;
+        transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+        box-shadow: 0 0 0 4px var(--custom-blue);
+        background: white;
+    }
+
+    .search-icon-container {
+        position: absolute;
+        right: 0;
+        padding-right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+    }
+
+    /* Profile picture adjustments */
+    .w-10 {
+        width: 2.5rem;
+        height: 2.5rem;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid #ddd;
+    }
+
+    /* Custom modal animation */
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* Hover effect for table rows */
+    tbody tr:hover {
+        background-color: #e9effa;
+        transition: background-color 0.2s ease;
+    }
+
+    /* Button color customization */
+    .bg-custom-blue {
+        background-color: var(--custom-blue);
+    }
+
+    .hover\:bg-custom-blue-dark:hover {
+        background-color: var(--custom-blue-dark);
+    }
+
+    .text-custom-blue {
+        color: var(--custom-blue);
+    }
+
+    .hover\:text-custom-blue-dark:hover {
+        color: var(--custom-blue-dark);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        h1 {
+            font-size: 1.5rem;
+        }
+        .table-auto {
+            font-size: 0.9rem;
+        }
+        .w-10 {
+            width: 2rem;
+            height: 2rem;
+        }
+    }
+</style>
+@endpush
 
 @section('content')
 <div class="container mx-auto my-10 px-4 md:px-6 max-w-screen-xl">
@@ -128,96 +217,7 @@
     </div>
 </div>
 
-<!-- Styling Enhancements -->
-<style>
-    :root {
-        --custom-blue: #2e5675;
-        --custom-blue-dark: #23425b;
-        --custom-red: #e63946;
-    }
-
-    /* Enhanced search input */
-    .search-input {
-        width: 100%;
-        padding-right: 40px;
-        border-radius: 9999px;
-        padding-left: 16px;
-        background: #f0f4f8;
-        transition: all 0.3s ease;
-    }
-
-    .search-input:focus {
-        box-shadow: 0 0 0 4px var(--custom-blue);
-        background: white;
-    }
-
-    .search-icon-container {
-        position: absolute;
-        right: 0;
-        padding-right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        cursor: pointer;
-    }
-
-    /* Profile picture adjustments */
-    .w-10 {
-        width: 2.5rem;
-        height: 2.5rem;
-        object-fit: cover;
-        border-radius: 50%;
-        border: 2px solid #ddd;
-    }
-
-    /* Custom modal animation */
-    .animate-fade-in {
-        animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    /* Hover effect for table rows */
-    tbody tr:hover {
-        background-color: #e9effa;
-        transition: background-color 0.2s ease;
-    }
-
-    /* Button color customization */
-    .bg-custom-blue {
-        background-color: var(--custom-blue);
-    }
-
-    .hover\:bg-custom-blue-dark:hover {
-        background-color: var(--custom-blue-dark);
-    }
-
-    .text-custom-blue {
-        color: var(--custom-blue);
-    }
-
-    .hover\:text-custom-blue-dark:hover {
-        color: var(--custom-blue-dark);
-    }
-
-    /* Responsive Adjustments */
-    @media (max-width: 768px) {
-        h1 {
-            font-size: 1.5rem;
-        }
-        .table-auto {
-            font-size: 0.9rem;
-        }
-        .w-10 {
-            width: 2rem;
-            height: 2rem;
-        }
-    }
-</style>
-
-<!-- Script Enhancements -->
+@push('scripts')
 <script>
     // When input is cleared, display back all results
     const searchInput = document.getElementById('search-input');
@@ -228,5 +228,5 @@
     });
 </script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-
+@endpush
 @endsection

@@ -229,27 +229,55 @@ class AdminController extends Controller
         return view('admin.cleaners.edit', compact('cleaner'));
     }
 
-    public function updateCleaner(Request $request, Cleaner $cleaner)
+    public function updateCleaner (Request $request, $id)
     {
-        $this->validateCleaner($request);
+        // Define validation rules
+        $validationRules = [
+            'cleaner_name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:cleaners,cleaner_username,' . $id . ',id',
+            'phone_no' => 'required|string|max:20',
+            'password' => 'nullable|string|min:8|confirmed',
+            'profile_pic' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'building' => 'required|string|in:Building A,Building B,Building C',
+        ];
 
-        $cleaner->update([
-            'cleaner_username' => $request->username ?? $cleaner->cleaner_username,
-            'cleaner_name' => $request->name ?? $cleaner->cleaner_name,
-            'cleaner_phoneNo' => $request->phone_no ?? $cleaner->cleaner_phoneNo,
-            'status' => $request->status ?? $cleaner->status,
-        ]);
+        // Validate the incoming data
+        $validated = $request->validate($validationRules);
 
+        // Find the cleaner by ID
+        $cleaner = Cleaner::findOrFail($id);
+
+        // Prepare data for update
+        $dataToUpdate = [
+            'cleaner_name' => $validated['cleaner_name'],
+            'cleaner_username' => $validated['username'],
+            'cleaner_phoneNo' => $validated['phone_no'],
+            'building' => $validated['building'],
+        ];
+
+        // If a password is provided, hash it and add to update data
         if ($request->filled('password')) {
-            $cleaner->update(['cleaner_password' => bcrypt($request->password)]);
+            $dataToUpdate['cleaner_password'] = Hash::make($validated['password']);
         }
 
+        // Handle profile picture upload if provided
         if ($request->hasFile('profile_pic')) {
-            $cleaner->update(['profile_pic' => file_get_contents($request->file('profile_pic')->getRealPath())]);
+            // Remove previous image if exists
+            $cleaner->clearMediaCollection('profile_pictures');
+
+            // Add new profile picture using Spatie Media Library
+            $cleaner->addMediaFromRequest('profile_pic')
+                    ->toMediaCollection('profile_pictures', 'public');
         }
 
-        return redirect()->route('admin.cleaners')->with('success', 'Cleaner updated successfully!');
+        // Update the cleaner's data in the database
+        $cleaner->update($dataToUpdate);
+
+        // Redirect back to the edit form with a success message
+        return redirect()->route('admin.cleaners.edit', $cleaner->id)
+                         ->with('success', 'Cleaner details updated successfully!');
     }
+
 
     public function resetCleanerPassword(Request $request, $cleaner)
     {

@@ -3,6 +3,44 @@
 
 @extends('layouts.admin')
 
+@section('title', 'Edit Supervisor')
+
+
+@push('styles')
+
+<style>
+    .form-control {
+        background-color: #f9fafb;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        padding: 0.75rem;
+        padding-right: 2.5rem; /* Extra padding for the eye icon */
+        width: 100%;
+    }
+
+    .form-control:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+
+    .toggle-password {
+        position: absolute;
+        top: 50%;
+        right: 15px;
+        transform: translateY(-50%);
+        cursor: pointer;
+    }
+
+    .btn {
+        transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+        opacity: 0.9;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container mx-auto my-10 px-6 max-w-screen-md">
     <!-- Page Title -->
@@ -144,7 +182,7 @@
 @endif
 
 
-<!-- Password Validation Script -->
+@push('scripts')
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const passwordInput = document.getElementById('new_password');
@@ -182,37 +220,6 @@
         confirmPasswordInput.addEventListener('input', validatePassword);
     });
 </script>
+@endpush
 
-<!-- Styling -->
-<style>
-    .form-control {
-        background-color: #f9fafb;
-        border: 1px solid #d1d5db;
-        border-radius: 0.375rem;
-        padding: 0.75rem;
-        padding-right: 2.5rem; /* Extra padding for the eye icon */
-        width: 100%;
-    }
-
-    .form-control:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-    }
-
-    .toggle-password {
-        position: absolute;
-        top: 50%;
-        right: 15px;
-        transform: translateY(-50%);
-        cursor: pointer;
-    }
-
-    .btn {
-        transition: all 0.3s ease;
-    }
-
-    .btn:hover {
-        opacity: 0.9;
-    }
-</style>
 @endsection
