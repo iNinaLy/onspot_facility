@@ -16,4 +16,3 @@ class HistoryController extends Controller
     }
     
 }
-

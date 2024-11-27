@@ -21,7 +21,9 @@ class Role
     {
         // Check if the user is authenticated
         if (!Auth::check()) {
-            return redirect('login'); // Redirect to login if not authenticated
+            // Redirect to role-specific login pages
+            $loginRoute = $role === 'admin' ? 'admin.login' : 'supervisor.login';
+            return redirect()->route($loginRoute)->with('alert', 'Please login first.');
         }
 
         // Log the user's role for debugging
@@ -29,7 +31,7 @@ class Role
 
         // Check if the user's role matches the expected role
         if ($request->user()->role !== $role) {
-            return redirect('dashboard'); // Redirect if the role does not match
+            return redirect()->route('dashboard')->with('alert', 'Access denied for this role.');
         }
 
         return $next($request); // Proceed to the next request

@@ -1,357 +1,232 @@
-    <x-app-layout>
-        <style>
-           /* Global Styling */
-            body, html {
-                font-family: Arial, sans-serif;
-                color: #333;
-            }
-
-            /* General Page Styling */
-            .font-bold1 {
-                font-weight: 700;
-                margin-top: 5rem;
-                margin-left: 8rem;
-            }
-
-            .text-gray1-700 {
-                color: rgb(3 4 4);
-                margin-left: 8rem;
-            }
-
-            .bg-gray-100 {
-                background-color: rgb(217, 219, 222);
-                padding: 6rem 5rem;
-            }
-
-            /* Grid Layout */
-            .grid-cols-1 {
-                margin-left: 8rem;
-                display: grid;
-                grid-template-columns: repeat(1, 1fr);
-                gap: 2rem;
-                justify-items: stretch;
-                justify-content: space-between;
-                align-content: space-evenly;
-                align-items: start;
-            }
-
-            .lg\:grid-cols-3 {
-                grid-template-columns: 1fr 2fr;
-                gap: 2rem;
-            }
-
-            .assign-cleaner .grid-cols-1 {
-                    grid-template-columns: 1fr 1fr;
-                    display: grid;
-                    gap: 2rem;
-                    margin-left: 0.2rem;
-                    align-items: baseline;
-                    align-content: center;
-            }
-
-            /* Image Section */
-            .image-section {
-                background-color: rgb(245, 245, 245);
-                border-radius: 10px;
-                padding: 10rem;
-                height: auto;
-                text-align: center;
-                margin: 2rem auto;
-            }
-
-            .additional-images {
-                display: flex;
-                justify-content: space-between;
-                gap: 1rem;
-            }
-
-            /* Details Section */
-            .details-section {
-                background-color: white;
-                padding: 2rem;
-                border-radius: 10px;
-                margin: 0 8rem 0 4rem;
-            }
-
-            .details-section h2,
-            .details-section h3 {
-                font-size: 1.5rem;
-                font-weight: bold;
-                margin-bottom: 1rem;
-            }
-
-            .details-section p {
-                color: gray;
-                font-size: 0.9rem;
-                margin-bottom: 0.5rem;
-            }
-
-            /* Task Section */
-            .task-section {
-                display: flex;
-                justify-content: space-between;
-            }
-
-            /* Assign Cleaner Section */
-            .assign-cleaner {
-                background-color: #ffffff;
-                padding: 2rem;
-                box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
-                margin: 2rem auto;
-                border-radius: 8px;
-                width: 80%;
-            }
-
-            .assign-cleaner h3 {
-                font-size: 1.25rem;
-                font-weight: 600;
-                margin-bottom: 1.5rem;
-            }
-
-            .assign-cleaner label {
-                font-weight: 500;
-                margin-bottom: 0.5rem;
-                display: block;
-            }
-
-            .assign-cleaner select,
-            .assign-cleaner input {
-                width: 10%;
-                border: 1px solid #d1d5db;
-                border-radius: 0.375rem;
-                transition: border-color 0.3s;
-                margin-right: 1rem;
-            }
-                        /* Dropdown Cleaner Styling */
-            .assign-cleaner .dropdown-cleaner {
-                display: none;
-                position: absolute;
-                background-color: white;
-                border: 1px solid #ddd;
-                max-height: 200px;
-                overflow-y: auto;
-                z-index: 10;
-                border-radius: 4px;
-                width: 100%;
-                box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
-                margin-top: 0.25rem;
-            }
-
-            .assign-cleaner .dropdown-cleaner.active {
-                display: block;
-            }
-
-            .assign-cleaner .dropdown-cleaner div {
-                padding: 0.75rem;
-                cursor: pointer;
-                transition: background-color 0.2s;
-            }
-
-            .assign-cleaner .dropdown-cleaner div:hover {
-                background-color: #f3f4f6;
-            }
-
-            /* Submit Button */
-            .assign-cleaner .submit-button {
-                background-color: #2563eb;
-                color: white;
-                padding: 0.75rem 2rem;
-                border: none;
-                border-radius: 0.375rem;
-                font-size: 1rem;
-                cursor: pointer;
-                transition: background-color 0.3s;
-            }
-
-            .assign-cleaner .submit-button:hover:enabled {
-                background-color: #1e40af; /* Darker blue */
-            }
-
-            .assign-cleaner .submit-button:disabled {
-                background-color: #9ca3af; /* Light gray */
-                cursor: not-allowed;
-            }
-
-            /* Responsive Layout */
-            @media (min-width: 640px) {
-                .assign-cleaner .grid-cols-1 {
-                    grid-template-columns: 1fr 1fr;
-                    display: grid;
-                    gap: 2rem;
-                }
-            }
-
-            .cleaner-item {
-                display: flex;
-                align-items: center;
-                margin-bottom: 0.5rem;
-            }
-
-            .cleaner-checkbox {
-                width: 15px; /* Smaller checkbox */
-                height: 15px; /* Smaller checkbox */
-            }
-
-        </style>
-
-        <div class="container mx-auto px-6 py-8">
-            <!-- Breadcrumb -->
-            <div class="text-sm text-gray-500 mb-6">
-                <a href="{{ route('supervisor.complaints.index') }}" class="text-blue-500">Home</a> / Complaints / Details
-            </div>
-
-            <!-- Complaint Status -->
-            <div class="mb-4">
-                <h1 class="text-2xl font-bold1">Complaint Details</h1>
-                <p class="text-lg text-gray1-700">Status: 
-                    <span class="{{ $complaint->comp_status === 'pending' ? 'text-yellow-500' : ($complaint->comp_status === 'resolved' ? 'text-green-500' : 'text-red-500') }}">
-                        {{ ucfirst($complaint->comp_status) }}
-                    </span>
-                </p>
-            </div>
-
-            <!-- Main Layout: Left Image Section and Right Details Section -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                <!-- Left Section: Image and Details -->
-                <div class="space-y-8">
-                    <!-- Image Section (Main Image) -->
-                    <div class="image-section">
-                        @if($complaint->images && $complaint->images->isNotEmpty())
-                            <img src="{{ asset('storage/' . $complaint->images->first()->path) }}" alt="Complaint Image" class="object-cover h-full w-full rounded-lg">
-                        @else
-                            <p class="text-gray-500">No additional images</p>
-                        @endif
-                    </div>
-
-                    <!-- Additional Images -->
-                    <div class="additional-images">
-                        @if($complaint->images && $complaint->images->isNotEmpty())
-                            @foreach($complaint->images as $image)
-                                @if(!$loop->first)
-                                    <div class="bg-gray-100 h-24 rounded-lg shadow-md flex items-center justify-center">
-                                        <img src="{{ asset('storage/' . $image->path) }}" alt="Complaint Image" class="object-cover h-full w-full rounded-lg">
-                                    </div>
-                                @endif
-                            @endforeach
-                        @else
-                            <p class="text-gray-500 col-span-3 text-center"></p>
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Right Section: Task Description and Task Included -->
-                <div class="col-span-2 space-y-8">
-                    <!-- Complaint Details Section -->
-                    <div class="details-section">
-                        <h2>Office Cleaning</h2>
-                        <p>Room: {{ $complaint->comp_location }}, Floor</p>
-                        <p>Date: {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}</p>
-                        <p>Complaint by: {{ $complaint->officer->officer_name ?? 'Unknown Officer' }}</p>
-                    </div>
-
-                    <!-- Task Description Section -->
-                    <div class="details-section">
-                        <h3>Task description</h3>
-                        <textarea class="w-full p-3 border border-gray-300 rounded-lg h-24" readonly>{{ $complaint->comp_desc }}</textarea>
-                    </div>
-
-                    <!-- Task Included Section -->
-                    <div class="details-section">
-                        <h3>Task Included</h3>
-                        <div class="task-section">
-                            @if($complaint->tasks && $complaint->tasks->isNotEmpty())
-                                @foreach($complaint->tasks as $task)
-                                    <div class="flex flex-col items-center space-y-2">
-                                        <img src="{{ asset($task->icon) }}" alt="{{ $task->name }}" class="h-8 w-8">
-                                        <span class="text-xs text-gray-600">{{ $task->name }}</span>
-                                    </div>
-                                @endforeach
-                            @else
-                                <p class="text-gray-500">No tasks included</p>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        <!-- Assign Cleaner Form -->
-<!-- Assign Cleaner Form -->
-<div class="assign-cleaner">
-    <h3 class="font-bold text-lg">Assign Cleaner</h3>
-    <form action="{{ route('assign.cleaner', $complaint->comp_id) }}" method="POST">
-        @csrf
-        <input type="hidden" name="comp_id" value="{{ $complaint->comp_id }}"> <!-- Store complaint ID -->
-
-        <div>
-            <!-- Number of Cleaners Selection -->
-            <label for="no_of_cleaners">Number of Cleaners</label>
-            <select id="no_of_cleaners" name="no_of_cleaners" class="custom-select">
-                <option value="">Select number of cleaners</option>
-                @for($i = 1; $i <= 3; $i++)
-                    <option value="{{ $i }}">{{ $i }}</option>
-                @endfor
-            </select>
+<x-app-layout>
+    <div class="container my-5">
+        <!-- Breadcrumb with SVG Back Icon -->
+        <div class="d-flex align-items-center mb-4">
+            <!-- Back Button with SVG Image -->
+            <a href="{{ route('supervisor.complaints.index') }}" class="me-2 d-flex align-items-center text-decoration-none" style="color: #2E5675; padding: 0.375rem;">
+                <!-- SVG Image for Back Button -->
+                <img src="{{ asset('img/svg/back-arrow.svg') }}" alt="Back" style="width: 24px; height: 24px;">
+            </a>
+            <h6 class="text-muted m-0">Complaints / Details</h6>
         </div>
 
-        <!-- Cleaner Selection -->
-        <div class="mt-4" id="cleaner-selection" style="display: none;">
-            <label>Select Cleaners</label>
-            <div id="cleaner-list">
-                @foreach($cleaners as $cleaner)
-                    @if($cleaner->status === 'available')
-                        <div class="cleaner-item">
-                            <input type="checkbox" id="cleaner-{{ $cleaner->id }}" class="cleaner-checkbox" value="{{ $cleaner->id }}">
-                            <label for="cleaner-{{ $cleaner->id }}">{{ $cleaner->cleaner_name }}</label>
-                        </div>
+        <!-- Messages Section -->
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show shadow-sm rounded-3" role="alert">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-3" role="alert">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
+        <div class="row gx-5">
+            <!-- Image Section -->
+            <div class="col-lg-6">
+                <div class="image-section bg-light rounded-3 shadow-sm p-3 d-flex align-items-center justify-content-center" style="height: 300px;">
+                    @if($complaint->getFirstMediaUrl('complaint_images'))
+                        <img src="{{ $complaint->getFirstMediaUrl('complaint_images') }}" alt="Complaint Image" class="img-fluid rounded-3" style="max-height: 100%; object-fit: cover;">
+                    @else
+                        <div class="placeholder-image text-muted">No Image Available</div>
                     @endif
-                @endforeach
+                </div>
+            </div>
+
+            <!-- Details Section -->
+            <div class="col-lg-6">
+                <div class="details-section bg-white rounded-3 shadow-sm p-4">
+                    <h4 class="mb-3 fw-bold text-primary">{{ $complaint->comp_desc }}</h4>
+                    <ul class="list-unstyled mb-3 text-secondary">
+                        <li><strong>Location:</strong> {{ $complaint->comp_location }}</li>
+                        <li><strong>Date:</strong> {{ \Carbon\Carbon::parse($complaint->comp_date)->format('d M Y') }}</li>
+                        <li><strong>Time:</strong> {{ \Carbon\Carbon::parse($complaint->comp_time)->format('h:i A') }}</li>
+                        <li><strong>Status:</strong> 
+                            <span class="badge rounded-pill 
+                                         @if($complaint->comp_status == 'completed') status-completed 
+                                         @elseif($complaint->comp_status == 'ongoing') status-ongoing 
+                                         @else status-pending @endif">
+                                {{ ucfirst($complaint->comp_status) }}
+                            </span>
+                        </li>
+                    </ul>
+
+                    <div class="bg-light p-3 rounded-3 mb-3 shadow-sm">
+                        <textarea class="form-control bg-transparent border-0" rows="3" readonly>{{ $complaint->comp_desc }}</textarea>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Submit Button -->
-        <div class="text-right mt-4">
-            <button type="submit" class="submit-button" disabled>Submit</button>
-        </div>
-    </form>
-</div>
+        @if (Auth::user()->role == 'supervisor')
+            <div class="assign-section mt-5 p-4 bg-white rounded-3 shadow-sm">
+                <h4 class="mb-4 text-primary">Assign Cleaners</h4>
+                
+                @if ($complaint->comp_status == 'pending')
+                    <form action="{{ route('supervisor.assign.cleaner', ['id' => $complaint->id]) }}" method="POST">
+                        @csrf
+                        <!-- Number of Cleaners Selection -->
+                        <div class="d-flex gap-3 mb-4 align-items-center">
+                            <label for="no_of_cleaners" class="form-label mb-0 fw-semibold text-secondary">Number of Cleaners:</label>
+                            <select class="form-select w-25 shadow-sm" name="no_of_cleaners" id="no_of_cleaners" required style="border-radius: 8px;">
+                                <option selected disabled>Number of cleaners</option>
+                                @for ($i = 1; $i <= $availableCleaners->count(); $i++)
+                                    <option value="{{ $i }}">{{ $i }}</option>
+                                @endfor
+                            </select>
+                            <button type="button" id="proceed-button" class="btn btn-primary shadow-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#cleanerModal">Select Cleaners</button>
+                        </div>
 
-<!-- JavaScript to handle cleaner selection -->
-<script>
-    const numberOfCleanersSelect = document.getElementById('no_of_cleaners');
-    const cleanerSelectionDiv = document.getElementById('cleaner-selection');
-    const cleanerList = document.getElementById('cleaner-list');
-    const submitButton = document.querySelector('.submit-button');
+                        <!-- Modal for Cleaner Selection -->
+                        <div class="modal fade" id="cleanerModal" tabindex="-1" aria-labelledby="cleanerModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="cleanerModalLabel">Select Cleaners</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <ul class="cleaner-list list-unstyled" id="cleaner-grid">
+                                            @foreach ($availableCleaners as $cleaner)
+                                                <li class="cleaner-item d-flex align-items-center justify-content-between p-3 mb-2 shadow-sm rounded-3" style="background-color: #f7f9fc;">
+                                                    <div class="d-flex align-items-center">
+                                                        @if($cleaner->getFirstMediaUrl('profile_pictures'))
+                                                            <img src="{{ $cleaner->getFirstMediaUrl('profile_pictures') }}" alt="Profile Picture" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                                        @else
+                                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; font-size: 1rem;">
+                                                                {{ strtoupper(substr($cleaner->cleaner_name, 0, 2)) }}
+                                                            </div>
+                                                        @endif
+                                                        <span class="text-secondary fw-semibold">{{ $cleaner->cleaner_name }}</span>
+                                                    </div>
+                                                    <div class="checkbox-wrapper-39">
+                                                        <label>
+                                                            <input type="checkbox" name="cleaners[]" value="{{ $cleaner->id }}" id="cleaner-{{ $cleaner->id }}">
+                                                            <span class="checkbox"></span>
+                                                        </label>
+                                                    </div>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-light shadow-sm rounded-pill px-3" data-bs-dismiss="modal">Close</button>
+                                        <button type="submit" class="btn btn-primary shadow-sm rounded-pill px-4">Assign Selected</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                @else
+                    <div class="alert alert-info mt-3 rounded-3 shadow-sm">
+                        Complaint is already <strong>{{ ucfirst($complaint->comp_status) }}</strong>.
+                    </div>
+                    <h5 class="mt-4">Assigned Cleaners</h5>
+                    <ul class="list-group list-group-flush rounded-3 shadow-sm">
+                        @forelse ($complaint->cleaners as $cleaner)
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ $cleaner->cleaner_name }} 
+                                <span class="text-muted small">Assigned by: {{ \App\Models\User::find($cleaner->pivot->assigned_by)->name ?? 'N/A' }},
+                                Date: {{ \Carbon\Carbon::parse($cleaner->pivot->assigned_date)->format('d M Y h:i A') }}</span>
+                            </li>
+                        @empty
+                            <li class="list-group-item text-muted">No cleaners assigned.</li>
+                        @endforelse
+                    </ul>
+                @endif
+            </div>
+        @else
+            <div class="alert alert-warning mt-5 rounded-3 shadow-sm">
+                You do not have permission to assign cleaners. Only supervisors can assign cleaners.
+            </div>
+        @endif
+    </div>
 
-    let maxCleaners = 0;
-
-    // Handle number of cleaners selection
-    numberOfCleanersSelect.addEventListener('change', function() {
-        maxCleaners = parseInt(this.value);
-        cleanerSelectionDiv.style.display = maxCleaners ? 'block' : 'none'; // Show/Hide cleaner selection
-        updateSelectedCleanersDisplay();
-    });
-
-    // Handle checkbox selection
-    cleanerList.addEventListener('change', function(e) {
-        const checkboxes = cleanerList.querySelectorAll('input[type="checkbox"]');
-        const checkedCount = Array.from(checkboxes).filter(checkbox => checkbox.checked).length;
-
-        if (checkedCount > maxCleaners) {
-            e.target.checked = false; // Uncheck if limit exceeded
-            alert('You can only select up to ' + maxCleaners + ' cleaners.');
+    <!-- Custom Styles for Status Badge, Buttons, and Checkboxes -->
+    <style>
+        /* Status Badge Styles */
+        .badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            border-radius: 9999px;
+            margin-top: 0.5rem;
         }
 
-        updateSelectedCleanersDisplay();
-    });
+        .status-pending {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
 
-    function updateSelectedCleanersDisplay() {
-        const checkboxes = cleanerList.querySelectorAll('input[type="checkbox"]');
-        const checkedCount = Array.from(checkboxes).filter(checkbox => checkbox.checked).length;
-        submitButton.disabled = checkedCount === 0; // Enable submit button if at least one cleaner is selected
-    }
-</script>
+        .status-ongoing {
+            background-color: #fef3c7;
+            color: #ca8a04;
+        }
 
+        .status-completed {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
 
+        /* Checkbox Styles */
+        .checkbox-wrapper-39 label {
+            display: block;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+        }
 
-    </div>
+        .checkbox-wrapper-39 input {
+            visibility: hidden;
+            display: none;
+        }
+
+        .checkbox-wrapper-39 input:checked ~ .checkbox {
+            transform: rotate(45deg);
+            width: 12px;
+            margin-left: 8px;
+            border-color: #24c78e;
+            border-top-color: transparent;
+            border-left-color: transparent;
+            border-radius: 0;
+        }
+
+        .checkbox-wrapper-39 .checkbox {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border: 2px solid #434343;
+            border-radius: 4px;
+            transition: all 0.375s;
+        }
+
+        /* Button Styles */
+        .btn-primary {
+            color: #fff;
+            background-color: #374e66;
+            border-color: #e7eaed;
+        }
+
+        .btn-primary:hover {
+            background-color: #2e5675;
+            border-color: #2e5675;
+        }
+
+        .bg-primary {
+            background-color: #2c5472 !important;
+            margin-right: 10px;
+        }
+
+        .text-primary {
+            color: #1f2832 !important;
+        }
+    </style>
 </x-app-layout>

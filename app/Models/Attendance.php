@@ -13,16 +13,16 @@ class Attendance extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = [
+        'cleaner_id',
         'attend_date',
         'attend_in',
-        'attend_status',
-        'cleaner_id'
+        'attend_status'
     ];
     
 
-    // Define the relationship with Cleaner
+    // Define the relationship with the User model
     public function cleaner()
     {
-        return $this->belongsTo(Cleaner::class, 'cleaner_id');
+        return $this->belongsTo(User::class, 'cleaner_id');
     }
 }

@@ -5,12 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
+use App\Models\NotificationToken;
 
 
 
@@ -20,15 +15,18 @@ use Illuminate\Support\Str;
         {
             // Validate the incoming registration data
             $request->validate([
-                'username' => 'required|string|max:255|unique:users', 
+                'username' => 'required|string|max:255|unique:users',
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
                 'password' => 'required|string|min:8|confirmed',
-                'phone_no' => 'nullable|string|max:255', 
-                'role' => 'required|string', 
+                'phone_no' => 'nullable|string|max:255',
+                'role' => 'required|string',
+                'device_token' => 'required_with:device_id,device_type|string',
+                'device_id' => 'required_with:device_token|string',
+                'device_type' => 'required_with:device_token|string|in:android,ios,web',
             ]);
         
-            // Create the user in the users table
+            // Create the user
             $user = \App\Models\User::create([
                 'username' => $request->username,
                 'name' => $request->name,
@@ -38,23 +36,24 @@ use Illuminate\Support\Str;
                 'role' => $request->role,
             ]);
         
-            // If the role is 'cleaner', create a corresponding record in the cleaners table
-            if ($request->role === 'cleaner') {
-                \App\Models\Cleaner::create([
-                    'cleaner_name' => $user->name,
-                    'cleaner_phoneNo' => $user->phone_no,
-                    'cleaner_username' => $user->username,
-                    'cleaner_password' => $user->password,
-                    'profile_pic' => null, // Optionally set this if needed
-                    'status' => 'available', // Default status, modify if needed
-                    'building' => $request->building ?? null, // Optional if building is provided
-                ]);
-            }
-        
             // Generate a token for the newly registered user
             $token = $user->createToken('YourAppName')->plainTextToken;
         
-            // Return the user and the token in the response, including username and phone_no
+            // Save FCM token if provided
+            if ($request->filled(['device_token', 'device_id', 'device_type'])) {
+                NotificationToken::updateOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'device_id' => $request->device_id,
+                    ],
+                    [
+                        'device_token' => $request->device_token,
+                        'device_type' => $request->device_type,
+                    ]
+                );
+            }
+        
+            // Return the user and the token in the response
             return response()->json([
                 'user' => [
                     'id' => $user->id,
@@ -68,55 +67,95 @@ use Illuminate\Support\Str;
                 ],
                 'token' => $token,
             ], 201);
-        }
+        }        
+        
     
 
-    //login method
-    public function login(Request $request)
-    {
-        // check if 'login' and 'password' fields are present
-        $request->validate([
-            'login' => 'required', 
-            'password' => 'required',
-        ]);
-    
-        // check if it is an email or username
-        $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
-    
-        // credentials array | email or username
-        $credentials = [
-            $loginType => $request->login,
-            'password' => $request->password,
-        ];
-    
-        //  log the user in
-        if (!Auth::attempt($credentials)) {
-            // unauthorized response
+        public function login(Request $request)
+        {
+            $request->validate([
+                'login' => 'required',
+                'password' => 'required',
+                'device_token' => 'required_with:device_id,device_type', // FCM token is required if device info is provided
+                'device_id' => 'required_with:device_token',
+                'device_type' => 'required_with:device_token|in:android,ios,web',
+            ]);
+        
+            $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+        
+            $credentials = [
+                $loginType => $request->login,
+                'password' => $request->password,
+            ];
+        
+            if (!Auth::attempt($credentials)) {
+                return response()->json(['message' => 'Invalid login credentials.'], 401);
+            }
+        
+            $user = Auth::user();
+            $token = $user->createToken('YourAppName')->plainTextToken;
+        
+            // Save FCM token if provided
+            if ($request->filled(['device_token', 'device_id', 'device_type'])) {
+                $this->storeNotificationToken($request);
+            }
+        
             return response()->json([
-                'message' => 'Invalid login credentials.',
-            ], 401);
+                'user' => $user,
+                'token' => $token,
+            ], 200);
         }
-    
-        $user = Auth::user();
-        // token for the authenticated user
-        $token = $user->createToken('YourAppName')->plainTextToken;
-    
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-        ], 200);  
-    }
+            
 
     //logout method
     public function logout(Request $request)
     {
+        $request->validate([
+            'device_id' => 'required|string', // Ensure the device ID is provided for cleanup
+        ]);
+    
         $user = Auth::user();
+    
+        // Delete the FCM token for the specific device
+        NotificationToken::where('user_id', $user->id)
+            ->where('device_id', $request->device_id)
+            ->delete();
+    
+        // Revoke all authentication tokens for the user
         $user->tokens()->delete();
-
-        return response()->json(['message' => 'Successfully logged out.']);
+    
+        return response()->json(['message' => 'Successfully logged out.'], 200);
     }
+    
 
-
+    public function storeNotificationToken(Request $request)
+    {
+        $request->validate([
+            'device_token' => 'required|string',
+            'device_id' => 'required|string',
+            'device_type' => 'required|string|in:android,ios,web', // Restrict valid device types
+        ]);
+    
+        if (!auth()->check()) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+    
+        $token = NotificationToken::updateOrCreate(
+            [
+                'user_id' => auth()->id(),
+                'device_id' => $request->device_id,
+            ],
+            [
+                'device_token' => $request->device_token,
+                'device_type' => $request->device_type,
+            ]
+        );
+        
+        return response()->json([
+            'message' => 'Device token saved successfully.',
+            'token' => $token,
+        ], 200);
+    }
 
     public function sendResetCode(Request $request)
     {
@@ -190,6 +229,6 @@ use Illuminate\Support\Str;
     
         return response()->json(['message' => 'Password has been reset successfully.']);
     }
-    
+
 
 }

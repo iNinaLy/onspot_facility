@@ -29,8 +29,11 @@ class Cleaner extends Model implements HasMedia
     public function complaints()
     {
         return $this->belongsToMany(Complaint::class, 'complaint_cleaner')
-            ->withPivot('no_of_cleaners', 'assigned_by', 'assigned_date')
-            ->withTimestamps();
+                    ->withPivot('no_of_cleaners', 'assigned_by', 'assigned_date')
+                    ->withTimestamps()
+                    ->with(['cleaners' => function ($query) {
+                        $query->select('id', 'cleaner_name', 'cleaner_phoneNo'); // Load name and phone number
+                    }]);
     }
 
     /**
@@ -38,10 +41,6 @@ class Cleaner extends Model implements HasMedia
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function tasks()
-    {
-        return $this->hasMany(Task::class);
-    }
 
     /**
      * Register media collections for the Cleaner (for profile pictures)
@@ -49,8 +48,13 @@ class Cleaner extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('profile_pictures')
-             ->useDisk('public'); // Use the 'public' disk for storage
+             ->singleFile()          // Ensure only one profile picture is kept per cleaner
+             ->useDisk('public');     // Store files on the 'public' disk, accessible through 'storage/app/public'
     }
 
-    protected $table = 'cleaners';
+    public function getProfilePictureUrlAttribute(): string
+    {
+        return $this->getFirstMediaUrl('profile_pictures') ?: asset('default-profile.png');
+    }
+
 }

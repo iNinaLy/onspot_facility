@@ -19,6 +19,8 @@ class Complaint extends Model implements HasMedia
     public $incrementing = true; // Ensure it's auto-incrementing
     protected $keyType = 'int'; // Primary key type
 
+    protected $dates = ['comp_date'];
+
     // Allow mass assignment on these fields
     protected $fillable = [
         'comp_date',
@@ -35,7 +37,7 @@ class Complaint extends Model implements HasMedia
 
     // Define status constants
     const STATUS_PENDING = 'pending';
-    const STATUS_ON_GOING = 'on going';
+    const STATUS_ON_GOING = 'ongoing';
     const STATUS_COMPLETED = 'completed';
 
     /**
