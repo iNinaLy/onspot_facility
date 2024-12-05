@@ -24,41 +24,42 @@ class CleanerController extends Controller
     }
 
     // Search and display paginated cleaners
-    public function cleaners(Request $request)
-    {
-        $search = $request->input('search');
-        
-        $cleaners = Cleaner::when($search, function ($query, $search) {
-                return $query->where('cleaner_name', 'LIKE', "%{$search}%");
-            })
-            ->paginate(10);
-        
-        $totalCleaners = Cleaner::count();
-        $availableCount = Cleaner::where('status', 'available')->count();
-        $unavailableCount = Cleaner::where('status', 'unavailable')->count();
-
-        return view('supervisor.cleaners.index', compact('totalCleaners', 'availableCount', 'unavailableCount', 'cleaners'));
-    }
-
-    // Store a new cleaner
     public function store(Request $request)
     {
         $validated = $request->validate([
             'cleaner_name' => 'required|string|max:255',
             'cleaner_phoneNo' => 'required|string|max:15',
+            'username' => 'required|string|max:255|unique:users,username',
+            'password' => 'required|string|min:8|confirmed',
             'status' => 'required|in:available,unavailable',
         ]);
-
-        $cleaner = Cleaner::create($validated);
-
+    
+        // Create a user for the cleaner
+        $user = User::create([
+            'name' => $validated['cleaner_name'],
+            'username' => $validated['username'],
+            'password' => Hash::make($validated['password']),
+            'phone_no' => $validated['cleaner_phoneNo'],
+            'role' => 'cleaner',
+        ]);
+    
+        // Create the cleaner entry linked to the user
+        $cleaner = Cleaner::create([
+            'user_id' => $user->id,
+            'cleaner_name' => $validated['cleaner_name'],
+            'cleaner_phoneNo' => $validated['cleaner_phoneNo'],
+            'status' => $validated['status'],
+        ]);
+    
         // Handle profile picture upload using Spatie Media Library
         if ($request->hasFile('profile_pic')) {
             $cleaner->addMediaFromRequest('profile_pic')
                     ->toMediaCollection('profile_pictures', 'public');
         }
-
+    
         return redirect()->back()->with('success', 'Cleaner added successfully');
     }
+    
 
     // Show the form to edit cleaner information
     public function edit($id)
@@ -170,15 +171,17 @@ class CleanerController extends Controller
     // Delete a cleaner
     public function destroy($id)
     {
-        $cleaner = Cleaner::find($id);
-
-        if (!$cleaner) {
-            return response()->json(['message' => 'Cleaner not found'], 404);
-        }
-
+        $cleaner = Cleaner::findOrFail($id);
+    
+        // Delete the associated user
+        User::where('id', $cleaner->user_id)->delete();
+    
+        // Delete the cleaner
         $cleaner->delete();
+    
         return response()->json(['message' => 'Cleaner deleted successfully'], 200);
     }
+    
 
     
 }

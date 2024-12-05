@@ -205,69 +205,94 @@ class SupervisorController extends Controller
     }
 
     // API for fetching list of cleaners
-    public function getAllCleaners(Request $request)
-    {
-        // Get the status query parameter, default to 'all' if not provided
-        $status = $request->query('status', 'all');
-    
-        Log::info("Requested status: $status"); // Log the requested status for debugging
-    
-        // Create the query
-        $query = Cleaner::query();
-    
-        // Filter based on status if it's not 'all'
-        if ($status !== 'all') {
-            $query->where('status', $status);
-        }
-    
-        // Fetch the cleaners
-        $cleaners = $query->get();
-    
-        foreach ($cleaners as $cleaner) {
-            // Convert the profile_pic blob data to base64 if it exists
-            if ($cleaner->profile_pic !== null) {
-                $cleaner->profile_pic = base64_encode($cleaner->profile_pic);
-            }
-    
-            // Check and handle malformed UTF-8 fields
-            foreach ($cleaner->getAttributes() as $key => $value) {
-                if (!mb_check_encoding($value, 'UTF-8')) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Malformed UTF-8 detected in Cleaner ID: {$cleaner->id}, Field: $key"
-                    ], 500);
-                }
-            }
-        }
-    
-        // Log the response for debugging
-        Log::info("Fetched cleaners: " . $cleaners->toJson());
-    
-        // Return the response
-        return response()->json(['success' => true, 'data' => $cleaners], 200);
+public function getAllCleaners(Request $request)
+{
+    // Get the status query parameter, default to 'all' if not provided
+    $status = $request->query('status', 'all');
+
+    Log::info("Requested status: $status"); // Log the requested status for debugging
+
+    // Create the query
+    $query = Cleaner::query();
+
+    // Filter based on status if it's not 'all'
+    if ($status !== 'all') {
+        $query->where('status', $status);
     }
-    
-       
-    // Show method to retrieve a specific cleaner by ID
-    public function showapi($id)
-    {
-        // Find the cleaner by ID
-        $cleaner = Cleaner::find($id);
 
-        // Check if the cleaner exists
-        if (!$cleaner) {
-            return response()->json(['message' => 'Cleaner not found'], 404);
-        }
+    // Fetch the cleaners
+    $cleaners = $query->get();
 
-        // Convert the BLOB data to Base64 if it exists
-        if ($cleaner->profile_pic) {
+    foreach ($cleaners as $cleaner) {
+        // Convert the profile_pic blob data to base64 if it exists
+        if ($cleaner->profile_pic !== null) {
             $cleaner->profile_pic = base64_encode($cleaner->profile_pic);
         }
 
-        // Return the cleaner's details including profile_pic
-        return response()->json([
-            'data' => $cleaner,
-        ]);
-    }  
+        // Check and handle malformed UTF-8 fields
+        foreach ($cleaner->getAttributes() as $key => $value) {
+            if (!mb_check_encoding($value, 'UTF-8')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Malformed UTF-8 detected in Cleaner user_id: {$cleaner->user_id}, Field: $key"
+                ], 500);
+            }
+        }
+    }
+
+    // Log the response for debugging
+    Log::info("Fetched cleaners: " . $cleaners->toJson());
+
+    // Return the response with user_id instead of id
+    $cleaners = $cleaners->map(function ($cleaner) {
+        return [
+            'user_id' => $cleaner->user_id,
+            'cleaner_name' => $cleaner->cleaner_name,
+            'cleaner_phoneNo' => $cleaner->cleaner_phoneNo,
+            'profile_pic' => $cleaner->profile_pic,
+            'cleaner_username' => $cleaner->cleaner_username,
+            'status' => $cleaner->status,
+            'created_at' => $cleaner->created_at,
+            'updated_at' => $cleaner->updated_at,
+            'building' => $cleaner->building,
+        ];
+    });
+
+    // Return the modified response
+    return response()->json(['success' => true, 'data' => $cleaners], 200);
+}
+
+// Show method to retrieve a specific cleaner by user_id
+public function showapi($user_id)
+{
+    // Find the cleaner by user_id
+    $cleaner = Cleaner::where('user_id', $user_id)->first();
+
+    // Check if the cleaner exists
+    if (!$cleaner) {
+        return response()->json(['message' => 'Cleaner not found'], 404);
+    }
+
+    // Convert the BLOB data to Base64 if it exists
+    if ($cleaner->profile_pic) {
+        $cleaner->profile_pic = base64_encode($cleaner->profile_pic);
+    }
+
+    // Return the cleaner's details including profile_pic and user_id
+    return response()->json([
+        'data' => [
+            'user_id' => $cleaner->user_id,
+            'cleaner_name' => $cleaner->cleaner_name,
+            'cleaner_phoneNo' => $cleaner->cleaner_phoneNo,
+            'profile_pic' => $cleaner->profile_pic,
+            'cleaner_username' => $cleaner->cleaner_username,
+            'status' => $cleaner->status,
+            'created_at' => $cleaner->created_at,
+            'updated_at' => $cleaner->updated_at,
+            'building' => $cleaner->building,
+        ]
+    ]);
+}
+
 
 }

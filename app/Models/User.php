@@ -76,4 +76,10 @@ class User extends Authenticatable implements HasMedia
     {
         return $this->role === 'officer';
     }
+
+    public function cleaner()
+    {
+        return $this->hasOne(Cleaner::class, 'user_id');
+    }
+
 }

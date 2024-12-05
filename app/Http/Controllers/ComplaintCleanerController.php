@@ -21,7 +21,7 @@ class ComplaintCleanerController extends Controller
         try {
             // Use Eloquent relationships to retrieve complaints assigned to a specific cleaner
             $tasks = ComplaintCleaner::with('complaint:id,comp_desc,comp_location,comp_date,comp_time,comp_status')
-                ->where('cleaner_id', $cleaner_id)
+                ->where('cleaner_id', $cleaner_id) // cleaner_id now refers to users.id
                 ->get()
                 ->map(function ($complaintCleaner) {
                     return [
@@ -36,12 +36,12 @@ class ComplaintCleanerController extends Controller
                         'assigned_by' => $complaintCleaner->assigned_by,
                     ];
                 });
-
+    
             return response()->json([
                 'status' => 'success',
                 'data' => $tasks
             ], 200);
-
+    
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
@@ -50,6 +50,7 @@ class ComplaintCleanerController extends Controller
             ], 500);
         }
     }
+    
 
     /**
      * Get complaints created by the authenticated officer.
@@ -129,7 +130,7 @@ class ComplaintCleanerController extends Controller
             } else {
                 // Fetch cleaner details from the users table
                 $cleaners = DB::table('complaint_cleaner')
-                    ->join('users', 'complaint_cleaner.cleaner_id', '=', 'users.id')
+                    ->join('users', 'complaint_cleaner.cleaner_id', '=', 'users.id') // cleaner_id references users.id
                     ->where('complaint_cleaner.complaint_id', $id)
                     ->select('users.id as cleaner_id', 'users.name as cleaner_name')
                     ->get();
@@ -161,5 +162,6 @@ class ComplaintCleanerController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-    }    
+    }
+    
 }

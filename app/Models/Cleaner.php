@@ -57,4 +57,10 @@ class Cleaner extends Model implements HasMedia
         return $this->getFirstMediaUrl('profile_pictures') ?: asset('default-profile.png');
     }
 
+    public function user()
+{
+    return $this->belongsTo(User::class, 'user_id');
+}
+
+
 }

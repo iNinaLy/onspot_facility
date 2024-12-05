@@ -20,9 +20,9 @@ class Attendance extends Model
     ];
     
 
-    // Define the relationship with the User model
+    // Define the relationship with the Cleaner model
     public function cleaner()
     {
-        return $this->belongsTo(User::class, 'cleaner_id');
+        return $this->belongsTo(Cleaner::class, 'cleaner_id');
     }
-}
+}    

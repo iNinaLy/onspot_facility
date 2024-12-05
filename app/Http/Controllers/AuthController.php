@@ -11,66 +11,89 @@ use App\Models\NotificationToken;
 
     class AuthController extends Controller
     {
-        public function register(Request $request)
-        {
-            // Validate the incoming registration data
-            $request->validate([
-                'username' => 'required|string|max:255|unique:users',
-                'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|min:8|confirmed',
-                'phone_no' => 'nullable|string|max:255',
-                'role' => 'required|string',
-                'device_token' => 'required_with:device_id,device_type|string',
-                'device_id' => 'required_with:device_token|string',
-                'device_type' => 'required_with:device_token|string|in:android,ios,web',
-            ]);
-        
-            // Create the user
-            $user = \App\Models\User::create([
-                'username' => $request->username,
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => bcrypt($request->password),
-                'phone_no' => $request->phone_no,
-                'role' => $request->role,
-            ]);
-        
-            // Generate a token for the newly registered user
-            $token = $user->createToken('YourAppName')->plainTextToken;
-        
-            // Save FCM token if provided
-            if ($request->filled(['device_token', 'device_id', 'device_type'])) {
-                NotificationToken::updateOrCreate(
-                    [
-                        'user_id' => $user->id,
-                        'device_id' => $request->device_id,
-                    ],
-                    [
-                        'device_token' => $request->device_token,
-                        'device_type' => $request->device_type,
-                    ]
-                );
-            }
-        
-            // Return the user and the token in the response
-            return response()->json([
-                'user' => [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'phone_no' => $user->phone_no,
-                    'role' => $user->role,
-                    'created_at' => $user->created_at,
-                    'updated_at' => $user->updated_at,
-                ],
-                'token' => $token,
-            ], 201);
-        }        
-        
+    public function register(Request $request)
+    {
+        \Log::info('Starting registration process');
     
-
+        // Validate the incoming registration data
+        $request->validate([
+            'username' => 'required|string|max:255|unique:users',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'phone_no' => 'nullable|string|max:255',
+            'role' => 'required|string',
+            'device_token' => 'required_with:device_id,device_type|string',
+            'device_id' => 'required_with:device_token|string',
+            'device_type' => 'required_with:device_token|string|in:android,ios,web',
+            'building' => 'required_if:role,cleaner|string|max:255', // Add building validation
+        ]);
+    
+        // Create the user
+        $user = \App\Models\User::create([
+            'username' => $request->username,
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => bcrypt($request->password),
+            'phone_no' => $request->phone_no,
+            'role' => $request->role,
+        ]);
+    
+        \Log::info('User created successfully: ' . $user->id);
+    
+        // If the role is 'cleaner', create a corresponding cleaner record
+        if ($user->role === 'cleaner') {
+            try {
+                \Log::info('Attempting to create cleaner record for user: ' . $user->id);
+                \App\Models\Cleaner::create([
+                    'user_id' => $user->id,
+                    'cleaner_username' => $user->username,
+                    'cleaner_name' => $user->name,
+                    'cleaner_phoneNo' => $user->phone_no,
+                    'status' => 'available',
+                    'cleaner_password' => bcrypt($request->password),
+                    'building' => $request->input('building', 'default_building'), // Default if missing
+                ]);
+                \Log::info('Cleaner record created successfully for user: ' . $user->id);
+            } catch (\Exception $e) {
+                \Log::error('Failed to create cleaner record: ' . $e->getMessage());
+                return response()->json(['error' => 'Failed to create cleaner record.'], 500);
+            }
+        }
+    
+        // Generate a token for the newly registered user
+        $token = $user->createToken('YourAppName')->plainTextToken;
+    
+        // Save FCM token if provided
+        if ($request->filled(['device_token', 'device_id', 'device_type'])) {
+            NotificationToken::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'device_id' => $request->device_id,
+                ],
+                [
+                    'device_token' => $request->device_token,
+                    'device_type' => $request->device_type,
+                ]
+            );
+        }
+    
+        // Return the user and the token in the response
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone_no' => $user->phone_no,
+                'role' => $user->role,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+            ],
+            'token' => $token,
+        ], 201);
+    }
+    
         public function login(Request $request)
         {
             $request->validate([

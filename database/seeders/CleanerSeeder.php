@@ -62,7 +62,7 @@ class CleanerSeeder extends Seeder
 
             // Now create an entry in the cleaners table using the user's ID
             Cleaner::create([
-                'id' => $user->id, // Foreign key relationship with users table
+                'user_id' => $user->id, // Foreign key relationship with users table
                 'cleaner_name' => $cleanerData['cleaner_name'],
                 'cleaner_phoneNo' => $cleanerData['cleaner_phoneNo'],
                 'cleaner_username' => $cleanerData['username'],

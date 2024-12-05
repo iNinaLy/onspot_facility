@@ -28,11 +28,11 @@ class ComplaintCleaner extends Model
         return $this->belongsTo(Complaint::class, 'complaint_id');
     }
 
+    // Relationship with Cleaner
     public function cleaner()
     {
-        return $this->belongsTo(Cleaner::class, 'cleaner_id');
+        return $this->belongsTo(Cleaner::class, 'cleaner_id', 'user_id'); // cleaner_id references user_id in cleaners
     }
-
     public function assignedBy()
     {
         return $this->belongsTo(User::class, 'assigned_by');
