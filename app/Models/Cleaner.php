@@ -7,14 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 
-class Cleaner extends Model implements HasMedia
+class Cleaner extends Authenticatable implements HasMedia 
+
 {
     use HasFactory, InteractsWithMedia;
 
     // Define the fillable fields
-    use InteractsWithMedia;
+    use InteractsWithMedia,Notifiable;
 
     protected $fillable = [
         'cleaner_name',
@@ -24,6 +27,12 @@ class Cleaner extends Model implements HasMedia
         'building',
         'status',
     ];
+
+    protected $attributes = [
+        'role' => 'cleaner',
+    ];
+    const STATUS_AVAILABLE = 'available';
+    const STATUS_BUSY = 'busy';
     public function setCleanerPasswordAttribute($value)
     {
         $this->attributes['cleaner_password'] = Hash::make($value);
@@ -96,5 +105,8 @@ class Cleaner extends Model implements HasMedia
         return $this->getFirstMediaUrl('profile_pictures') ?: asset('default-profile.png');
     }
 
-    
+    public function notificationTokens()
+    {
+        return $this->hasMany(NotificationToken::class);
+    }
 }

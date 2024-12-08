@@ -64,14 +64,18 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
 
-    // Complaints Management
-    Route::get('/complaints', [AdminController::class, 'complaints'])->name('complaints');
-    Route::post('/complaints/batch-update', [AdminController::class, 'batchUpdate'])->name('complaints.batchUpdate');
-    Route::get('/complaints/search', [AdminController::class, 'searchComplaints'])->name('complaints.search');
-    Route::put('/complaints/{id}/status', [AdminController::class, 'updateStatus'])->name('complaints.updateStatus');
-    Route::get('/complaints/{complaint}/edit', [AdminController::class, 'editComplaint'])->name('complaints.edit');
-    Route::delete('/complaints/{complaint}', [AdminController::class, 'destroyComplaint'])->name('complaints.destroy');
-
+    /// Complaints Management
+    Route::get('/complaints', [ComplaintController::class, 'index'])->name('complaints');
+    Route::post('/complaints/bulk-action', [ComplaintController::class, 'bulkAction'])->name('complaints.bulkAction');
+    Route::post('/complaints/{id}/inline-update', [ComplaintController::class, 'inlineUpdate'])->name('complaints.inlineUpdate');
+    Route::get('/complaints/create', [ComplaintController::class, 'create'])->name('complaints.create');
+    Route::post('/complaints', [ComplaintController::class, 'submitComplaint'])->name('complaints.submit');
+    Route::get('/complaints/{id}', [ComplaintController::class, 'show'])->name('complaints.show');
+    Route::get('/complaints/dashboard', [ComplaintController::class, 'showDashboard'])->name('complaints.dashboard');
+    Route::put('/complaints/{id}', [ComplaintController::class, 'update'])->name('complaints.update');
+    Route::delete('/complaints/{id}', [ComplaintController::class, 'destroy'])->name('complaints.destroy');
+    Route::post('/complaints/{id}/assign-cleaner', [ComplaintController::class, 'assignCleaner'])->name('complaints.assignCleaner');
+    
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/edit', [AdminController::class, 'editProfile'])->name('edit');
         Route::patch('/', [AdminController::class, 'updateProfile'])->name('update');
@@ -82,11 +86,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 // ===================
 // Supervisor Routes
 // ===================
+
 Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supervisor.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [SupervisorController::class, 'dashboard'])->name('dashboard');
 
-    // Notifications
+   
+        // Notifications
     Route::prefix('notifications')->name('notifications.')->group(function () {
         // Display notifications index
         Route::get('/', [NotificationController::class, 'index'])->name('index');
@@ -95,15 +101,17 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
         Route::get('/all', [NotificationController::class, 'fetchAll'])->name('all');
 
         // Mark a specific notification as read
-        Route::get('/read/{id}', [NotificationController::class, 'markAsRead'])->name('markAsRead');
+        Route::post('/read/{id}', [NotificationController::class, 'markAsRead'])->name('markAsRead');
 
         // Mark all notifications as read
         Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('markAllAsRead');
+        
+        //Delete
+        Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
         // Clear all notifications
         Route::post('/clear-all', [NotificationController::class, 'clearAll'])->name('clearAll');
     });
-
 
     // Cleaner Management
     Route::prefix('cleaners')->group(function () {

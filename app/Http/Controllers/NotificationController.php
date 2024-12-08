@@ -14,15 +14,18 @@ class NotificationController extends Controller
     {
         $user = Auth::user();
 
-        // Retrieve the latest 10 notifications using Eloquent query
+        // Retrieve all notifications with pagination
         $notifications = $user->notifications()
             ->orderBy('created_at', 'desc')
-            ->paginate(10); // Use paginate for proper pagination
+            ->paginate(10);
 
-        // Optionally, retrieve unread notifications count
-        $unreadNotificationsCount = $user->unreadNotifications->count();
+        // Retrieve unread notifications
+        $unreadNotifications = $user->unreadNotifications;
 
-        return view('supervisor.notifications.index', compact('notifications', 'unreadNotificationsCount'));
+        // Retrieve unread notifications count
+        $unreadNotificationsCount = $unreadNotifications->count();
+
+        return view('supervisor.notifications.index', compact('notifications', 'unreadNotifications', 'unreadNotificationsCount'));
     }
 
     /**
@@ -30,15 +33,17 @@ class NotificationController extends Controller
      */
     public function markAsRead($id)
     {
-        $notification = Auth::user()->unreadNotifications->find($id);
-
+        $user = Auth::user(); // Ensure the user is authenticated
+        $notification = $user->unreadNotifications->find($id);
+    
         if ($notification) {
             $notification->markAsRead();
-            return response()->json(['status' => 'success']);
+            return response()->json(['status' => 'success', 'message' => 'Notification marked as read.']);
         }
-
-        return response()->json(['status' => 'error', 'message' => 'Notification not found'], 404);
+    
+        return response()->json(['status' => 'error', 'message' => 'Notification not found.'], 404);
     }
+    
 
     /**
      * Mark all notifications as read.
@@ -49,12 +54,30 @@ class NotificationController extends Controller
         return response()->json(['status' => 'success']);
     }
 
+    /**
+     * Clear all notifications.
+     */
     public function clearAll()
     {
         // Clear all notifications for the authenticated user
         Auth::user()->notifications()->delete();
 
-        // Redirect back with a success message
-        return redirect()->back()->with('success', 'All notifications cleared successfully.');
+        // Return a JSON response
+        return response()->json(['status' => 'success', 'message' => 'All notifications cleared successfully.']);
+    }
+
+    /**
+     * Delete a specific notification.
+     */
+    public function destroy($id)
+    {
+        $notification = Auth::user()->notifications()->find($id);
+
+        if ($notification) {
+            $notification->delete();
+            return response()->json(['status' => 'success', 'message' => 'Notification deleted successfully.']);
+        }
+
+        return response()->json(['status' => 'error', 'message' => 'Notification not found.'], 404);
     }
 }

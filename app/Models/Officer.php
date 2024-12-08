@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Officer extends Model
+class Officer extends Authenticatable
 {
-    use HasFactory;
+    use HasFactory, Notifiable;
 
     protected $table = 'officers';
 
@@ -26,4 +28,14 @@ class Officer extends Model
     {
         return $this->belongsTo(User::class, 'user_id'); // Ensure this is correct if you have a user_id field
     }
+    
+    public function notificationTokens()
+    {
+        return $this->hasMany(NotificationToken::class);
+    }
+
+    // Ensure the officer has a role attribute
+    protected $attributes = [
+        'role' => 'officer',
+    ];
 }

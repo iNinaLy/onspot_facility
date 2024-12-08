@@ -11,7 +11,7 @@
         html {
             scroll-behavior: smooth;
         }
-
+        
         body {
             background-color: #f8fafc;
             font-family: 'Inter', sans-serif;

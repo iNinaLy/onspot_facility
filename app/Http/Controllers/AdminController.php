@@ -87,33 +87,8 @@ class AdminController extends Controller
     }
 
 
-    public function complaints(Request $request)
-    {
-        $status = $request->input('status');
-        $query = Complaint::query();
+    
 
-        if ($status) {
-            $query->where('comp_status', $status);
-        }
-
-        $complaints = $query->orderBy('comp_date', 'desc')->paginate(10);
-
-        return view('admin.complaints.index', compact('complaints', 'status'));
-    }
-
-    public function createComplaint()
-    {
-        return view('admin.complaints.create');
-    }
-
-    public function storeComplaint(Request $request)
-    {
-        $this->validateComplaint($request);
-
-        Complaint::create($request->all());
-
-        return redirect()->route('admin.complaints')->with('success', 'Complaint created successfully!');
-    }
 
     public function editComplaint($id)
     {
@@ -177,17 +152,38 @@ class AdminController extends Controller
         $search = $request->query('search');
         $status = $request->query('status');
 
-        $cleaners = Cleaner::when($search, function ($query, $search) {
-                return $query->where('cleaner_name', 'LIKE', "%{$search}%")
-                             ->orWhere('cleaner_phoneNo', 'LIKE', "%{$search}%")
-                             ->orWhere('cleaner_username', 'LIKE', "%{$search}%");
-            })
-            ->when($status, function ($query, $status) {
-                return $query->where('status', strtolower($status));
-            })
-            ->paginate(10);
+        // Build the query with search and status filters
+        $cleanersQuery = Cleaner::query();
 
-        return view('admin.cleaners.index', compact('cleaners', 'search', 'status'));
+        if ($search) {
+            $cleanersQuery->where(function ($query) use ($search) {
+                $query->where('cleaner_name', 'LIKE', "%{$search}%")
+                      ->orWhere('cleaner_phoneNo', 'LIKE', "%{$search}%")
+                      ->orWhere('cleaner_username', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if ($status) {
+            $cleanersQuery->where('status', strtolower($status));
+        }
+
+        // Paginate the results
+        $cleaners = $cleanersQuery->paginate(10);
+
+        // Compute the counts for metrics
+        $totalCleaners = Cleaner::count();
+        $availableCleaners = Cleaner::where('status', 'available')->count();
+        $unavailableCleaners = Cleaner::where('status', 'unavailable')->count();
+
+        // Pass the variables to the view
+        return view('admin.cleaners.index', compact(
+            'cleaners',
+            'search',
+            'status',
+            'totalCleaners',
+            'availableCleaners',
+            'unavailableCleaners'
+        ));
     }
 
     public function createCleaner()
@@ -221,7 +217,7 @@ class AdminController extends Controller
             'user_id' => $user->id,
         ]);
 
-        return redirect()->route('admin.cleaners.index')->with('success', 'Cleaner created successfully!');
+        return redirect()->route('admin.cleaners')->with('success', 'Cleaner created successfully!');
     }
 
     public function editCleaner(Cleaner $cleaner)
@@ -229,7 +225,7 @@ class AdminController extends Controller
         return view('admin.cleaners.edit', compact('cleaner'));
     }
 
-    public function updateCleaner (Request $request, $id)
+    public function updateCleaner(Request $request, $id)
     {
         // Define validation rules
         $validationRules = [
@@ -263,9 +259,10 @@ class AdminController extends Controller
         // Handle profile picture upload if provided
         if ($request->hasFile('profile_pic')) {
             // Remove previous image if exists
+            // Assuming you're using a package like Spatie Media Library
             $cleaner->clearMediaCollection('profile_pictures');
 
-            // Add new profile picture using Spatie Media Library
+            // Add new profile picture
             $cleaner->addMediaFromRequest('profile_pic')
                     ->toMediaCollection('profile_pictures', 'public');
         }
@@ -277,6 +274,7 @@ class AdminController extends Controller
         return redirect()->route('admin.cleaners.edit', $cleaner->id)
                          ->with('success', 'Cleaner details updated successfully!');
     }
+
 
 
     public function resetCleanerPassword(Request $request, $cleaner)

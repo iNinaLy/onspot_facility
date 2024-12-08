@@ -5,13 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Cleaner;
-use App\Models\User; // For officer and supervisor roles
+use App\Models\User; 
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Foundation\Validation\ValidatesRequests;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
+
 class Complaint extends Model implements HasMedia
 {
-    use HasFactory, InteractsWithMedia;
+    use AuthorizesRequests, DispatchesJobs, ValidatesRequests, HasFactory, InteractsWithMedia;
 
     protected $table = 'complaints'; // Specify the table name
     protected $primaryKey = 'id'; // Primary key (auto-increment)
@@ -32,6 +36,13 @@ class Complaint extends Model implements HasMedia
         'assigned_date',
         'no_of_cleaners',
         'comp_image', // Add comp_image to fillable fields
+    ];
+
+    // Cast attributes to native types
+    protected $casts = [
+        'assigned_date' => 'datetime', // This ensures assigned_date is a Carbon instance
+        'comp_date'      => 'datetime', // Assuming comp_date is also a datetime
+        // Add other casts as necessary
     ];
 
    // Define status constants
@@ -120,7 +131,11 @@ class Complaint extends Model implements HasMedia
                     ->withTimestamps();
     }
 
-
+    public function assignedBy()
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
+    }
+    
     /**
      * Generic relationship for user association.
      */
