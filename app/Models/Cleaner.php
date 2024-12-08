@@ -18,7 +18,8 @@ class Cleaner extends Model implements HasMedia
         'cleaner_phoneNo',
         'profile_pic', // This could be stored separately if needed, or handled via media library
         'status', // You may track if the cleaner is available/busy/etc.
-        'user_id', // Assuming each cleaner has a corresponding user profile
+        'user_id',
+        'cleaner_password',
     ];
 
     /**

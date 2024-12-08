@@ -26,7 +26,8 @@ use App\Models\NotificationToken;
             'device_token' => 'required_with:device_id,device_type|string',
             'device_id' => 'required_with:device_token|string',
             'device_type' => 'required_with:device_token|string|in:android,ios,web',
-            'building' => 'required_if:role,cleaner|string|max:255', // Add building validation
+            'building' => 'nullable|string|max:255', 
+
         ]);
     
         // Create the user
@@ -51,7 +52,7 @@ use App\Models\NotificationToken;
                     'cleaner_name' => $user->name,
                     'cleaner_phoneNo' => $user->phone_no,
                     'status' => 'available',
-                    'cleaner_password' => bcrypt($request->password),
+                    'cleaner_password' => bcrypt($request->password), 
                     'building' => $request->input('building', 'default_building'), // Default if missing
                 ]);
                 \Log::info('Cleaner record created successfully for user: ' . $user->id);
@@ -60,6 +61,7 @@ use App\Models\NotificationToken;
                 return response()->json(['error' => 'Failed to create cleaner record.'], 500);
             }
         }
+        
     
         // Generate a token for the newly registered user
         $token = $user->createToken('YourAppName')->plainTextToken;

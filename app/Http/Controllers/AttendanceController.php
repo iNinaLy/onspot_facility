@@ -103,6 +103,7 @@ class AttendanceController extends Controller
             'attended' => $todayAttendance ? true : false,
             'attendance' => $todayAttendance,
             'cleaner_name' => $cleanerName,
+            'status' => $cleaner->status,
         ], 200);
     }
 }
