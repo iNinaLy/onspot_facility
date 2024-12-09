@@ -16,37 +16,59 @@ class ComplaintCleanerController extends Controller
      * @param int $cleaner_id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getCleanerTasks($cleaner_id)
+    public function getCleanerTasks(Request $request, $cleaner_id)
     {
         try {
-            // Use Eloquent relationships to retrieve complaints assigned to a specific cleaner
-            $tasks = ComplaintCleaner::with('complaint:id,comp_desc,comp_location,comp_date,comp_time,comp_status')
-                ->where('cleaner_id', $cleaner_id) // cleaner_id now refers to users.id
-                ->get()
-                ->map(function ($complaintCleaner) {
-                    return [
-                        'complaint_id' => $complaintCleaner->complaint->id,
-                        'comp_desc' => $complaintCleaner->complaint->comp_desc,
-                        'comp_location' => $complaintCleaner->complaint->comp_location,
-                        'comp_date' => $complaintCleaner->complaint->comp_date,
-                        'comp_time' => $complaintCleaner->complaint->comp_time,
-                        'comp_status' => $complaintCleaner->complaint->comp_status,
-                        'assigned_date' => $complaintCleaner->assigned_date,
-                        'no_of_cleaners' => $complaintCleaner->no_of_cleaners,
-                        'assigned_by' => $complaintCleaner->assigned_by,
-                    ];
-                });
+            $statusFilter = $request->query('status', null); // Optional status filter
+    
+            // Log the status filter and cleaner ID for debugging
+            \Log::info("Fetching tasks for cleaner_id: $cleaner_id with status: $statusFilter");
+    
+            // Retrieve complaints assigned to the cleaner with optional status filtering
+            $tasks = ComplaintCleaner::with(['complaint' => function ($query) use ($statusFilter) {
+                if ($statusFilter) {
+                    $query->where('comp_status', $statusFilter); // Apply status filter if provided
+                } else {
+                    $query->whereIn('comp_status', ['ongoing', 'completed']); // Default to these statuses
+                }
+            }])
+            ->where('cleaner_id', $cleaner_id)
+            ->get()
+            ->map(function ($complaintCleaner) {
+                if (!$complaintCleaner->complaint) {
+                    return null; // Skip tasks without a matching complaint
+                }
+    
+                return [
+                    'complaint_id' => $complaintCleaner->complaint->id,
+                    'comp_desc' => $complaintCleaner->complaint->comp_desc,
+                    'comp_location' => $complaintCleaner->complaint->comp_location,
+                    'comp_date' => $complaintCleaner->complaint->comp_date,
+                    'comp_time' => $complaintCleaner->complaint->comp_time,
+                    'comp_status' => $complaintCleaner->complaint->comp_status,
+                    'assigned_date' => $complaintCleaner->assigned_date,
+                    'no_of_cleaners' => $complaintCleaner->no_of_cleaners,
+                    'assigned_by' => $complaintCleaner->assigned_by,
+                ];
+            })
+            ->filter() // Remove null values
+            ->values(); // Re-index the array
+    
+            // Log the result for debugging
+            \Log::info("Tasks fetched: " . json_encode($tasks));
     
             return response()->json([
                 'status' => 'success',
-                'data' => $tasks
+                'data' => $tasks,
             ], 200);
     
         } catch (\Exception $e) {
+            // Log the error
+            \Log::error("Error fetching tasks: " . $e->getMessage());
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to retrieve tasks.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -160,6 +182,36 @@ class ComplaintCleanerController extends Controller
                 'status' => 'error',
                 'message' => 'Failed to retrieve complaint details.',
                 'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    public function markCleanerUnavailable(Request $request, $complaint_id)
+    {
+        try {
+            // Find the complaint-cleaner record
+            $complaintCleaner = ComplaintCleaner::where('complaint_id', $complaint_id)->first();
+    
+            if (!$complaintCleaner) {
+                return response()->json(['error' => 'Complaint not found'], 404);
+            }
+    
+            // Find the cleaner and update their status to 'unavailable'
+            $cleaner = User::find($complaintCleaner->cleaner_id);
+            if ($cleaner) {
+                $cleaner->status = 'unavailable'; // Update status
+                $cleaner->save();
+            }
+    
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Cleaner marked as unavailable.',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to update cleaner status.',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

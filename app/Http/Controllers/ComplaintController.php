@@ -415,20 +415,29 @@ class ComplaintController extends Controller
         return response()->json($complaintData);
     }
         
-    // fetch assigned complaint history
     public function getHistory(Request $request)
     {
         // Get supervisor's ID from request (assuming it's passed with the token)
-        $supervisorId = $request->user()->id; // Adjust this if needed based on your auth setup
-
-        // Fetch tasks assigned by this supervisor
+        $supervisorId = $request->user()->id;
+    
+        // Get the optional comp_status filter from the request and sanitize it
+        $statusFilter = trim($request->query('comp_status', ''));
+    
+        // Fetch tasks assigned by this supervisor with optional status filtering
         $tasks = Complaint::where('assigned_by', $supervisorId)
+            ->when($statusFilter, function ($query) use ($statusFilter) {
+                // Apply filtering if status filter is provided
+                if (!empty($statusFilter)) {
+                    $query->where('comp_status', $statusFilter); // Use direct comparison for single status
+                }
+            })
             ->select('id', 'comp_desc', 'no_of_cleaners', 'comp_status', 'comp_date')
             ->orderBy('comp_date', 'desc') // Order by date, latest first
             ->get();
-
+    
+        // Return tasks in JSON format
         return response()->json($tasks);
-    }
+    }    
 
     // fetch history details
     public function getHistoryDetails($id)

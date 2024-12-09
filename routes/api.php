@@ -23,6 +23,8 @@ use Illuminate\Http\Request;
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cleaner/{cleaner_id}/tasks', [ComplaintCleanerController::class, 'getCleanerTasks']); // List all tasks for a specific cleaner
     Route::get('/complaints/{id}/details', [ComplaintCleanerController::class, 'getComplaintDetailsConditional']); // Get details of a specific complaint
+    Route::post('/tasks/{complaint_id}/mark-unavailable', [ComplaintCleanerController::class, 'markCleanerUnavailable']);
+
 });
 
 // Cleaner Attendance Routes
