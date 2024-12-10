@@ -1,5 +1,3 @@
-<!-- resources/views/layouts/app.blade.php -->
-
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -18,27 +16,9 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.2.4/dist/cdn.min.js"></script>
     
     @stack('styles')
-
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f4f4f7;
-            color: #333;
-            margin: 0;
-            padding: 0;
-        }
-
-        .wrapper {
-            display: flex;
-            transition: all 0.5s ease-in-out;
-        }
-
-        .main-content {
-            margin-left: 250px; /* Sidebar width */
-            padding: 20px;
-            flex-grow: 1;
-        }
-    </style>
+        @vite('resources/admin/app.js')
+        @vite('resources/admin/dashboard.js')
+        @vite('resources/admin/complaint.js')
 </head>
 <body>
     <div class="wrapper">

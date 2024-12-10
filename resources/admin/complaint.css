@@ -1,0 +1,192 @@
+/* ==== Status Select Loading Spinner ==== */
+.status-select {
+    position: relative; 
+}
+
+.status-select.loading {
+    pointer-events: none; 
+    background-color: #f5f5f5; 
+}
+
+.status-select.loading::after {
+    content: '';
+    position: absolute;
+    right: 10px; 
+    top: 50%; 
+    transform: translateY(-50%); 
+    width: 1rem; 
+    height: 1rem; 
+    border: 2px solid #2e5675; 
+    border-top: 2px solid transparent; 
+    border-radius: 50%;
+    animation: spin 1s linear infinite; 
+}
+
+@keyframes spin {
+    to {
+        transform: translateY(-50%) rotate(360deg); /* Complete a full rotation */
+    }
+}
+
+/* ==== Bulk Actions Toolbar ==== */
+.bulk-actions-toolbar {
+    display: none;
+    margin-bottom: 1rem;
+}
+
+.bulk-actions-toolbar.active {
+    display: flex;
+}
+
+.bulk-actions-toolbar .btn {
+    margin-right: 0.5rem;
+}
+
+/* ==== General Modal Styling ==== */
+
+.modal-content {
+    border-radius: 20px; 
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); 
+}
+
+.modal-header {
+    padding: 1.5rem; 
+}
+
+.modal-title {
+    font-size: 1.5rem; 
+    font-weight: 600; 
+}
+
+.modal-body {
+    padding: 2rem; 
+}
+
+.modal-footer {
+    padding: 1.5rem; 
+}
+
+/* ==== Status Badge Styling ==== */
+
+.status-container {
+    text-align: center; 
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.5em 1em;
+    border-radius: 9999px; 
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+/* ==== Details Grid Styling ==== */
+
+.details-grid {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    row-gap: 1.5rem;
+    column-gap: 1rem;
+}
+
+.detail-label {
+    font-weight: 600; 
+    color: #555555;
+}
+
+.detail-value {
+    color: #333333;
+    word-wrap: break-word; 
+}
+
+/* ==== Complaint Image Styling ==== */
+
+.complaint-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 15px; 
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+    margin-top: 0.5rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease; 
+}
+
+.complaint-image:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ==== Responsive Adjustments ==== */
+
+@media (max-width: 768px) {
+    .details-grid {
+        grid-template-columns: 120px 1fr; 
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-header {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .details-grid {
+        grid-template-columns: 100px 1fr; 
+    }
+
+    .modal-content {
+        border-radius: 15px; 
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+    }
+}
+
+
+.bg-gradient {
+    background-image: linear-gradient(to right, #3b82f6, #14b8a6); 
+}
+
+.bg-gray-50 {
+    background-color: #f9fafb;
+}
+
+.bg-gray-100 {
+    background-color: #f3f4f6;
+}
+
+/* Text Colors */
+.text-white {
+    color: #ffffff;
+}
+
+.text-gray-700 {
+    color: #4b5563;
+}
+
+.text-gray-800 {
+    color: #1f2937;
+}
+
+/* ==== Smooth Transitions ==== */
+.modal-content,
+.status-badge,
+.btn {
+    transition: all 0.3s ease;
+}
+
+/* ==== Hover Effects ==== */
+.status-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}

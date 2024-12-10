@@ -3,294 +3,9 @@
 @section('title', 'Manage Complaints')
 
 @push('styles')
-<!-- Bootstrap CSS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="resources/admin/app.css" rel="stylesheet" />
+<link href="resources/admin/complaint.css" rel="stylesheet" />
 
-<!-- Bootstrap Icons -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-
-<!-- Toastr CSS -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet"/>
-
-<!-- Custom Styles -->
-<style>
-    /* ==== Color Palette ==== */
-    :root {
-        --primary-color: #2e5675; /* Deep Blue */
-        --secondary-color: #f0f0f0; /* Pastel Grey */
-        --accent-color: #a8dadc; /* Soft Teal */
-        --text-color: #333333; /* Dark Grey */
-        --background-color: #ffffff; /* White */
-        --card-background: #f9f9f9; /* Light Grey for Cards */
-        --border-color: #e0e0e0; /* Subtle Grey Border */
-        --button-hover: #1b3a5f; /* Darker Blue for Hover */
-        /* ==== Pastel Button Colors ==== */
-        --pastel-view: #ebebeb; /* Light Grey */
-        --pastel-edit: #ebebeb; /* Light Grey */
-        --pastel-delete: #dd5858; /* Soft Red */
-    }
-
-    body {
-        background-color: var(--background-color);
-        color: var(--text-color);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-                     Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    }
-
-    .heading {
-        font-size: 2rem;
-        font-weight: bold;
-        color: var(--primary-color);
-        margin-bottom: 2rem;
-    }
-
-    /* ==== Metrics Cards ==== */
-    .metrics-card {
-        background-color: var(--card-background);
-        border: 1px solid var(--border-color);
-        box-shadow: 0 4px 6px rgba(46, 86, 117, 0.1);
-        border-radius: 12px;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .metrics-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 6px 8px rgba(46, 86, 117, 0.15);
-    }
-
-    .metrics-card .card-title {
-        font-size: 1.2rem;
-        color: var(--primary-color);
-    }
-
-    .metrics-card .card-text {
-        font-size: 2rem;
-        font-weight: bold;
-        color: var(--text-color);
-    }
-
-    /* ==== Action Buttons ==== */
-    .btn-primary {
-        background-color: var(--primary-color);
-        border: none;
-        color: #ffffff;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        transition: background-color 0.2s;
-    }
-
-    .btn-primary:hover {
-        background-color: var(--button-hover);
-    }
-
-    /* ==== Pastel Action Buttons ==== */
-    .btn-pastel-view {
-        background-color: var(--pastel-view);
-        border: none;
-        color: #000000;
-        border-radius: 8px;
-        transition: background-color 0.2s;
-    }
-
-    .btn-pastel-view:hover {
-        background-color: #d6d6d6;
-    }
-
-    .btn-pastel-edit {
-        background-color: var(--pastel-edit);
-        border: none;
-        color: #000000;
-        border-radius: 8px;
-        transition: background-color 0.2s;
-    }
-
-    .btn-pastel-edit:hover {
-        background-color: #d6d6d6;
-    }
-
-    .btn-pastel-delete {
-        background-color: var(--pastel-delete);
-        border: none;
-        color: #ffffff;
-        border-radius: 8px;
-        transition: background-color 0.2s;
-    }
-
-    .btn-pastel-delete:hover {
-        background-color: #c74747;
-    }
-
-    /* ==== Table Styles ==== */
-    table {
-        background-color: var(--background-color);
-        border-collapse: separate;
-        border-spacing: 0 12px;
-    }
-
-    table thead tr th {
-        background-color: var(--secondary-color);
-        color: var(--text-color);
-        border-top-left-radius: 12px;
-        border-top-right-radius: 12px;
-        padding: 1rem;
-        font-weight: 600;
-        font-size: 1rem;
-        border-bottom: none;
-    }
-
-    table tbody tr td {
-        background-color: var(--background-color);
-        padding: 1rem;
-        border-bottom: none;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        border-radius: 8px;
-    }
-
-    /* Hover Effect for Table Rows */
-    table tbody tr:hover td {
-        background-color: #ebebeb;
-        cursor: pointer;
-    }
-
-    /* ==== Modal Styles ==== */
-    .modal-content {
-        background-color: var(--background-color);
-        border-radius: 20px;
-        box-shadow: 0 8px 16px rgba(46, 86, 117, 0.2);
-        padding: 1.5rem;
-    }
-
-    .modal-header {
-        border-bottom: none;
-        text-align: center;
-    }
-
-    .modal-title {
-        color: var(--primary-color);
-        font-size: 1.5rem;
-        font-weight: bold;
-    }
-
-    .modal-body {
-        padding-top: 1rem;
-    }
-
-    .modal-footer {
-        border-top: none;
-        justify-content: center;
-    }
-
-    /* ==== Tooltips ==== */
-    .tooltip-inner {
-        background-color: var(--primary-color);
-        color: #ffffff;
-        border-radius: 8px;
-        font-size: 0.9rem;
-    }
-
-    /* ==== Pagination ==== */
-    .pagination .page-link {
-        background-color: var(--background-color);
-        color: var(--primary-color);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        margin: 0 2px;
-    }
-
-    .pagination .page-link:hover {
-        background-color: var(--primary-color);
-        color: #ffffff;
-    }
-
-    .pagination .active .page-link {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color);
-        color: #ffffff;
-    }
-
-    /* ==== Select All Checkbox ==== */
-    #select-all {
-        transform: scale(1.2);
-    }
-
-    /* ==== Status Select Dropdown ==== */
-    .status-select {
-        width: 100%;
-        border: none;
-        background-color: transparent;
-        padding: 0;
-        font-size: inherit;
-        color: inherit;
-        appearance: none;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-    }
-
-    .status-select:focus {
-        outline: none;
-        box-shadow: none;
-    }
-
-    /* Loading Spinner */
-    .status-select.loading {
-        pointer-events: none;
-        background-image: url('data:image/svg+xml;base64,{{ base64_encode('<svg xmlns="http://www.w3.org/2000/svg" style="margin:auto;background:none;display:block;" width="24px" height="24px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><circle cx="50" cy="50" fill="none" stroke="#2e5675" stroke-width="10" r="35" stroke-dasharray="164.93361431346415 56.97787143782138"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" values="0 50 50;360 50 50" keyTimes="0;1"></animateTransform></circle></svg>') }}');
-        background-repeat: no-repeat;
-        background-position: right center;
-        background-size: 1rem 1rem;
-    }
-
-    /* ==== Bulk Actions Toolbar ==== */
-    .bulk-actions-toolbar {
-        display: none;
-        margin-bottom: 1rem;
-    }
-
-    .bulk-actions-toolbar.active {
-        display: flex;
-    }
-
-    .bulk-actions-toolbar .btn {
-        margin-right: 0.5rem;
-    }
-
-    /* ==== Page Size Selector Styles ==== */
-    .page-size-selector {
-        max-width: 120px;
-    }
-
-    .page-size-selector .form-select {
-        width: 70px;
-        display: inline-block;
-    }
-
-    /* ==== View Modal Styles ==== */
-    .complaint-details {
-        margin-bottom: 1rem;
-    }
-
-    .complaint-details h6 {
-        font-weight: bold;
-        color: var(--primary-color);
-    }
-
-    .complaint-details p {
-        margin-bottom: 0.5rem;
-    }
-
-    .complaint-details .detail-label {
-        font-weight: bold;
-        color: var(--text-color);
-    }
-
-    .complaint-details .detail-value {
-        color: var(--text-color);
-    }
-
-    .complaint-details hr {
-        margin: 1rem 0;
-    }
-</style>
 @endpush
 
 @push('scripts')
@@ -650,66 +365,73 @@
                 </tr>
 
                 <!-- View Modal -->
+
                 <div class="modal fade" id="viewModal{{ $complaint->id }}" tabindex="-1" aria-labelledby="viewModalLabel{{ $complaint->id }}" aria-hidden="true">
                     <div class="modal-dialog modal-lg modal-dialog-centered">
                         <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="viewModalLabel{{ $complaint->id }}">Complaint Details - ID: {{ $complaint->id }}</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <!-- Modal Header -->
+                            <div class="modal-header bg-gradient from-blue-500 to-teal-500 text-white">
+                                <h5 class="modal-title" id="viewModalLabel{{ $complaint->id }}">Complaint Details</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            <div class="modal-body">
-                                <div class="complaint-details">
-                                    <h6>ID:</h6>
-                                    <p class="detail-value">{{ $complaint->id }}</p>
+                            
+                            <!-- Modal Body -->
+                            <div class="modal-body bg-gray-50">
+                                <div class="complaint-info">
+                                    <!-- Status Badge -->
+                                     
+                                    <div class="status-container mb-4 text-center">
+                                        <span class="status-badge 
+                                            @if($complaint->comp_status === 'completed') status-completed 
+                                            @elseif($complaint->comp_status === 'ongoing') status-ongoing 
+                                            @elseif($complaint->comp_status === 'pending') status-pending 
+                                            @else status-unknown 
+                                            @endif
+                                        ">
+                                            {{ ucfirst(str_replace('_', ' ', $complaint->comp_status)) }}
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Complaint Details -->
+                                    <div class="details-grid">
+                                        <div class="detail-label">ID:</div>
+                                        <div class="detail-value">{{ $complaint->id }}</div>
 
-                                    <hr>
+                                        <div class="detail-label">Location:</div>
+                                        <div class="detail-value">{{ $complaint->comp_location }}</div>
 
-                                    <h6>Status:</h6>
-                                    <p class="detail-value text-capitalize">{{ $complaint->comp_status }}</p>
+                                        <div class="detail-label">Assigned Date:</div>
+                                        <div class="detail-value">
+                                            {{ $complaint->assigned_date ? $complaint->assigned_date->format('d M Y H:i') : 'N/A' }}
+                                        </div>
 
-                                    <hr>
+                                        <div class="detail-label">Complaint By:</div>
+                                        <div class="detail-value">{{ $complaint->officer->name ?? 'N/A' }}</div>
 
-                                    <h6>Location:</h6>
-                                    <p class="detail-value">{{ $complaint->comp_location }}</p>
+                                        <div class="detail-label">Assigned By:</div>
+                                        <div class="detail-value">{{ $complaint->assignedBy->name ?? 'N/A' }}</div>
 
-                                    <hr>
+                                        <div class="detail-label">Description:</div>
+                                        <div class="detail-value">{{ $complaint->comp_desc }}</div>
 
-                                    <h6>Assigned Date:</h6>
-                                    <p class="detail-value">
-                                        {{ $complaint->assigned_date ? $complaint->assigned_date->format('d M Y H:i') : 'N/A' }}
-                                    </p>
-
-                                    <hr>
-
-                                    <h6>Complaint By:</h6>
-                                    <p class="detail-value">{{ $complaint->officer->name ?? 'N/A' }}</p>
-
-                                    <hr>
-
-                                    <h6>Assigned By:</h6>
-                                    <p class="detail-value">{{ $complaint->assignedBy->name ?? 'N/A' }}</p>
-
-                                    <hr>
-
-                                    <h6>Description:</h6>
-                                    <p class="detail-value">{{ $complaint->comp_desc }}</p>
-
-                                    <hr>
-
-                                    @if($complaint->comp_image)
-                                        <h6>Image:</h6>
-                                        <img src="{{ asset('storage/' . $complaint->comp_image) }}" alt="Complaint Image" class="img-fluid rounded shadow-sm">
-                                    @endif
-
-                                    <!-- Add other complaint details as needed -->
+                                        @if($complaint->comp_image)
+                                            <div class="detail-label">Image:</div>
+                                            <div class="detail-value">
+                                                <img src="{{ asset('storage/' . $complaint->comp_image) }}" alt="Complaint Image" class="complaint-image">
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
-                            <div class="modal-footer">
+                            
+                            <!-- Modal Footer -->
+                            <div class="modal-footer bg-gray-100">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                             </div>
                         </div>
                     </div>
                 </div>
+
 
                 <!-- Edit Modal -->
                 <div class="modal fade" id="editModal{{ $complaint->id }}" tabindex="-1" aria-labelledby="editModalLabel{{ $complaint->id }}" aria-hidden="true">

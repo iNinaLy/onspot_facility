@@ -1,0 +1,31 @@
+﻿{
+  "resources/css/admin/complaints.scss": {
+    "file": "assets/complaints-D6CtVmGA.css",
+    "src": "resources/css/admin/complaints.scss",
+    "isEntry": true
+  },
+  "resources/css/admin/dashboard.scss": {
+    "file": "assets/dashboard-CTbCfkt-.css",
+    "src": "resources/css/admin/dashboard.scss",
+    "isEntry": true
+  },
+  "resources/css/admin/main.scss": {
+    "file": "assets/main-lq0fQlR7.css",
+    "src": "resources/css/admin/main.scss",
+    "isEntry": true
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-Ceovo8Hp.css",
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-FeYROFTS.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "css": [
+      "assets/app-Ceovo8Hp.css"
+    ]
+  }
+}

@@ -3,294 +3,11 @@
 @section('title', 'Manage Supervisors')
 
 @push('styles')
-
-<!-- Include Bootstrap CSS (if not already included in your layout) -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<!-- Include Bootstrap Icons -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-
-<!-- Include Toastr CSS -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet"/>
-
-<style>
-    /* ==== Color Palette ==== */
-    :root {
-        --primary-color: #2e5675; /* Deep Blue */
-        --secondary-color: #f0f0f0; /* Pastel Grey */
-        --accent-color: #a8dadc; /* Soft Teal */
-        --text-color: #333333; /* Dark Grey */
-        --background-color: #ffffff; /* White */
-        --card-background: #f9f9f9; /* Light Grey for Cards */
-        --border-color: #e0e0e0; /* Subtle Grey Border */
-        --button-hover: #1b3a5f; /* Darker Blue for Hover */
-        /* ==== Pastel Button Colors ==== */
-        --pastel-view: #ebebeb; /* Light Grey */
-        --pastel-edit: #ebebeb; /* Light Grey */
-        --pastel-delete: #dd5858; /* Soft Red */
-    }
-
-    body {
-        background-color: var(--background-color);
-        color: var(--text-color);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-                     Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    }
-
-    .heading {
-        font-size: 2rem;
-        font-weight: bold;
-        color: var(--primary-color);
-        margin-bottom: 2rem;
-    }
-
-    /* ==== General Styles ==== */
-    .container {
-        max-width: 1200px;
-    }
-
-    /* ==== Buttons ==== */
-    .btn-primary {
-        background-color: var(--primary-color);
-        border: none;
-        color: #ffffff;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        transition: background-color 0.2s;
-    }
-
-    .btn-primary:hover {
-        background-color: var(--button-hover);
-    }
-
-    /* ==== Custom Pastel Buttons ==== */
-    .btn-pastel-view {
-        background-color: var(--pastel-view);
-        border: none;
-        color: #000000;
-        border-radius: 8px;
-        transition: background-color 0.2s;
-    }
-
-    .btn-pastel-view:hover {
-        background-color: #d6d6d6;
-    }
-
-    .btn-pastel-edit {
-        background-color: var(--pastel-edit);
-        border: none;
-        color: #000000;
-        border-radius: 8px;
-        transition: background-color 0.2s;
-    }
-
-    .btn-pastel-edit:hover {
-        background-color: #d6d6d6;
-    }
-
-    .btn-pastel-delete {
-        background-color: var(--pastel-delete);
-        border: none;
-        color: #ffffff;
-        border-radius: 8px;
-        transition: background-color 0.2s;
-    }
-
-    .btn-pastel-delete:hover {
-        background-color: #c74747;
-    }
-
-    /* ==== Table Styles ==== */
-    table {
-        background-color: var(--background-color);
-        border-collapse: separate;
-        border-spacing: 0 12px;
-    }
-
-    table thead tr th {
-        background-color: var(--secondary-color);
-        color: var(--text-color);
-        border-top-left-radius: 12px;
-        border-top-right-radius: 12px;
-        padding: 1rem;
-        font-weight: 600;
-        font-size: 1rem;
-        border-bottom: none;
-    }
-
-    table tbody tr td {
-        background-color: var(--background-color);
-        padding: 1rem;
-        border-bottom: none;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        border-radius: 8px;
-    }
-
-    /* Hover Effect for Table Rows */
-    table tbody tr:hover td {
-        background-color: #ebebeb;
-        cursor: pointer;
-    }
-
-    /* ==== Modal Styles ==== */
-    .modal-content {
-        background-color: var(--background-color);
-        border-radius: 20px;
-        box-shadow: 0 8px 16px rgba(46, 86, 117, 0.2);
-        padding: 1.5rem;
-    }
-
-    .modal-header {
-        border-bottom: none;
-        text-align: center;
-    }
-
-    .modal-title {
-        color: var(--primary-color);
-        font-size: 1.5rem;
-        font-weight: bold;
-    }
-
-    .modal-body {
-        padding-top: 1rem;
-    }
-
-    .modal-footer {
-        border-top: none;
-        justify-content: center;
-    }
-
-    /* Centered Image in Modal */
-    .modal-body .profile-picture {
-        width: 150px;
-        height: 150px;
-        margin: 0 auto 20px;
-        display: block;
-    }
-
-    /* ==== Tooltips ==== */
-    .tooltip-inner {
-        background-color: var(--primary-color);
-        color: #ffffff;
-        border-radius: 8px;
-        font-size: 0.9rem;
-    }
-
-    /* ==== Pagination ==== */
-    .pagination .page-link {
-        background-color: var(--background-color);
-        color: var(--primary-color);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        margin: 0 2px;
-    }
-
-    .pagination .page-link:hover {
-        background-color: var(--primary-color);
-        color: #ffffff;
-    }
-
-    .pagination .active .page-link {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color);
-        color: #ffffff;
-    }
-
-    /* ==== Toastr Notifications ==== */
-    #toast-container > .toast-success {
-        background-color: #4caf50;
-    }
-
-    #toast-container > .toast-error {
-        background-color: #f44336;
-    }
-
-    /* Search Input */
-    
-     .search-input {
-        width: 100%;
-        padding-right: 30px;
-        border-radius: 9999px;
-        padding-left: 16px;
-        background: #f0f4f8;
-        transition: all 0.3s ease;
-    }
-
-    .search-input:focus {
-        box-shadow: 0 0 0 4px var(--primary-color);
-        background: white;
-    }
-
-    .search-icon-container {
-        position: absolute;
-        right: 0;
-        padding-right: 2rem;
-        top: 50%;
-        transform: translateY(-50%);
-        cursor: pointer;
-    }
-    /* Profile picture adjustments */
-    .w-10 {
-        width: 2.5rem;
-        height: 2.5rem;
-        object-fit: cover;
-        border-radius: 50%;
-        border: 2px solid #ddd;
-    }
-
-    /* Responsive Adjustments */
-    @media (max-width: 768px) {
-        h1 {
-            font-size: 1.5rem;
-        }
-        .table-auto {
-            font-size: 0.9rem;
-        }
-        .w-10 {
-            width: 2rem;
-            height: 2rem;
-        }
-    }
-</style>
+    <link href="resources/admin/app.css" rel="stylesheet" />
 @endpush
 
 @push('scripts')
-<!-- Include jQuery (if not already included in your layout) -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<!-- Include Bootstrap JS (if not already included in your layout) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- Include Toastr JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-
-<script>
-    // When input is cleared, display back all results
-    const searchInput = document.getElementById('search-input');
-
-    searchInput.addEventListener('input', function () {
-        if (searchInput.value === '') {
-            window.location.href = '{{ route('admin.supervisors.index') }}';
-        }
-    });
-
-    $(document).ready(function() {
-        // Initialize Bootstrap Tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl)
-        });
-    });
-
-    // Toastr Notifications
-    @if(session('success'))
-        toastr.success("{{ session('success') }}");
-    @endif
-
-    @if(session('error'))
-        toastr.error("{{ session('error') }}");
-    @endif
-</script>
+    @vite(['resources/js/app.js'])
 @endpush
 
 @section('content')
@@ -301,24 +18,31 @@
     </div>
 
     <!-- Search Form -->
-    <form method="GET" action="{{ route('admin.supervisors.index') }}" class="mb-4">
-        <div class="row justify-content-center">
-            <div class="col-md-6 position-relative">
+    <form method="GET" action="{{ route('admin.supervisors.index') }}" class="mb-4 search-form">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="input-group rounded-pill enhanced-rounded-search">
                 <input 
                     type="search" 
                     name="search"
-                    class="search-input form-control" 
+                    class="form-control search-input" 
                     placeholder="Search by name, phone number, or email" 
                     value="{{ request()->query('search') }}"
-                    id="search-input"
-                    autocomplete="off"
+                    data-route="{{ route('admin.supervisors.index') }}" 
+                    autocomplete="on"
                 >
-                <button type="submit" class="search-icon-container">
+                <button 
+                    class="btn btn-outline-secondary" 
+                    type="submit" 
+                    aria-label="Search"
+                >
                     <i class="bi bi-search"></i>
                 </button>
             </div>
         </div>
-    </form>
+    </div>
+</form>
+
 
     <!-- Success Message -->
     @if (session('success'))

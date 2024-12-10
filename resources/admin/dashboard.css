@@ -1,0 +1,202 @@
+
+/* Sidebar styling */
+#sidebar-container {
+    background-color: #ffffff;
+    transition: background-color 0.3s ease;
+}
+
+/* Card Style */
+.card {
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+    background-color: #fff;
+    margin-bottom: 1rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 5px 10px rgba(164, 197, 227, 0.1);
+}
+
+.key-metric {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1f3d5a;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #2e5675;
+}
+
+/* Button styling */
+.see-all-btn {
+    background-color: #2e5675;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    border: none;
+    font-size: 0.85rem;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.see-all-btn:hover {
+    background-color: #1f3d5a;
+}
+
+/* Header */
+.header {
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+    border-radius: 16px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .row {
+        flex-direction: column;
+    }
+}
+
+.main-content-wrapper {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Recent Complaints Section */
+.recent-complaints-section {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.recent-complaints-section h5 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2e5675;
+    margin-bottom: 1rem;
+}
+
+.recent-complaints-section .see-all-btn {
+    background-color: #f6f6f6;
+    color: #070707;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.recent-complaints-section .see-all-btn:hover {
+    background-color: #4a6b8d;
+    color: #f5f4f4;
+    transition: background-color 0.9s ease;
+}
+
+.recent-complaints-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #f9fafb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.recent-complaints-table thead {
+    background-color: #2e5675;
+}
+
+.recent-complaints-table th {
+    color: #242222;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.recent-complaints-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.recent-complaints-table tbody tr:hover {
+    background-color: #d8e7f6;
+}
+
+.recent-complaints-table td {
+    padding: 0.75rem 1rem;
+    color: #333;
+    font-size: 0.85rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Status Badge Styling */
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+    text-transform: capitalize;
+}
+
+.status-completed {
+    background-color: #b8e3e9;
+}
+
+.status-ongoing {
+    background-color: #93b1b5;
+}
+
+.status-pending {
+    background-color: #4f7c82;
+}
+
+/* Responsive Table */
+@media (max-width: 576px) {
+    .recent-complaints-table th, .recent-complaints-table td {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* Chart Legend Styling */
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.chart-legend div {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #8e8e93;
+}
+
+.chart-legend span {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-right: 0.5rem;
+    border-radius: 3px;
+}

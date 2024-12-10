@@ -1,15 +1,17 @@
-<title>{{ config('app.name','OnSpot Facility') }}</title>
-<link rel="icon" href="{{ asset('images/favicon-32x32.png') }}" type="image/png">
 
 @extends('layouts.admin')
 
 @section('title', 'Add New User')
 
+@push ('style')
+    <link href="resources/admin/app.css" rel="stylesheet" />
+@nedpush
+
 @section('content')
 <div class="container mx-auto my-10 px-4 md:px-6 max-w-screen-xl">
     <!-- Page Title -->
-    <div class="flex justify-between items-center mb-8 flex-col md:flex-row">
-        <h1 class="text-3xl font-semibold text-gray-900 text-center md:text-left">Add New User</h1>
+    <div class="heading text-center mb-4">
+        <h1 class="header-title">Add New User</h1>
     </div>
 
     <!-- Success Message -->
