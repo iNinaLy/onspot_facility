@@ -1,3 +1,5 @@
+// resources/js/app.js
+
 // Import CSS file
 import '../css/app.css';
 
@@ -9,7 +11,6 @@ import 'alpinejs';
 
 // Your JavaScript code...
 console.log('Main Application Loaded');
-// resources/js/app.js
 
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Bootstrap JS
 import toastr from 'toastr'; // Toastr JS
@@ -54,21 +55,20 @@ $(document).ready(function() {
     });
 
     // Toastr Notifications
-    @if(session('success'))
-        toastr.success("{{ session('success') }}");
-    @endif
-
-    @if(session('error'))
-        toastr.error("{{ session('error') }}");
-    @endif
-
-    @if(session('warning'))
-        toastr.warning("{{ session('warning') }}");
-    @endif
-
-    @if(session('info'))
-        toastr.info("{{ session('info') }}");
-    @endif
+    if (window.sessionMessages) {
+        if (window.sessionMessages.success) {
+            toastr.success(window.sessionMessages.success);
+        }
+        if (window.sessionMessages.error) {
+            toastr.error(window.sessionMessages.error);
+        }
+        if (window.sessionMessages.warning) {
+            toastr.warning(window.sessionMessages.warning);
+        }
+        if (window.sessionMessages.info) {
+            toastr.info(window.sessionMessages.info);
+        }
+    }
 });
 
 // Debounce function to limit the rate of function calls

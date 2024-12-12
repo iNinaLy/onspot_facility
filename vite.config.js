@@ -8,9 +8,14 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/js/app.js',
+                'resources/css/app.css',
                 'resources/admin/app.js',
                 'resources/admin/dashboard.js',
-                'resources/admin/complaint.js'
+                'resources/admin/complaint.js',
+                'resources/supervisor/app.js',
+                'resources/supervisor/dashboard.js',
+                'resources/supervisor/complaint.js',
+                'resources/supervisor/cleaner.js',
             ],
             refresh: true,
         }),
@@ -19,6 +24,7 @@ export default defineConfig({
         alias: {
             '@': path.resolve(__dirname, 'resources/js'),
             '@admin': path.resolve(__dirname, 'resources/admin'),
+            '@supervisor': path.resolve(__dirname, 'resources/supervisor'),
         },
     },
 });

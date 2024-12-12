@@ -4,6 +4,7 @@
 
 @push('styles')
     <link href="resources/admin/app.css" rel="stylesheet" />
+    <link href="resources/admin/complaint.css" rel="stylesheet" />
 @endpush
 
 @push('scripts')

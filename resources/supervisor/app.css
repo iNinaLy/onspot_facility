@@ -1,0 +1,122 @@
+@import"https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css";
+
+@import"https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css";
+
+@import"https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+/* Base styling */
+html {
+    scroll-behavior: smooth;
+}
+
+@media (prefers-color-scheme: dark) {
+    .dark\:text-gray-200 {
+        --tw-text-opacity: 1;
+        color: rgb(0 0 0);
+    }
+}
+
+:root {
+    --primary-color: #2E5675;
+    --secondary-color: #4caf50;
+    --available-color: #2196f3;
+    --unavailable-color: #f44336;
+    --modal-bg: rgba(0, 0, 0, 0.5);
+    --modal-content-bg: #ffffff;
+    --modal-border-radius: 15px;
+    --close-button-color: #aaa;
+    --close-button-hover-color: #000;
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --transition-duration: 0.3s;
+    --badge-font-size: 0.85rem;
+    --badge-padding: 0.4rem 0.8rem;
+    --tooltip-bg-color: var(--primary-color);
+    --tooltip-text-color: #fff;
+}
+
+/* Global Styles */
+body {
+    font-family: var(--font-family);
+    background-color: #f4f7fa;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Header with Filters */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 3rem;
+}
+
+.heading {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+/* Filter Form Styles */
+.filter-container {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-container select,
+.filter-container input {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #d1d5db;
+    font-size: 0.875rem;
+    width: 200px;
+    transition: border-color var(--transition-duration);
+}
+
+.filter-container select:focus,
+.filter-container input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* Button styling with gradient and hover effect */
+.button-transition {
+    transition: all 0.3s ease-in-out;
+    transform: scale(1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    background-color: #2e5675;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.button-transition:hover {
+    transform: scale(1.05);
+    background-color: #24445c;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.content-wrapper {
+    padding-top: 70px;
+}
+
