@@ -14,18 +14,22 @@ use Illuminate\Notifications\Notifiable;
 class Cleaner extends Authenticatable implements HasMedia 
 
 {
-    use HasFactory, InteractsWithMedia;
+    use HasFactory, InteractsWithMedia,Notifiable;
 
-    // Define the fillable fields
-    use InteractsWithMedia,Notifiable;
-
+    protected $table = 'cleaners';
+    protected $primaryKey = 'user_id'; // Set this to user_id instead of id
+    public $incrementing = false;      // If user_id is not an auto-increment column
+    protected $keyType = 'int'; 
+    
     protected $fillable = [
+        'user_id',
         'cleaner_name',
-        'cleaner_username',
         'cleaner_phoneNo',
+        'profile_pic',
+        'cleaner_username',
         'cleaner_password',
-        'building',
         'status',
+        'building',
     ];
 
     protected $attributes = [
@@ -52,10 +56,16 @@ class Cleaner extends Authenticatable implements HasMedia
      */
     public function complaints()
     {
-        return $this->belongsToMany(Complaint::class, 'complaint_cleaner', 'cleaner_id', 'complaint_id')
-                    ->withPivot('assigned_by', 'assigned_date', 'no_of_cleaners')
-                    ->withTimestamps();
+        return $this->belongsToMany(
+            Complaint::class,
+            'complaint_cleaner', 
+            'cleaner_id', 
+            'complaint_id'
+        )
+        ->withPivot('assigned_by', 'no_of_cleaners', 'assigned_date')
+        ->withTimestamps();
     }
+
 
     public function scopeWithOngoingComplaints($query)
     {

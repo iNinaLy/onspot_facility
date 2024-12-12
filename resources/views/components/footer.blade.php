@@ -8,14 +8,14 @@ body {
 
 <footer class="bg-white text-gray-800 py-4 border-t">
     <div class="max-w-7xl mx-auto text-center">
-        <p class="text-lg font-semibold mb-2">&copy; {{ date('2020') }} Atasan Restu Technology Sdn Bhd. All rights reserved.</p>
+        <p class="text-lg font-semibold mb-2">&copy; {{ date('2023') }} Atasan Restu Technology Sdn Bhd. ©</p>
         
         <div class="flex justify-center space-x-8 mb-2">
             <div>
                 <a href="mailto:info@example.com" class="hover:underline">atasanrestu@corporate.com</a>
             </div>
             <div>
-                <a href="tel:+1234567890" class="hover:underline">+1 (234) 567-890</a>
+                <a href="tel:+1234567890" class="hover:underline">+6047304238 </a>
             </div>
         </div>
 

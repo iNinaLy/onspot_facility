@@ -1,0 +1,250 @@
+ /* Filter Bar */
+ .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    justify-content: center;
+}
+
+.filter-bar input {
+    flex: 1 1 300px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    transition: border-color 0.3s;
+}
+
+.filter-bar input:focus {
+    border-color: #2e3a59;
+    outline: none;
+}
+
+/* Button Group */
+.btn-group {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.btn-group button {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.btn-group button.active {
+    background-color: #2e5675;
+    color: #fff;
+}
+
+.btn-group button.inactive {
+    background-color: #e0e0e0;
+    color: #2e3a59;
+}
+
+.btn-group button:hover {
+    opacity: 0.9;
+}
+
+/* Card Styles */
+
+
+/* Status Badge Colors */
+.badge-completed {
+    background-color: #d4edda; /* Light Green */
+    color: #155724; /* Dark Green Text */
+    border: 1px solid #c3e6cb;
+}
+
+.badge-ongoing {
+    background-color: #d1ecf1; /* Light Blue */
+    color: #0c5460; /* Dark Blue Text */
+    border: 1px solid #bee5eb;
+}
+
+.description {
+    font-size: 1rem;
+    margin: 0.5rem 0 1rem;
+    color: #555;
+    line-height: 1.5;
+}
+
+/* Buttons */
+.btn-details {
+    padding: 0.3rem 1.2rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    background-color: #2e5675;
+    color: #fff;
+    border: solid;
+    border-radius: 6rem;
+    cursor: pointer;
+    transition: background-color 0.3s, opacity 0.3s;
+}
+
+.btn-details:hover {
+    background-color: #1c3d55;
+    opacity: 0.9;
+}
+
+/* Details Section */
+.toggle-content {
+    display: none;
+    padding-top: 1rem;
+    border-top: 1px solid #e0e0e0;
+    font-size: 0.95rem;
+    color: #333;
+    line-height: 1.6;
+}
+
+.toggle-content.active {
+    display: block;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.toggle-content p {
+    margin: 0.5rem 0;
+}
+
+.toggle-content h6 {
+    margin-top: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2e3a59;
+}
+
+.toggle-content ul {
+    list-style: disc inside;
+    padding-left: 1rem;
+}
+
+.toggle-content ul li {
+    margin-bottom: 0.5rem;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    color: #555;
+    margin: 2rem 0;
+    font-size: 1rem;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.empty-state-completed {
+    text-align: center;
+    color: #0c5460; /* Dark Teal for professionalism */
+    background-color: #d1ecf1; /* Light Blue Background for a calm tone */
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #bee5eb;
+    margin: 2rem 0;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.empty-state-completed i {
+    color: #0c5460; /* Match the text color */
+    font-size: 1.2rem;
+}
+
+.empty-state-ongoing {
+    text-align: center;
+    color: #555;
+    margin: 2rem 0;
+    font-size: 1rem;
+    font-style: italic;
+}
+
+.card {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.card-header h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2e3a59;
+    margin: 0;
+}
+
+.card-header .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px; /* Pill shape */
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    transition: background-color 0.3s, color 0.3s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Additional Styling for Phone Links */
+.phone-link {
+    color: #0c5460; /* Dark Teal for consistency */
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.phone-link:hover {
+    color: #155724; /* Slightly darker on hover */
+}
+
+.phone-link i {
+    margin-right: 0.3rem;
+}
+
+/* Styling for Complaint Date */
+.complaint-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.5rem;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.complaint-date i {
+    color: #2e3a59;
+}

@@ -42,4 +42,6 @@
     <!-- Custom Scripts -->
     @stack('scripts')
 </body>
+@include('components.footer')
+
 </html>
