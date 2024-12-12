@@ -155,32 +155,37 @@ use App\Models\NotificationToken;
 
     public function storeNotificationToken(Request $request)
     {
+        \Log::info('Incoming Request', $request->all());
+    
         $request->validate([
             'device_token' => 'required|string',
             'device_id' => 'required|string',
-            'device_type' => 'required|string|in:android,ios,web', // Restrict valid device types
+            'device_type' => 'required|string|in:android,ios,web',
         ]);
     
-        if (!auth()->check()) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
+        try {
+            // Use updateOrCreate to handle duplicates
+            $token = \App\Models\NotificationToken::updateOrCreate(
+                [
+                    'device_token' => $request->device_token, // Match by device_token
+                ],
+                [
+                    'user_id' => auth()->id(), // Update these fields if device_token exists
+                    'device_id' => $request->device_id,
+                    'device_type' => $request->device_type,
+                ]
+            );
     
-        $token = NotificationToken::updateOrCreate(
-            [
-                'user_id' => auth()->id(),
-                'device_id' => $request->device_id,
-            ],
-            [
-                'device_token' => $request->device_token,
-                'device_type' => $request->device_type,
-            ]
-        );
-        
-        return response()->json([
-            'message' => 'Device token saved successfully.',
-            'token' => $token,
-        ], 200);
+            \Log::info('Device token saved successfully', ['token' => $token]);
+    
+            return response()->json(['message' => 'Device token saved successfully.'], 200);
+        } catch (\Exception $e) {
+            \Log::error('Failed to save device token: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to save device token.', 'error' => $e->getMessage()], 500);
+        }
     }
+    
+    
 
     public function sendResetCode(Request $request)
     {
