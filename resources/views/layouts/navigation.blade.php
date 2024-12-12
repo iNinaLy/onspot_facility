@@ -121,7 +121,7 @@
     </div>
 </nav>
 
-<!-- Alpine.js Component Script -->
+
 <script>
     function notificationComponent() {
         return {

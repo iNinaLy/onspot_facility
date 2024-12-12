@@ -27,49 +27,45 @@
 
           <!-- Pending Complaints -->
 
-        @if($pendingComplaints > 0)
-            <div class="flex items-center p-6 bg-red-50 border-l-4 border-red-600 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div class="flex-shrink-0">
-                    <div class="flex items-center justify-center h-10 w-10 bg-red-100 rounded-full">
-                        <i class="fa fa-exclamation-circle text-red-600 text-lg"></i>
+            @if($pendingComplaints > 0)
+                <div class="flex items-center p-6 bg-red-50 border-l-4 border-red-600 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center h-10 w-10 bg-red-100 rounded-full">
+                            <i class="fa fa-exclamation-circle text-red-600 text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 flex-1">
+                        <p class="text-lg font-bold text-red-800">
+                            Pending Complaints
+                        </p>
+                        <p class="text-sm text-red-700 mt-1">
+                            You have <strong>{{ $pendingComplaints }}</strong> pending complaint{{ $pendingComplaints > 1 ? 's' : '' }} that need your attention.
+                        </p>
+                    </div>
+                    <div>
+                        <a href="{{ route('supervisor.complaints.index') }}" 
+                        class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg shadow-md hover:bg-red-700 hover:shadow-lg transition duration-300">
+                            View Complaints
+                        </a>
                     </div>
                 </div>
-                <div class="ml-5 flex-1">
-                    <p class="text-lg font-bold text-red-800">
-                        Pending Complaints
-                    </p>
-                    <p class="text-sm text-red-700 mt-1">
-                        You have <strong>{{ $pendingComplaints }}</strong> pending complaint{{ $pendingComplaints > 1 ? 's' : '' }} that need your attention.
-                    </p>
-                </div>
-                <div>
-                    <a href="{{ route('supervisor.complaints.index') }}" 
-                    class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg shadow-md hover:bg-red-700 hover:shadow-lg transition duration-300">
-                        View Complaints
-                    </a>
-                </div>
-            </div>
-        @else
-            <div class="flex items-center p-6 bg-gray-50 border-l-4 border-gray-300 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div class="flex-shrink-0">
-                    <div class="flex items-center justify-center h-10 w-10 bg-gray-200 rounded-full">
-                        <i class="fa fa-check-circle text-gray-600 text-lg"></i>
+            @else
+                <div class="flex items-center p-6 bg-gray-50 border-l-4 border-gray-300 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center h-10 w-10 bg-gray-200 rounded-full">
+                            <i class="fa fa-check-circle text-gray-600 text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5">
+                        <p class="text-lg font-bold text-gray-800">
+                            No Pending Complaints
+                        </p>
+                        <p class="text-sm text-gray-600 mt-1">
+                            You’re all caught up! Great job staying on top of things.
+                        </p>
                     </div>
                 </div>
-                <div class="ml-5">
-                    <p class="text-lg font-bold text-gray-800">
-                        No Pending Complaints
-                    </p>
-                    <p class="text-sm text-gray-600 mt-1">
-                        You’re all caught up! Great job staying on top of things.
-                    </p>
-                </div>
-            </div>
-        @endif
-
-
-
-
+            @endif
 
             <!-- Complaints Management Card (Assign Section - Borderless) -->
             <div class="flex overflow-hidden sm:rounded-lg mt-6" id="complaints-card">
@@ -79,7 +75,7 @@
                     <p class="mt-3 text-gray-600">
                         Efficiently manage complaints and assign tasks to available cleaners. Ensure all complaints are addressed promptly.
                     </p>
-                    <button onclick="window.location.href='/supervisor/complaints'" 
+                    <button onclick="window.location.href='{{ route('supervisor.complaints.index') }}'" 
                             class="mt-4 button-transition">
                         Assign Tasks
                     </button>
@@ -103,10 +99,12 @@
                     <p class="text-gray-600 mb-4">
                         Find out which cleaners are currently on duty and available for assignments.
                     </p>
-                    <button onclick="window.location.href='/supervisor/cleaners'" 
-                            class="mt-4 button-transition">
+                    <button 
+                        onclick="window.location.href='{{ route('supervisor.cleaners') }}'"
+                        class="mt-4 button-transition">
                         Search Cleaners
                     </button>
+
                     <div class="grid grid-cols-2 gap-4 mt-4">
                         <div class="stats-card">
                             <div class="text-lg font-semibold">Total Cleaners</div>
