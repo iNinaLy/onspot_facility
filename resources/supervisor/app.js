@@ -4,7 +4,7 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'toastr/build/toastr.min.css';
-import './app.css';
+import './app.css'; // Corrected path to app.css
 
 // Import JS dependencies
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';

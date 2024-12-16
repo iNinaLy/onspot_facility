@@ -230,73 +230,82 @@ class ComplaintController extends Controller
      */
     public function assignCleaner(Request $request, $id)
     {
-        // Validate the incoming request data
-        $validated = $request->validate([
-            'no_of_cleaners' => 'required|integer|min:1|max:3',
-            'cleaners'       => 'required|array|size:' . $request->no_of_cleaners,
-            'cleaners.*'     => 'exists:cleaners,id',
-        ]);
-
-        // Fetch the complaint along with any currently assigned cleaners
-        $complaint = Complaint::with('cleaners')->findOrFail($id);
-
-        // Check if cleaners are already assigned to this complaint
-        if ($complaint->cleaners()->exists()) {
-            return redirect()->route('supervisor.complaints.show', $id)
-                ->withErrors('Cleaners have already been assigned for this complaint.');
-        }
-
+        Log::info('AssignCleaner process started', ['complaint_id' => $id, 'request_data' => $request->all()]);
+    
         try {
-            // Begin a database transaction to ensure data integrity
+            // Validate request data
+            $validated = $request->validate([
+                'no_of_cleaners' => 'required|integer|min:1|max:3',
+                'cleaners'       => 'required|array|size:' . $request->no_of_cleaners,
+                'cleaners.*'     => 'exists:cleaners,user_id', // Ensure 'user_id' matches in the cleaners table
+            ]);
+    
+            Log::info('Validation passed', ['validated_data' => $validated]);
+    
+            // Fetch complaint
+            $complaint = Complaint::with('cleaners')->findOrFail($id);
+            Log::info('Complaint fetched', ['complaint' => $complaint]);
+    
+            // Check if cleaners are already assigned
+            if ($complaint->cleaners()->exists()) {
+                Log::warning('Cleaners already assigned', ['complaint_id' => $id]);
+                return redirect()->route('supervisor.complaints.show', $id)
+                    ->withErrors('Cleaners have already been assigned for this complaint.');
+            }
+    
+            // Begin transaction
             DB::transaction(function () use ($validated, $complaint) {
                 $assignments = [];
-
-                foreach ($validated['cleaners'] as $cleanerId) {
-                    // Prepare assignment data for pivot table
-                    $assignments[$cleanerId] = [
+                foreach ($validated['cleaners'] as $userId) {
+                    $cleaner = Cleaner::where('user_id', $userId)->first();
+    
+                    if (!$cleaner) {
+                        throw new \Exception("Cleaner with user_id {$userId} not found.");
+                    }
+    
+                    Log::info('Cleaner fetched', ['user_id' => $userId, 'cleaner' => $cleaner]);
+    
+                    $assignments[$cleaner->id] = [
                         'assigned_by'    => Auth::id(),
                         'assigned_date'  => now(),
-                        'no_of_cleaners' => $validated['no_of_cleaners'],
                     ];
-
-                    // Fetch the cleaner instance
-                    $cleaner = Cleaner::findOrFail($cleanerId);
-
-                    // Update cleaner's status to 'busy' using the defined constant
-                    $cleaner->status = Cleaner::STATUS_BUSY;
+    
+                    // Update cleaner status
+                    $cleaner->status = 'unavailable';
                     $cleaner->save();
+                    Log::info('Cleaner status updated', ['cleaner_id' => $cleaner->id, 'status' => $cleaner->status]);
                 }
-
-                // Attach cleaners to the complaint with the assignment data
+    
+                // Attach cleaners to the complaint
                 $complaint->cleaners()->attach($assignments);
-
-                // Update complaint details to reflect the ongoing status and assignment
+                Log::info('Cleaners attached to complaint', ['assignments' => $assignments]);
+    
+                // Update complaint details
                 $complaint->update([
                     'comp_status'    => 'ongoing',
                     'no_of_cleaners' => $validated['no_of_cleaners'],
                     'assigned_by'    => Auth::id(),
                     'assigned_date'  => now(),
                 ]);
+                Log::info('Complaint updated', ['complaint' => $complaint]);
             });
-
-            // Retrieve all assigned cleaners in a single query for notification
-            $cleaners = Cleaner::whereIn('id', $validated['cleaners'])->get();
-
-            // Notify assigned cleaners about the new assignment
-            Notification::send($cleaners, new ComplaintNotification($complaint, Auth::user(), true));
-
+    
+            
+    
             return redirect()->route('supervisor.complaints.show', $id)
-                ->with('success', 'Cleaners assigned and notified successfully.');
+                ->with('success', 'Cleaners assigned successfully.');
         } catch (\Exception $e) {
-            // Log the error details for debugging purposes
-            Log::error('Error assigning cleaners to complaint ID: ' . $id, [
+            Log::error('Error assigning cleaners', [
+                'complaint_id' => $id,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
-
+    
             return redirect()->route('supervisor.complaints.show', $id)
                 ->withErrors('An error occurred while assigning cleaners. Please try again.');
         }
     }
+         
 
     /**
      * Submit a new complaint via Web.

@@ -1,280 +1,19 @@
 @extends('layouts.app')
 @section('title', 'Notifications')
+
+@push('styles')
+    <!-- External Stylesheets -->
+    <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/heroicons@2.0.13/dist/outline/solid.js"></script>
+
+@endpush
+
 @section('content')
-<style>
-    /* Base Styles */
-    body {
-        font-family: 'Inter', sans-serif;
-        background-color: #F7F7F7;
-        color: #4A4A4A;
-    }
 
-    .notification-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 4rem; /* Added margin-top */
-        margin-bottom: 1.5rem;
-    }
-
-    .notification-header h2 {
-        font-size: 1.75rem;
-        font-weight: 600;
-        color: #2e5675;
-    }
-
-    .tabs {
-        display: flex;
-        border-bottom: 2px solid #ddd;
-        margin-bottom: 1rem;
-    }
-
-    .tab {
-        padding: 0.75rem 1.5rem;
-        cursor: pointer;
-        border: none;
-        background: none;
-        outline: none;
-        transition: background-color 0.3s ease;
-        font-size: 1rem;
-        font-weight: 500;
-        color: #555;
-    }
-
-    .tab:hover {
-        background-color: #f0f0f0;
-    }
-
-    .tab.active {
-        border-bottom: 4px solid #2e5675;
-        color: #2e5675;
-    }
-
-    .notification-list {
-        max-height: 600px;
-        overflow-y: auto;
-    }
-
-    .notification-card {
-        background: #fff;
-        border-radius: 0.75rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: background-color 0.3s ease, transform 0.3s ease;
-    }
-
-    .notification-card:hover {
-        background-color: #f0f4f8;
-        transform: translateY(-2px);
-    }
-
-    .notification-card.unread {
-        border-left: 5px solid #2e5675;
-        background-color: #eef2f5;
-    }
-
-    .notification-card .content {
-        flex-grow: 1;
-        margin-right: 1.5rem;
-    }
-
-    .notification-card .content p {
-        margin: 0.25rem 0;
-    }
-
-    .notification-card .content .time {
-        color: #7A7A7A;
-        font-size: 0.875rem;
-    }
-
-    .notification-card .actions {
-        display: flex;
-        gap: 0.75rem;
-    }
-
-    /* Button Styles */
-
-    /* "View" Button */
-    .btn-view {
-        display: flex;
-        align-items: center;
-        background-color: #2e5675;
-        color: white;
-        border: none;
-        border-radius: 0.5rem;
-        padding: 0.4rem 0.8rem; /* Reduced padding */
-        cursor: pointer;
-        transition: background-color 0.3s ease, transform 0.2s ease;
-        font-size: 0.8rem; /* Reduced font size */
-        font-weight: 500;
-    }
-
-    .btn-view:hover {
-        background-color: #23465e;
-        transform: translateY(-2px);
-    }
-
-    .btn-view:active {
-        transform: translateY(0);
-    }
-
-    .btn-view:disabled {
-        background-color: #cccccc;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    /* "Mark All as Read" Button */
-    .btn-mark-read {
-        display: flex;
-        align-items: center;
-        background-color: #6c757d;
-        color: white;
-        border: none;
-        border-radius: 0.5rem;
-        padding: 0.4rem 0.8rem; /* Reduced padding */
-        cursor: pointer;
-        transition: background-color 0.3s ease, transform 0.2s ease;
-        font-size: 0.8rem; /* Reduced font size */
-        font-weight: 500;
-        margin-right: 0.5rem; /* Adjusted margin */
-    }
-
-    .btn-mark-read:hover {
-        background-color: #5a6268;
-        transform: translateY(-2px);
-    }
-
-    .btn-mark-read:active {
-        transform: translateY(0);
-    }
-
-    .btn-mark-read:disabled {
-        background-color: #cccccc;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    /* "Delete" Button */
-    .btn-delete {
-        display: flex;
-        align-items: center;
-        background-color: #d9534f;
-        color: white;
-        border: none;
-        border-radius: 0.5rem;
-        padding: 0.4rem 0.8rem; /* Reduced padding */
-        cursor: pointer;
-        transition: background-color 0.3s ease, transform 0.2s ease;
-        font-size: 0.8rem; /* Reduced font size */
-        font-weight: 500;
-    }
-
-    .btn-delete:hover {
-        background-color: #c9302c;
-        transform: translateY(-2px);
-    }
-
-    .btn-delete:active {
-        transform: translateY(0);
-    }
-
-    /* "Delete All" Button */
-    .btn-delete-all {
-        display: flex;
-        align-items: center;
-        background-color: #6c757d;
-        color: white;
-        border: none;
-        border-radius: 0.5rem;
-        padding: 0.4rem 0.8rem; /* Reduced padding */
-        cursor: pointer;
-        transition: background-color 0.3s ease, transform 0.2s ease;
-        font-size: 0.8rem; /* Reduced font size */
-        font-weight: 500;
-        margin-right: 0.5rem; /* Adjusted margin */
-    }
-
-    .btn-delete-all:hover {
-        background-color: #5a6268;
-        transform: translateY(-2px);
-    }
-
-    .btn-delete-all:active {
-        transform: translateY(0);
-    }
-
-    .btn-delete-all:disabled {
-        background-color: #cccccc;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    /* Icon Styles */
-    .icon {
-        width: 1rem; /* Reduced icon size */
-        height: 1rem; /* Reduced icon size */
-        margin-right: 0.3rem; /* Reduced margin */
-        flex-shrink: 0;
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .notification-card {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .notification-card .actions {
-            margin-top: 0.75rem;
-            width: 100%;
-            justify-content: flex-start;
-        }
-
-        .btn-view, .btn-mark-read, .btn-delete, .btn-delete-all {
-            width: auto; /* Allow buttons to adjust width */
-            justify-content: center;
-        }
-
-        .icon {
-            margin-right: 0.2rem; /* Adjusted margin */
-        }
-
-        .notification-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.5rem;
-        }
-
-        .notification-header h2 {
-            margin-bottom: 0.5rem;
-        }
-    }
-
-    @media (prefers-color-scheme: dark) {
-        .dark\:bg-gray-800 {
-            --tw-bg-opacity: 1;
-            background-color: rgb(234 234 234);
-        }
-    }
-
-    @media (prefers-color-scheme: dark) {
-        .dark\:border-gray-600 {
-            --tw-border-opacity: 0.5;
-            border-color: rgb(219 221 224);
-        }
-    }
-</style>
-
-<!-- Include SweetAlert2 CSS -->
-<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
-
-<!-- Optionally include Heroicons via CDN if not already included -->
-<script src="https://unpkg.com/heroicons@2.0.13/dist/outline/solid.js"></script>
 
 <div class="container mx-auto px-4 py-8" x-data="notificationComponent()">
     <!-- Notifications Header -->
@@ -448,6 +187,12 @@
         </template>
     </div>
 
+@push('scripts')
+    @vite([
+        'resources/supervisor/app.js',
+        'resources/supervisor/dashboard.js',
+        'resources/supervisor/complaint.js',
+    ])
     <!-- Include Alpine.js and SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -808,4 +553,5 @@
             };
         }
     </script>
+@endpush
 @endsection

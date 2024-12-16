@@ -10,6 +10,14 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     
+   <style>
+    .heading {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2e5675;
+        margin-top: 4rem;
+    }
+    </style>
 @endpush
 
 @section('content')

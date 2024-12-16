@@ -85,10 +85,9 @@
 @endsection
 
 @push('scripts')
-    <!-- Include compiled Supervisor JavaScript Files using Vite -->
-    @vite([
-        'resources/js/supervisor/app.js',
-        'resources/js/supervisor/dashboard.js',
-        'resources/js/supervisor/complaint.js',
-    ])
+@vite([
+    'resources/supervisor/app.js',
+    'resources/supervisor/dashboard.js',
+    'resources/supervisor/complaint.js',
+])
 @endpush

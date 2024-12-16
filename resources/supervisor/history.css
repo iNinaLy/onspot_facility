@@ -1,3 +1,11 @@
+.heading {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2e5675;
+    margin: 0;
+    margin-top: 4rem;
+}
+ 
  /* Filter Bar */
  .filter-bar {
     display: flex;

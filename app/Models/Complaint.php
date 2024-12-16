@@ -196,4 +196,3 @@ class Complaint extends Model implements HasMedia
     }
 }
 
-

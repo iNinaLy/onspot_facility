@@ -9,11 +9,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pYxNt+Dm+1NmiZZmUwyNq0B0Eyz4TRMXVjV7Z+QvNaw0lJZbdKU+RxmYpRKEtEjqNj+FwAB6S2gk7nVtK2yqdg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
-    <!-- Compiled Supervisor Stylesheets -->
-    <link href="{{ mix('css/supervisor/app.css') }}" rel="stylesheet" />
-    <link href="{{ mix('css/supervisor/cleaner.css') }}" rel="stylesheet" /> 
-
 @endpush
 
 @section('content')
@@ -145,6 +140,7 @@
                     <span class="modal-cleaner-building"></span>
                 </p>
             </div>
+
             <div class="assigned-complaints">
                 <h3>Assigned Complaints:</h3>
                 <ul id="modal-cleaner-complaints">
@@ -154,6 +150,7 @@
                     Cleaners still have ongoing tasks to be completed.
                 </p>
             </div>
+            
         </div>
     </div>
 </div>

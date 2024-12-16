@@ -36,7 +36,7 @@ class Cleaner extends Authenticatable implements HasMedia
         'role' => 'cleaner',
     ];
     const STATUS_AVAILABLE = 'available';
-    const STATUS_BUSY = 'busy';
+    const STATUS_UNAVAILABLE = 'unavailable';
     public function setCleanerPasswordAttribute($value)
     {
         $this->attributes['cleaner_password'] = Hash::make($value);
@@ -117,6 +117,7 @@ class Cleaner extends Authenticatable implements HasMedia
 
     public function notificationTokens()
     {
-        return $this->hasMany(NotificationToken::class);
+        return $this->hasMany(NotificationToken::class, 'user_id');
     }
+
 }
