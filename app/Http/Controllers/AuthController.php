@@ -185,7 +185,6 @@ use App\Models\NotificationToken;
         }
     }
     
-    
 
     public function sendResetCode(Request $request)
     {

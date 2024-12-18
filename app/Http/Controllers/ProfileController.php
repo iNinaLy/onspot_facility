@@ -47,21 +47,33 @@ class ProfileController extends Controller
     /**
      * Handle profile picture storage.
      */
-    public function storeProfilePicture(Request $request)
+    public function storeProfilePicture(Request $request): JsonResponse
     {
-        if ($request->hasFile('profile_pic')) {
-            Log::info('Incoming request data:', $request->all());
-
-            // Store the file in the 'public/profile_pics' directory
-            $path = $request->file('profile_pic')->store('profile_pics', 'public');
-            Log::info('Stored file path:', [$path]);
-
-            // Return the public URL for database storage
-            return $path;
-        }
-        return null;
-    }
-
+        $user = $request->user();
+    
+        // Validate the uploaded file
+        $request->validate([
+            'profile_pic' => 'required|image|max:2048', // Max size 2MB
+        ]);
+    
+        // Remove the existing profile picture
+        $user->clearMediaCollection('profile_pictures');
+    
+        // Add the new profile picture
+        $media = $user->addMediaFromRequest('profile_pic')
+                      ->toMediaCollection('profile_pictures');
+    
+        // Save the URL to the 'profile_pic' column in the users table
+        $user->update([
+            'profile_pic' => $media->getUrl(), // Get the full URL of the uploaded media
+        ]);
+    
+        return response()->json([
+            'message' => 'Profile picture uploaded successfully.',
+            'profile_pic' => $user->profile_pic, // Updated column
+        ]);
+    }    
+    
     /**
      * Delete the user's account.
      */
@@ -86,19 +98,17 @@ class ProfileController extends Controller
      */
     public function getProfile(Request $request): JsonResponse
     {
-        $user = Auth::user();
+        $user = $request->user();
 
-        if ($user) {
-            return response()->json([
-                'name' => $user->name,
-                'username' => $user->username,
-                'email' => $user->email,
-                'phone_no' => $user->phone_no,
-                'profile_pic' => $user->profile_pic ? asset('storage/' . $user->profile_pic) : null,
-            ]);
-        }
-
-        return response()->json(['message' => 'User not found'], 404);
+        return response()->json([
+            'id' => $user->id,
+            'username' => $user->username,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone_no' => $user->phone_no,
+            'profile_pic' => $user->profile_pic, // Accessor returns full URL
+            'role' => $user->role,
+        ]);
     }
 
     /**
@@ -138,44 +148,68 @@ class ProfileController extends Controller
     }
 
 
-    public function apiupdate(ProfileUpdateRequest $request): JsonResponse
+    public function apiupdate(Request $request): JsonResponse
     {
-        \Log::info('Profile update request received:', $request->all());
+        $user = $request->user();
+        
+        // Log what the backend receives
+        Log::info('Received update request:', $request->all());
+    
+        // Validate request input
+        $validated = $request->validate([
+            'username' => 'nullable|string|max:255',
+            'name' => 'nullable|string|max:255',
+            'email' => 'nullable|email|unique:users,email,' . $user->id,
+            'phone_no' => 'nullable|string|max:20',
+            'profile_pic' => 'nullable|string',
+        ]);
+    
+        // Handle profile picture deletion
+        if ($request->filled('profile_pic') && $request->input('profile_pic') === '') {
+            Log::info('Deleting profile picture...');
+            $user->clearMediaCollection('profile_pictures');
+            $validated['profile_pic'] = null; // Clear in database
+        }        
+    
+        // Update user profile fields
+        $user->update($validated);
+    
+        // Log after update
+        Log::info('Updated user profile:', $user->toArray());
+    
+        return response()->json([
+            'message' => 'Profile updated successfully.',
+            'user' => $user,
+        ]);
+    }        
+    
+    
+    public function deleteProfilePicture(Request $request): JsonResponse
+    {
         $user = $request->user();
     
-        if (!$user) {
-            return response()->json(['message' => 'User not authenticated'], 401);
+        // Check if the profile_pic field in the database is already null
+        if ($user->profile_pic === null) {
+            return response()->json([
+                'message' => 'No profile picture found to delete.',
+            ], 404);
         }
     
-        \Log::info('Validated data:', $request->validated());
-    
-        // Handle profile picture upload using the store method
-        $profilePicPath = $this->storeProfilePicture($request);
-        if ($profilePicPath) {
-            $user->profile_pic = $profilePicPath; // Save the correct relative path to the user
+        // Explicitly delete all media files in the collection
+        $mediaItems = $user->getMedia('profile_pictures');
+        if ($mediaItems->isNotEmpty()) {
+            foreach ($mediaItems as $media) {
+                $media->delete(); // Delete media from storage and database
+            }
         }
     
-        $user->fill($request->validated());
-        $user->save();
-        \Log::info('User after save:', [$user->toArray()]);
+        // Set the profile_pic column in the database to null
+        $user->update(['profile_pic' => null]);
     
-        // Return updated user info including profile picture
         return response()->json([
-            'message' => 'Profile updated successfully',
-            'user' => [
-                'id' => $user->id,
-                'username' => $user->username,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone_no' => $user->phone_no,
-                'profile_pic' => $user->profile_pic ? asset('storage/' . $user->profile_pic) : null, // Return full URL of profile picture
-                'role' => $user->role,
-                'building' => $user->building,
-                'created_at' => $user->created_at,
-                'updated_at' => $user->updated_at
-            ]
-        ], 200);
+            'message' => 'Profile picture deleted successfully.',
+            'profile_pic' => null,
+        ]);
     }
     
-
 }

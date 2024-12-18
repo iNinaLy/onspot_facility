@@ -35,30 +35,33 @@ class User extends Authenticatable implements HasMedia
         'password' => 'hashed',
     ];
 
+    protected static function booted()
+    {
+        static::deleting(function ($user) {
+            // Automatically delete associated media when user is deleted
+            $user->clearMediaCollection('profile_pictures');
+        });
+    }
+
     /**
-     * Register media collections for the user profile picture.
+     * Register media collection for profile pictures.
      */
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('profile_pictures')
-             ->singleFile() // Ensure only one profile picture per user
-             ->useDisk('public'); // Use public disk to make the images accessible
+             ->singleFile() // Only allow one profile picture at a time
+             ->useDisk('public'); // Use 'public' disk
     }
 
     /**
-     * Accessor for the profile picture URL.
-     * Returns a default image if no media exists for this user.
+     * Accessor for profile picture URL.
      */
-    public function getProfilePicAttribute()
+    public function getProfilePicAttribute($value)
     {
-        // Check if there's a media item in the profile_pictures collection
-        if ($this->hasMedia('profile_pictures')) {
-            return $this->getFirstMediaUrl('profile_pictures');
-        }
-
-        // Fallback to stored value or default image if no profile picture is set
-        return $this->attributes['profile_pic'] ?: asset('default-profile.png');
+        return $value ?: asset('storage/profile_pic/default.webp');
     }
+    
+    
 
     // Your role-checking and other methods remain the same...
 

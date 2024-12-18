@@ -38,6 +38,9 @@ Route::middleware('auth:sanctum')->group(function () {
 // Authentication routes
 Route::post('/flutterlogin', [AuthController::class, 'login']);
 Route::post('/flutterregister', [AuthController::class, 'register']); 
+//Forgot Password Route
+Route::post('/forgot-password', [AuthController::class, 'sendResetCode']);
+Route::post('/reset-password', [AuthController::class, 'verifyResetCode']);
 
 //Sanctum-protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -45,14 +48,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/store-token', [AuthController::class, 'storeNotificationToken']);
 });
 
-//Forgot Password Route
-Route::post('/forgot-password', [AuthController::class, 'sendResetCode']);
-Route::post('/reset-password', [AuthController::class, 'verifyResetCode']);
-
 // Profile Routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'getProfile']);
     Route::put('/profile', [ProfileController::class, 'apiupdate']);
+    Route::post('/profile/picture', [ProfileController::class, 'storeProfilePicture']); // Upload or update
+    Route::delete('/profile/picture', [ProfileController::class, 'deleteProfilePicture']); // Delete
 });
 
 
