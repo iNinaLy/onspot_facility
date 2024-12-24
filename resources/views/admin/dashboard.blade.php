@@ -10,7 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="resources/admin/app.css" rel="stylesheet" />
+    
 @endpush
 
 @section('content')
@@ -145,6 +145,11 @@
     <!-- Chart.js Script -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     @push('scripts')
+    @vite([
+        'resources/admin/app.js',
+        'resources/admin/dashboard.js',
+        'resources/admin/complaint.js',
+    ])
         <script>
             // Prepare data for Complaint Status Chart
             const complaintStatusLabels = @json(array_keys($complaintsByStatus->toArray()));

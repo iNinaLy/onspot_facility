@@ -8,7 +8,11 @@
 @endpush
 
 @push('scripts')
-    @vite(['resources/js/app.js'])
+@vite([
+        'resources/admin/app.js',
+        'resources/admin/dashboard.js',
+        'resources/admin/complaint.js',
+    ])
 @endpush
 
 @section('content')

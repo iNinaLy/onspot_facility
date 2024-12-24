@@ -7,7 +7,9 @@
 @endpush
 
 @push('scripts')
-    @vite(['resources/js/app.js'])
+    @vite(['resources/admin/app.js'])
+    @vite(['resources/admin/complaint.js'])
+    
 @endpush
 
 @section('content')

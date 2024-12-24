@@ -10,73 +10,138 @@
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link
+        href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap"
+        rel="stylesheet"
+    />
 
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
 
-    <!-- MDBootstrap CSS (for custom elements) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/3.10.2/mdb.min.css" />
+    <!-- MDBootstrap CSS (optional) -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/3.10.2/mdb.min.css"
+    />
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
+        /* 
+         * Overall Page Styles (same as login)
+         */
         body {
-            background-color: #fff;
+            background:
+                linear-gradient(rgba(28,54,79,0.6), rgba(28,54,79,0.6)),
+                url('images/login.png') no-repeat center center fixed;
+            background-size: cover;
             font-family: 'Figtree', sans-serif;
-            color: #f8f9fa;
+            color: #f8f9fa; /* Light text to contrast the overlay */
+            margin: 0;
+            padding: 0;
         }
 
-        .card {
+        /* Title / Branding Section (same as login) */
+        .title-section {
+            text-align: left;
+        }
+        .title-section h1 {
+            font-size: 4rem;
+            font-weight: 1000;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .title-section p {
+            font-size: 1rem;
+            max-width: 450px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        /* Glassmorphism Card (same as login) */
+        .glass-card {
+            background: #dce9eb;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border-radius: 1.5rem;
-            box-shadow: 0 12px 20px #597693;
-            background: #f7f7f7;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
             padding: 2rem;
             color: #333;
         }
 
-        .form-outline {
-            position: relative;
-            color: #555;
-        }
-
+        /* Form Labels (same as login) */
         .form-label {
             font-weight: 600;
             color: #333;
         }
 
-        .btn-primary {
-            background-color: #1c364f;
-            border-color: #007bff;
-            transition: background-color 0.3s ease;
+        /* Button styling (same gradient & animation as login) */
+        .btn-signin {
+            background: linear-gradient(135deg, #1c2325, #507cb2);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 0.55rem 1rem;
+            font-size: 1rem;
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-in-out;
+            display: inline-block;
+            width: 100%;
+        }
+        .btn-signin:hover {
+            transform: translateY(-2px) scale(1);
+            animation: glow 1.0s ease-in-out infinite alternate;
+        }
+        .btn-signin:active {
+            transform: translateY(0) scale(1.0);
         }
 
-        .btn-primary:hover {
-            background-color: #244b71;
+        @keyframes glow {
+            0% {
+                box-shadow: 0 0 10px rgb(124, 179, 195);
+            }
+            100% {
+                box-shadow: 0 0 10px rgb(159, 184, 214);
+            }
         }
 
+        /* Error & Alert Styling (similar to login) */
         .error-message {
             color: #d9534f;
             font-size: 0.875rem;
         }
-
         .alert {
             border-radius: 0.5rem;
         }
 
-        .return-login {
-            display: block;
-            margin-top: 1rem;
-            font-size: 0.875rem;
-            text-align: center;
-            color: #555;
-            text-decoration: none;
-            transition: color 0.3s ease;
+        /* Subtle fade-in animation for the card (same as login) */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s forwards;
+        }
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
+        /* Optional: Link styling to match design */
+        .return-login {
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            display: inline-block;
+            text-decoration: none;
+            color: #333;
+            transition: color 0.2s ease;
+        }
         .return-login:hover {
-            color: #1c364f;
+            color: #1c2325;
         }
     </style>
 </head>
@@ -84,19 +149,23 @@
     <section class="vh-100 d-flex align-items-center">
         <div class="container py-5 h-100">
             <div class="row d-flex align-items-center justify-content-center h-100">
-                <!-- Side Image Section -->
-                <div class="col-md-8 col-lg-7 col-xl-6 d-none d-md-block">
-                    <img src="images/bgimage.png" alt="Illustrative image">
+                
+                <!-- Left Section (Title / Branding) -->
+                <div class="col-md-8 col-lg-7 col-xl-6 d-none d-md-block title-section">
+                    <h1 class="text-white">OnSpot Facility</h1>
+                    <p class="text-white">
+                        Making your facility management seamless and efficient.
+                    </p>
                 </div>
-
-                <!-- Form Card Section -->
+                
+                <!-- Right Section (Reset Form) -->
                 <div class="col-md-7 col-lg-5 col-xl-5">
-                    <div class="card p-5">
+                    <div class="glass-card fade-in">
                         <h3 class="text-center mb-4">Reset Your Password</h3>
                         <p class="text-muted text-center mb-4">
-                            {{ __('Forgot your password? No problem. Enter your email address, and we will send you a password reset link.') }}
+                            {{ __('Forgot your password? No problem. Enter your email, and we will send you a reset link.') }}
                         </p>
-                        
+
                         <!-- Session Status -->
                         @if(session('status'))
                             <div class="alert alert-success" role="alert">
@@ -109,27 +178,48 @@
 
                             <!-- Email Address -->
                             <div data-mdb-input-init class="form-outline mb-4">
-                                <input type="email" id="email" class="form-control form-control-lg" name="email" required autofocus value="{{ old('email') }}" />
+                                <input
+                                    type="email"
+                                    id="email"
+                                    class="form-control form-control-lg"
+                                    name="email"
+                                    value="{{ old('email') }}"
+                                    required
+                                    autofocus
+                                />
                                 <label class="form-label" for="email">Email address</label>
                                 @error('email')
                                     <span class="error-message">{{ $message }}</span>
                                 @enderror
                             </div>
 
-                            <!-- Submit Button -->
-                            <button type="submit" class="btn btn-primary btn-lg btn-block w-100">Email Password Reset Link</button>
+                            <!-- Submit Button (styled same as login button) -->
+                            <button
+                                type="submit"
+                                class="btn-signin"
+                            >
+                                {{ __('Email Password Reset Link') }}
+                            </button>
 
                             <!-- Return to Login Link -->
-                            <a href="{{ route('login') }}" class="return-login">Back to Login</a>
+                            <div class="text-center mt-3">
+                                <a href="{{ route('login') }}" class="return-login">
+                                    Back to Login
+                                </a>
+                            </div>
                         </form>
                     </div>
-                </div>
+                </div><!-- End Right Section -->
             </div>
         </div>
     </section>
 
     <!-- Bootstrap JS and MDBootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/3.10.2/mdb.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+    ></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/3.10.2/mdb.min.js"
+    ></script>
 </body>
 </html>

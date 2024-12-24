@@ -119,6 +119,12 @@
 </div>
 
 @push('scripts')
+@vite([
+        'resources/admin/app.js',
+        'resources/admin/dashboard.js',
+        'resources/admin/complaint.js',
+    ])
+    
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {

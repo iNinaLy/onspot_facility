@@ -69,10 +69,6 @@
 
         <a href="{{ route('supervisor.complaints.show', $complaint->id) }}" class="view-details-btn">View Details</a>
 
-        <!-- Show Edit Button if the logged-in supervisor assigned the complaint -->
-        @if($complaint->cleaners->isNotEmpty() && $complaint->cleaners->first()->pivot->assigned_by == Auth::id())
-          <a href="{{ route('supervisor.complaints.edit', $complaint->id) }}" class="edit-btn mt-2">Edit</a>
-        @endif
       </div>
     </div>
   @endforeach
