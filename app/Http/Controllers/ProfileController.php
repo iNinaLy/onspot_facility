@@ -21,17 +21,14 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        // Check if the user is an admin and use the admin-specific view
         if ($user->role === 'admin') {
             return view('admin.profile.edit', ['user' => $user]);
         }
 
-        // Check if the user is a supervisor and use the supervisor-specific view
         if ($user->role === 'supervisor') {
             return view('supervisor.profile.edit', ['user' => $user]);
         }
 
-        // Default view for other roles (or return a 403 error if not authorized)
         return abort(403, 'Unauthorized action.');
     }
 
@@ -51,28 +48,29 @@ class ProfileController extends Controller
     {
         $user = $request->user();
     
-        // Validate the uploaded file
         $request->validate([
-            'profile_pic' => 'required|image|max:2048', // Max size 2MB
+            'profile_pic' => 'required|image|mimes:jpg,jpeg,png|max:2048', // Accept only jpg, jpeg, png
+        ], [
+            'profile_pic.required' => 'Profile picture is required.',
+            'profile_pic.image' => 'The file must be an image.',
+            'profile_pic.mimes' => 'The file must be a jpg, jpeg, or png image.',
+            'profile_pic.max' => 'The image size must not exceed 2MB.',
         ]);
     
-        // Remove the existing profile picture
-        $user->clearMediaCollection('profile_pictures');
+        try {
+            $user->clearMediaCollection('profile_pictures'); // Clear existing image
+            $media = $user->addMediaFromRequest('profile_pic')->toMediaCollection('profile_pictures');
+            $user->update(['profile_pic' => $media->getUrl()]); // Update the profile_pic URL
     
-        // Add the new profile picture
-        $media = $user->addMediaFromRequest('profile_pic')
-                      ->toMediaCollection('profile_pictures');
-    
-        // Save the URL to the 'profile_pic' column in the users table
-        $user->update([
-            'profile_pic' => $media->getUrl(), // Get the full URL of the uploaded media
-        ]);
-    
-        return response()->json([
-            'message' => 'Profile picture uploaded successfully.',
-            'profile_pic' => $user->profile_pic, // Updated column
-        ]);
-    }    
+            return response()->json([
+                'message' => 'Profile picture uploaded successfully.',
+                'profile_pic' => $user->profile_pic,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error uploading profile picture: ' . $e->getMessage());
+            return response()->json(['message' => 'Error uploading profile picture.'], 500);
+        }
+    }
     
     /**
      * Delete the user's account.
@@ -106,7 +104,7 @@ class ProfileController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'phone_no' => $user->phone_no,
-            'profile_pic' => $user->profile_pic, // Accessor returns full URL
+            'profile_pic' => $user->profile_pic ?: asset('storage/profile_pic/default.webp'),
             'role' => $user->role,
         ]);
     }
@@ -123,39 +121,32 @@ class ProfileController extends Controller
             return redirect()->route('profile.edit')->with('error', 'User not authenticated.');
         }
 
-        Log::info('Validated data:', $request->validated());
-
-        // Handle profile picture upload
-        if ($request->hasFile('profile_pic')) {
-            // Delete previous profile picture if exists
-            if ($user->profile_pic) {
-                Storage::disk('public')->delete($user->profile_pic);
+        try {
+            // Handle profile picture upload
+            if ($request->hasFile('profile_pic')) {
+                $user->clearMediaCollection('profile_pictures');
+                $media = $user->addMediaFromRequest('profile_pic')->toMediaCollection('profile_pictures');
+                $user->profile_pic = $media->getUrl();
             }
 
-            // Store the new profile picture
-            $path = $this->storeProfilePicture($request);
-            $user->profile_pic = $path;
+            // Update user with validated data
+            $user->fill($request->validated());
+            $user->save();
+
+            Log::info('User after save:', [$user->toArray()]);
+            return redirect()->route('profile.edit')->with('success', 'Profile updated successfully!');
+        } catch (\Exception $e) {
+            Log::error('Error updating profile: ' . $e->getMessage());
+            return redirect()->route('profile.edit')->with('error', 'Error updating profile.');
         }
-
-        // Update user with validated data
-        $user->fill($request->validated());
-        $user->save();
-
-        Log::info('User after save:', [$user->toArray()]);
-
-        // Redirect back with a success message
-        return redirect()->route('profile.edit')->with('success', 'Profile updated successfully!');
     }
-
 
     public function apiupdate(Request $request): JsonResponse
     {
         $user = $request->user();
-        
-        // Log what the backend receives
+
         Log::info('Received update request:', $request->all());
-    
-        // Validate request input
+
         $validated = $request->validate([
             'username' => 'nullable|string|max:255',
             'name' => 'nullable|string|max:255',
@@ -163,53 +154,43 @@ class ProfileController extends Controller
             'phone_no' => 'nullable|string|max:20',
             'profile_pic' => 'nullable|string',
         ]);
-    
-        // Handle profile picture deletion
-        if ($request->filled('profile_pic') && $request->input('profile_pic') === '') {
-            Log::info('Deleting profile picture...');
-            $user->clearMediaCollection('profile_pictures');
-            $validated['profile_pic'] = null; // Clear in database
-        }        
-    
-        // Update user profile fields
-        $user->update($validated);
-    
-        // Log after update
-        Log::info('Updated user profile:', $user->toArray());
-    
-        return response()->json([
-            'message' => 'Profile updated successfully.',
-            'user' => $user,
-        ]);
-    }        
-    
-    
+
+        try {
+            if ($request->filled('profile_pic') && $request->input('profile_pic') === '') {
+                Log::info('Deleting profile picture...');
+                $user->clearMediaCollection('profile_pictures');
+                $validated['profile_pic'] = null;
+            }
+
+            $user->update($validated);
+            Log::info('Updated user profile:', $user->toArray());
+
+            return response()->json([
+                'message' => 'Profile updated successfully.',
+                'user' => $user,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating profile: ' . $e->getMessage());
+            return response()->json(['message' => 'Error updating profile.'], 500);
+        }
+    }
+
     public function deleteProfilePicture(Request $request): JsonResponse
     {
         $user = $request->user();
     
-        // Check if the profile_pic field in the database is already null
-        if ($user->profile_pic === null) {
+        try {
+            $user->clearMediaCollection('profile_pictures');
+            $user->update(['profile_pic' => null]);
+    
             return response()->json([
-                'message' => 'No profile picture found to delete.',
-            ], 404);
+                'message' => 'Profile picture deleted successfully.',
+                'profile_pic' => $user->profile_pic, // Default fallback is handled in the accessor
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error deleting profile picture: ' . $e->getMessage());
+            return response()->json(['message' => 'Error deleting profile picture.'], 500);
         }
-    
-        // Explicitly delete all media files in the collection
-        $mediaItems = $user->getMedia('profile_pictures');
-        if ($mediaItems->isNotEmpty()) {
-            foreach ($mediaItems as $media) {
-                $media->delete(); // Delete media from storage and database
-            }
-        }
-    
-        // Set the profile_pic column in the database to null
-        $user->update(['profile_pic' => null]);
-    
-        return response()->json([
-            'message' => 'Profile picture deleted successfully.',
-            'profile_pic' => null,
-        ]);
-    }
+    }    
     
 }

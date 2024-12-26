@@ -56,7 +56,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/profile/picture', [ProfileController::class, 'deleteProfilePicture']); // Delete
 });
 
-
 //OFFICER ROUTES
 // Officer routes
 Route::middleware('auth:sanctum')->group(function () {
