@@ -19,43 +19,45 @@ class ComplaintCleanerController extends Controller
     public function getCleanerTasks(Request $request, $cleaner_id)
     {
         try {
-            $statusFilter = $request->query('status', null); // Optional status filter
+            $notified = $request->query('notified', null); // Optional 'notified' filter (true/false)
     
-            // Log the status filter and cleaner ID for debugging
-            \Log::info("Fetching tasks for cleaner_id: $cleaner_id with status: $statusFilter");
+            // Log the filter parameters for debugging
+            \Log::info("Fetching ongoing tasks for cleaner_id: $cleaner_id with notified: $notified");
     
-            // Retrieve complaints assigned to the cleaner with optional status filtering
-            $tasks = ComplaintCleaner::with(['complaint' => function ($query) use ($statusFilter) {
-                if ($statusFilter) {
-                    $query->where('comp_status', $statusFilter); // Apply status filter if provided
-                } else {
-                    $query->whereIn('comp_status', ['ongoing', 'completed']); // Default to these statuses
-                }
-            }])
-            ->where('cleaner_id', $cleaner_id)
-            ->get()
-            ->map(function ($complaintCleaner) {
-                if (!$complaintCleaner->complaint) {
-                    return null; // Skip tasks without a matching complaint
-                }
+            // Retrieve complaints assigned to the cleaner
+            $tasks = ComplaintCleaner::where('cleaner_id', $cleaner_id)
+                ->when(!is_null($notified), function ($query) use ($notified) {
+                    $query->where('is_notified', filter_var($notified, FILTER_VALIDATE_BOOLEAN)); // Apply 'is_notified' filter
+                })
+                ->whereHas('complaint', function ($query) {
+                    $query->where('comp_status', 'ongoing'); // Filter by 'ongoing' status in the 'complaints' table
+                })
+                ->with('complaint') // Include complaint details
+                ->get()
+                ->map(function ($complaintCleaner) {
+                    if (!$complaintCleaner->complaint) {
+                        return null; // Skip tasks without a matching complaint
+                    }
     
-                return [
-                    'complaint_id' => $complaintCleaner->complaint->id,
-                    'comp_desc' => $complaintCleaner->complaint->comp_desc,
-                    'comp_location' => $complaintCleaner->complaint->comp_location,
-                    'comp_date' => $complaintCleaner->complaint->comp_date,
-                    'comp_time' => $complaintCleaner->complaint->comp_time,
-                    'comp_status' => $complaintCleaner->complaint->comp_status,
-                    'assigned_date' => $complaintCleaner->assigned_date,
-                    'no_of_cleaners' => $complaintCleaner->no_of_cleaners,
-                    'assigned_by' => $complaintCleaner->assigned_by,
-                ];
-            })
-            ->filter() // Remove null values
-            ->values(); // Re-index the array
+                    // Return the structured task data
+                    return [
+                        'complaint_id' => $complaintCleaner->complaint->id,
+                        'comp_desc' => $complaintCleaner->complaint->comp_desc,
+                        'comp_location' => $complaintCleaner->complaint->comp_location,
+                        'comp_date' => $complaintCleaner->complaint->comp_date,
+                        'comp_time' => $complaintCleaner->complaint->comp_time,
+                        'comp_status' => $complaintCleaner->complaint->comp_status,
+                        'assigned_date' => $complaintCleaner->assigned_date,
+                        'no_of_cleaners' => $complaintCleaner->no_of_cleaners,
+                        'assigned_by' => $complaintCleaner->assigned_by,
+                        'is_notified' => $complaintCleaner->is_notified, // Include the notification status
+                    ];
+                })
+                ->filter() // Remove null values
+                ->values(); // Re-index the array
     
-            // Log the result for debugging
-            \Log::info("Tasks fetched: " . json_encode($tasks));
+            // Log the fetched tasks for debugging
+            \Log::info("Ongoing tasks fetched: " . json_encode($tasks));
     
             return response()->json([
                 'status' => 'success',
@@ -64,15 +66,43 @@ class ComplaintCleanerController extends Controller
     
         } catch (\Exception $e) {
             // Log the error
-            \Log::error("Error fetching tasks: " . $e->getMessage());
+            \Log::error("Error fetching ongoing tasks: " . $e->getMessage());
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to retrieve tasks.',
+                'message' => 'Failed to retrieve ongoing tasks.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }    
+      
+    
+    public function toggleNotification(Request $request, $complaint_id)
+    {
+        try {
+            $complaintCleaner = ComplaintCleaner::where('complaint_id', $complaint_id)->first();
+
+            if (!$complaintCleaner) {
+                return response()->json(['error' => 'Complaint not found'], 404);
+            }
+
+            // Toggle is_notified status
+            $complaintCleaner->is_notified = !$complaintCleaner->is_notified;
+            $complaintCleaner->save();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Notification status updated.',
+                'is_notified' => $complaintCleaner->is_notified,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to update notification status.',
                 'error' => $e->getMessage(),
             ], 500);
         }
     }
-    
+
 
     /**
      * Get complaints created by the authenticated officer.

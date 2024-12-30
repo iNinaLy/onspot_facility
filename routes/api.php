@@ -17,6 +17,13 @@ use App\Http\Controllers\ComplaintCleanerController;
 use Illuminate\Http\Request;
 
 
+// Route to expose Supabase configuration
+Route::middleware('auth:sanctum')->get('/supabase-config', function () {
+    return response()->json([
+        'supabase_url' => env('SUPABASE_URL'),
+        'supabase_key' => env('SUPABASE_KEY'),
+    ]);
+});
 
 //CLEANER ROUTES
 // Cleaner Task and Complaint Routes
@@ -24,7 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cleaner/{cleaner_id}/tasks', [ComplaintCleanerController::class, 'getCleanerTasks']); // List all tasks for a specific cleaner
     Route::get('/complaints/{id}/details', [ComplaintCleanerController::class, 'getComplaintDetailsConditional']); // Get details of a specific complaint
     Route::post('/tasks/{complaint_id}/mark-unavailable', [ComplaintCleanerController::class, 'markCleanerUnavailable']);
-
+    Route::put('/tasks/{complaint_id}/toggle-notification', [ComplaintCleanerController::class, 'toggleNotification']);
 });
 
 // Cleaner Attendance Routes
