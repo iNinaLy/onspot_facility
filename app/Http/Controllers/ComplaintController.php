@@ -420,15 +420,20 @@ class ComplaintController extends Controller
         // Get supervisor's ID from request (assuming it's passed with the token)
         $supervisorId = $request->user()->id;
     
-        // Get the optional comp_status filter from the request and sanitize it
+        // Get the optional filters from the request and sanitize them
         $statusFilter = trim($request->query('comp_status', ''));
+        $monthFilter = trim($request->query('month', ''));
     
-        // Fetch tasks assigned by this supervisor with optional status filtering
+        // Fetch tasks assigned by this supervisor with optional filtering
         $tasks = Complaint::where('assigned_by', $supervisorId)
             ->when($statusFilter, function ($query) use ($statusFilter) {
-                // Apply filtering if status filter is provided
                 if (!empty($statusFilter)) {
-                    $query->where('comp_status', $statusFilter); // Use direct comparison for single status
+                    $query->where('comp_status', $statusFilter);
+                }
+            })
+            ->when($monthFilter, function ($query) use ($monthFilter) {
+                if (!empty($monthFilter)) {
+                    $query->whereMonth('comp_date', $monthFilter); // Filter by month (expects numeric value)
                 }
             })
             ->select('id', 'comp_desc', 'no_of_cleaners', 'comp_status', 'comp_date')
@@ -438,6 +443,7 @@ class ComplaintController extends Controller
         // Return tasks in JSON format
         return response()->json($tasks);
     }    
+    
 
     // fetch history details
     public function getHistoryDetails($id)
