@@ -9,6 +9,8 @@ use App\Models\Complaint;
 use App\Models\Cleaner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+
 
 class SupervisorController extends Controller
 {
@@ -262,7 +264,6 @@ public function getAllCleaners(Request $request)
     return response()->json(['success' => true, 'data' => $cleaners], 200);
 }
 
-// Show method to retrieve a specific cleaner by user_id
 public function showapi($user_id)
 {
     // Find the cleaner by user_id
@@ -278,7 +279,27 @@ public function showapi($user_id)
         $cleaner->profile_pic = base64_encode($cleaner->profile_pic);
     }
 
-    // Return the cleaner's details including profile_pic and user_id
+    // Retrieve the latest complaints assigned to this cleaner, including supervisor's name
+    $latestComplaints = DB::table('complaints')
+        ->join('complaint_cleaner', 'complaints.id', '=', 'complaint_cleaner.complaint_id')
+        ->join('users', 'complaints.assigned_by', '=', 'users.id') // Join to fetch supervisor's name
+        ->where('complaint_cleaner.cleaner_id', $user_id) // Use user_id for filtering
+        ->select(
+            'complaints.id as complaint_id',
+            'complaints.comp_date',
+            'complaints.comp_time',
+            'complaints.comp_desc',
+            'complaints.comp_location',
+            'complaints.comp_image',
+            'complaints.comp_status',
+            'complaint_cleaner.assigned_date',
+            'users.name as assigned_by' // Fetch the supervisor's name
+        )
+        ->orderBy('complaint_cleaner.assigned_date', 'desc')
+        ->limit(1) // Retrieve the latest complaint
+        ->get();
+
+    // Return the cleaner's details along with the latest complaints
     return response()->json([
         'data' => [
             'user_id' => $cleaner->user_id,
@@ -290,9 +311,9 @@ public function showapi($user_id)
             'created_at' => $cleaner->created_at,
             'updated_at' => $cleaner->updated_at,
             'building' => $cleaner->building,
+            'latest_complaints' => $latestComplaints
         ]
     ]);
 }
-
 
 }
