@@ -207,113 +207,84 @@ class SupervisorController extends Controller
     }
 
     // API for fetching list of cleaners
-public function getAllCleaners(Request $request)
-{
-    // Get the status query parameter, default to 'all' if not provided
-    $status = $request->query('status', 'all');
-
-    Log::info("Requested status: $status"); // Log the requested status for debugging
-
-    // Create the query
-    $query = Cleaner::query();
-
-    // Filter based on status if it's not 'all'
-    if ($status !== 'all') {
-        $query->where('status', $status);
-    }
-
-    // Fetch the cleaners
-    $cleaners = $query->get();
-
-    foreach ($cleaners as $cleaner) {
-        // Convert the profile_pic blob data to base64 if it exists
-        if ($cleaner->profile_pic !== null) {
-            $cleaner->profile_pic = base64_encode($cleaner->profile_pic);
+    public function getAllCleaners(Request $request)
+    {
+        $status = $request->query('status', 'all');
+    
+        // Filter cleaners by status and eager load the related `user` records
+        $query = Cleaner::with('user'); // Load the related user records
+        if ($status !== 'all') {
+            $query->where('status', $status);
         }
+    
+        $cleaners = $query->get();
+    
+        // Map the cleaners to include profile_pic from the users table
+        $cleaners = $cleaners->map(function ($cleaner) {
+            return [
+                'user_id' => $cleaner->user_id,
+                'cleaner_name' => $cleaner->cleaner_name,
+                'cleaner_phoneNo' => $cleaner->cleaner_phoneNo,
+                'profile_pic' => $cleaner->user->profile_pic ?? asset('storage/profile_pic/default.webp'), // Fetch from users table
+                'cleaner_username' => $cleaner->cleaner_username,
+                'status' => $cleaner->status,
+                'created_at' => $cleaner->created_at,
+                'updated_at' => $cleaner->updated_at,
+                'building' => $cleaner->building,
+            ];
+        });
+    
+        return response()->json(['success' => true, 'data' => $cleaners], 200);
+    }    
+    
 
-        // Check and handle malformed UTF-8 fields
-        foreach ($cleaner->getAttributes() as $key => $value) {
-            if (!mb_check_encoding($value, 'UTF-8')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Malformed UTF-8 detected in Cleaner user_id: {$cleaner->user_id}, Field: $key"
-                ], 500);
-            }
+    public function showapi($user_id)
+    {
+        // Find the cleaner by user_id
+        $cleaner = Cleaner::where('user_id', $user_id)->with('user')->first(); // Eager load the related user
+    
+        if (!$cleaner) {
+            return response()->json(['message' => 'Cleaner not found'], 404);
         }
+    
+        // Retrieve the profile picture from the `users` table
+        $profilePicUrl = $cleaner->user->profile_pic; // Access the user's profile_pic field
+    
+        // Retrieve the latest complaints assigned to this cleaner
+        $latestComplaints = DB::table('complaints')
+            ->join('complaint_cleaner', 'complaints.id', '=', 'complaint_cleaner.complaint_id')
+            ->join('users', 'complaints.assigned_by', '=', 'users.id') // Join to fetch supervisor's name
+            ->where('complaint_cleaner.cleaner_id', $user_id) // Use user_id for filtering
+            ->select(
+                'complaints.id as complaint_id',
+                'complaints.comp_date',
+                'complaints.comp_time',
+                'complaints.comp_desc',
+                'complaints.comp_location',
+                'complaints.comp_image',
+                'complaints.comp_status',
+                'complaint_cleaner.assigned_date',
+                'users.name as assigned_by' // Fetch the supervisor's name
+            )
+            ->orderBy('complaint_cleaner.assigned_date', 'desc')
+            ->limit(1) // Retrieve the latest complaint
+            ->get();
+    
+        return response()->json([
+            'data' => [
+                'user_id' => $cleaner->user_id,
+                'cleaner_name' => $cleaner->cleaner_name,
+                'cleaner_phoneNo' => $cleaner->cleaner_phoneNo,
+                'profile_pic' => $profilePicUrl, // Retrieve the profile picture from the `users` table
+                'cleaner_username' => $cleaner->cleaner_username,
+                'status' => $cleaner->status,
+                'created_at' => $cleaner->created_at,
+                'updated_at' => $cleaner->updated_at,
+                'building' => $cleaner->building,
+                'latest_complaints' => $latestComplaints,
+            ]
+        ]);
     }
-
-    // Log the response for debugging
-    Log::info("Fetched cleaners: " . $cleaners->toJson());
-
-    // Return the response with user_id instead of id
-    $cleaners = $cleaners->map(function ($cleaner) {
-        return [
-            'user_id' => $cleaner->user_id,
-            'cleaner_name' => $cleaner->cleaner_name,
-            'cleaner_phoneNo' => $cleaner->cleaner_phoneNo,
-            'profile_pic' => $cleaner->profile_pic,
-            'cleaner_username' => $cleaner->cleaner_username,
-            'status' => $cleaner->status,
-            'created_at' => $cleaner->created_at,
-            'updated_at' => $cleaner->updated_at,
-            'building' => $cleaner->building,
-        ];
-    });
-
-    // Return the modified response
-    return response()->json(['success' => true, 'data' => $cleaners], 200);
-}
-
-public function showapi($user_id)
-{
-    // Find the cleaner by user_id
-    $cleaner = Cleaner::where('user_id', $user_id)->first();
-
-    // Check if the cleaner exists
-    if (!$cleaner) {
-        return response()->json(['message' => 'Cleaner not found'], 404);
-    }
-
-    // Convert the BLOB data to Base64 if it exists
-    if ($cleaner->profile_pic) {
-        $cleaner->profile_pic = base64_encode($cleaner->profile_pic);
-    }
-
-    // Retrieve the latest complaints assigned to this cleaner, including supervisor's name
-    $latestComplaints = DB::table('complaints')
-        ->join('complaint_cleaner', 'complaints.id', '=', 'complaint_cleaner.complaint_id')
-        ->join('users', 'complaints.assigned_by', '=', 'users.id') // Join to fetch supervisor's name
-        ->where('complaint_cleaner.cleaner_id', $user_id) // Use user_id for filtering
-        ->select(
-            'complaints.id as complaint_id',
-            'complaints.comp_date',
-            'complaints.comp_time',
-            'complaints.comp_desc',
-            'complaints.comp_location',
-            'complaints.comp_image',
-            'complaints.comp_status',
-            'complaint_cleaner.assigned_date',
-            'users.name as assigned_by' // Fetch the supervisor's name
-        )
-        ->orderBy('complaint_cleaner.assigned_date', 'desc')
-        ->limit(1) // Retrieve the latest complaint
-        ->get();
-
-    // Return the cleaner's details along with the latest complaints
-    return response()->json([
-        'data' => [
-            'user_id' => $cleaner->user_id,
-            'cleaner_name' => $cleaner->cleaner_name,
-            'cleaner_phoneNo' => $cleaner->cleaner_phoneNo,
-            'profile_pic' => $cleaner->profile_pic,
-            'cleaner_username' => $cleaner->cleaner_username,
-            'status' => $cleaner->status,
-            'created_at' => $cleaner->created_at,
-            'updated_at' => $cleaner->updated_at,
-            'building' => $cleaner->building,
-            'latest_complaints' => $latestComplaints
-        ]
-    ]);
-}
-
+    
+    
 }

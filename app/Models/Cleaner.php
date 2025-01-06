@@ -55,12 +55,41 @@ class Cleaner extends Model implements HasMedia
 
     public function getProfilePictureUrlAttribute(): string
     {
-        return $this->getFirstMediaUrl('profile_pictures') ?: asset('default-profile.png');
+        // Use the value in the database if it exists
+        if (!empty($this->profile_pic) && str_contains($this->profile_pic, 'http')) {
+            return $this->profile_pic;
+        }
+    
+        // Check the media library for associated profile picture
+        $mediaUrl = $this->getFirstMediaUrl('profile_pictures');
+        if (!empty($mediaUrl)) {
+            return $mediaUrl;
+        }
+    
+        // Fall back to the default image
+        return asset('storage/profile_pic/default.webp');
+    }
+     
+
+        public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function user()
+    public function getProfilePicAttribute($value)
+    {
+        // Return the URL from the database or the default image URL
+        return $value ?: asset('storage/profile_pic/default.webp');
+    }
+
+    public function setProfilePicAttribute($value)
 {
-    return $this->belongsTo(User::class, 'user_id');
+    $this->attributes['profile_pic'] = $value;
+
+    // Automatically sync profile_pic with the related user
+    if ($this->user) {
+        $this->user->update(['profile_pic' => $value]);
+    }
 }
 
 

@@ -58,19 +58,33 @@ class ProfileController extends Controller
         ]);
     
         try {
-            $user->clearMediaCollection('profile_pictures'); // Clear existing image
+            // Clear existing profile picture
+            $user->clearMediaCollection('profile_pictures');
+    
+            // Store the new profile picture
             $media = $user->addMediaFromRequest('profile_pic')->toMediaCollection('profile_pictures');
-            $user->update(['profile_pic' => $media->getUrl()]); // Update the profile_pic URL
+            $profilePicUrl = $media->getUrl();
+    
+            // Update profile_pic in the users table
+            $user->update(['profile_pic' => $profilePicUrl]);
+    
+            // If the user is a cleaner, update the cleaners table as well
+            if ($user->role === 'cleaner') {
+                $cleaner = Cleaner::where('user_id', $user->id)->first();
+                if ($cleaner) {
+                    $cleaner->update(['profile_pic' => $user->profile_pic]); // Save the URL, not raw data
+                }
+            }            
     
             return response()->json([
                 'message' => 'Profile picture uploaded successfully.',
-                'profile_pic' => $user->profile_pic,
+                'profile_pic' => $profilePicUrl,
             ]);
         } catch (\Exception $e) {
             Log::error('Error uploading profile picture: ' . $e->getMessage());
             return response()->json(['message' => 'Error uploading profile picture.'], 500);
         }
-    }
+    }    
     
     /**
      * Delete the user's account.
@@ -106,6 +120,7 @@ class ProfileController extends Controller
             'phone_no' => $user->phone_no,
             'profile_pic' => $user->profile_pic ?: asset('storage/profile_pic/default.webp'),
             'role' => $user->role,
+            'building' => $user->building,
         ]);
     }
 
