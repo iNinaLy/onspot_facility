@@ -44,15 +44,13 @@ class Cleaner extends Authenticatable implements HasMedia
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    /**
-     * Relationship with the Complaint model.
-     */
     public function complaints()
     {
         return $this->belongsToMany(Complaint::class, 'complaint_cleaner', 'cleaner_id', 'complaint_id')
                     ->withPivot('no_of_cleaners', 'assigned_by', 'assigned_date')
                     ->withTimestamps();
     }
+
 
     /**
      * Mutator to hash the cleaner's password.
@@ -70,6 +68,11 @@ class Cleaner extends Authenticatable implements HasMedia
         return $query->where('status', self::STATUS_AVAILABLE);
     }
 
+
+    public function ongoingComplaints()
+    {
+        return $this->hasMany(Complaint::class, 'cleaner_id')->where('comp_status', 'ongoing');
+    }
     /**
      * Scope to retrieve cleaners with ongoing complaints.
      */

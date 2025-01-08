@@ -8,14 +8,14 @@
     <style>
         .heading {
             font-size: 2rem;
-            font-weight: bold;
+            font-weight: 700rem;
             color: #2E5675;
         }
         
         @media (min-width: 640px) {
             .sm\:px-6 {
                 padding-left: 1.5rem;
-                padding-top: 3rem;
+                padding-top: 1rem;
                 padding-right: 1.5rem;
             }
         }
@@ -30,7 +30,7 @@
 @endpush
 
 @section('content')
-    <div class="py-12 bg-gradient-to-r from-yellow-300 via-orange-200 to-pink-200 min-h-screen">
+<div class="py-12 bg-gradient-to-b from-gray-100 via-gray to-blue-50 min-h-screen">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
             
             <!-- Profile Settings Heading -->
@@ -72,6 +72,10 @@
 @endsection
 
 @push('scripts')
+@vite([
+    'resources/supervisor/app.js',
+    'resources/supervisor/dashboard.js',
+])
     <script>
         // Function to toggle the visibility of the details section
         function toggleDetails(id) {
@@ -81,6 +85,5 @@
             }
         }
 
-        // Optional: Add additional JavaScript if needed
     </script>
 @endpush

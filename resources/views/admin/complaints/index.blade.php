@@ -341,7 +341,8 @@
                         @endif
                     </td>
                     <td>{{ $complaint->officer->name ?? 'N/A' }}</td>
-                    <td>{{ $complaint->assignedBy->name ?? 'N/A' }}</td>
+                    <td>{{ $complaint->supervisor->name ?? 'N/A' }}</td>
+
                     <td>
                         <!-- Action Buttons -->
                         <button type="button" class="btn btn-pastel-view btn-sm me-1" data-bs-toggle="modal" data-bs-target="#viewModal{{ $complaint->id }}" data-bs-toggle="tooltip" title="View Details">
@@ -609,3 +610,6 @@
 
 </div>
 @endsection
+
+
+

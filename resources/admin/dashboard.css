@@ -1,38 +1,152 @@
-
-/* Sidebar styling */
-#sidebar-container {
-    background-color: #ffffff;
-    transition: background-color 0.3s ease;
-}
-
-/* Card Style */
-.card {
-    border: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    border-radius: 10px;
-    background-color: #fff;
-    margin-bottom: 1rem;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 5px 10px rgba(164, 197, 227, 0.1);
-}
-
-.key-metric {
-    font-size: 0.85rem;
-    font-weight: 600;
+/* ----------------------------------
+   Global & Basic Resets
+---------------------------------- */
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    background-color: #f0f2f5; /* Light background to enhance the blur effect */
     color: #1f3d5a;
 }
 
-.metric-value {
-    font-size: 1.5rem;
-    font-weight: bold;
+/* Wrapper for main content fade-in */
+.main-content-wrapper {
+    animation: fadeIn 0.5s ease-in-out;
+    padding: 1rem;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Header */
+.header {
+    background: none;
+    border-bottom: 2px solid #eee;
+    padding: 1rem 0;
+    margin-bottom: 1.5rem;
+}
+.header h1,
+.header .h4 {
+    margin: 0;
+    font-weight: 600;
     color: #2e5675;
 }
 
-/* Button styling */
+/* Metric Card Container */
+.metric-card {
+    background: rgba(255, 255, 255, 0.426); /* Semi-transparent gray */
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    display: flex; /* Enable Flexbox */
+    align-items: center; /* Vertically center items */
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+    cursor: pointer;
+    backdrop-filter: blur(15px); /* Blurs the background behind the card */
+    -webkit-backdrop-filter: blur(15px); /* Safari support */
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Subtle white border for contrast */
+}
+
+.metric-card:hover {
+    transform: translateY(-1px); 
+    box-shadow: 0 8px 20px rgba(160, 240, 236, 0.2);
+    background: rgba(228, 227, 227, 0.603); /* Slightly more opaque on hover */
+}
+
+/* Metric Icon */
+.metric-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem; /* Increased icon size for better visibility */
+    flex-shrink: 0;
+}
+
+.icon-background {
+    background-color: rgba(44, 44, 44, 0); /* Semi-transparent white background */
+    border-radius: 50px; /* Fully rounded corners for circular background */
+    padding: 0.75rem;
+    width: 60px; /* Increased width for better icon placement */
+    height: 60px; /* Uniform height for consistency */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+.icon-black {
+    color: #000; /* Black icon color */
+}
+
+/* Metric Information */
+.metric-info {
+    text-align: center; /* Center align text */
+    margin-left: 1rem; /* Space between icon and text */
+    flex: 1; /* Allow the content to take up remaining space */
+}
+
+.metric-title {
+    font-size: 0.85rem;
+    font-weight: 580;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+    margin-left:-5rem;
+}
+
+.metric-value {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #2e5675;
+    margin: 0;
+    margin-left:-5rem;
+}
+
+/* Chart Legend */
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #8e8e93;
+}
+
+.legend-item span {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-right: 0.5rem;
+    border-radius: 3px;
+}
+
+/* Standard White Cards for Non-Metric Sections */
+.card {
+    background:rgba(255, 255, 255, 0.426); /* Semi-transparent gray */
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Subtle white border for contrast */
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+    backdrop-filter: blur(15px); /* Blurs the background behind the card */
+    -webkit-backdrop-filter: blur(15px); /* Safari support */
+}
+
+.card:hover {
+    transform: translateY(-1px); /* Slightly more lift on hover */
+    box-shadow: 0 8px 20px rgba(132, 183, 196, 0.333);
+    background: rgba(247, 246, 246, 0.808);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Buttons */
 .see-all-btn {
     background-color: #2e5675;
     color: #fff;
@@ -44,43 +158,13 @@
     text-decoration: none;
     display: inline-block;
 }
-
 .see-all-btn:hover {
     background-color: #1f3d5a;
 }
 
-/* Header */
-.header {
-    background-color: #fff;
-    border-bottom: 1px solid #eee;
-    border-radius: 16px;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-    .row {
-        flex-direction: column;
-    }
-}
-
-.main-content-wrapper {
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
 /* Recent Complaints Section */
 .recent-complaints-section {
-    background-color: #ffffff;
+    background: rgba(255, 255, 255, 0.8); /* Semi-transparent white for readability */
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -105,41 +189,40 @@
     text-decoration: none;
     display: inline-block;
 }
-
 .recent-complaints-section .see-all-btn:hover {
     background-color: #4a6b8d;
     color: #f5f4f4;
-    transition: background-color 0.9s ease;
+    transition: background-color 0.3s ease;
 }
 
+/* Table Styling */
+.table-responsive {
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    background-color: #f9fafb;
+}
 .recent-complaints-table {
     width: 100%;
     border-collapse: collapse;
-    background-color: #f9fafb;
-    border-radius: 12px;
-    overflow: hidden;
+    background-color: #ffffff;
 }
-
 .recent-complaints-table thead {
     background-color: #2e5675;
 }
-
 .recent-complaints-table th {
-    color: #242222;
+    color: #ffffff;
     padding: 0.75rem 1rem;
     text-align: left;
     font-weight: 700;
     font-size: 0.9rem;
 }
-
 .recent-complaints-table tbody tr {
     transition: background-color 0.2s ease;
 }
-
 .recent-complaints-table tbody tr:hover {
     background-color: #d8e7f6;
 }
-
 .recent-complaints-table td {
     padding: 0.75rem 1rem;
     color: #333;
@@ -147,7 +230,7 @@
     border-bottom: 1px solid #e0e0e0;
 }
 
-/* Status Badge Styling */
+/* Status Badges */
 .status-badge {
     display: inline-block;
     padding: 0.25rem 0.6rem;
@@ -157,46 +240,50 @@
     color: #fff;
     text-transform: capitalize;
 }
-
 .status-completed {
-    background-color: #b8e3e9;
+    background-color: #b8e3e9; /* Light Blue-Green */
 }
-
 .status-ongoing {
-    background-color: #93b1b5;
+    background-color: #93b1b5; /* Muted Blue-Gray */
 }
-
 .status-pending {
-    background-color: #4f7c82;
+    background-color: #4f7c82; /* Deep Teal */
 }
 
-/* Responsive Table */
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .metric-card {
+        flex-direction: row;
+        justify-content: flex-start; /* Align items to the start */
+    }
+
+    .metric-info {
+        text-align: center; /* Center align text */
+        margin-left: 1rem; /* Space between icon and text */
+    }
+
+    .chart-legend {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
 @media (max-width: 576px) {
-    .recent-complaints-table th, .recent-complaints-table td {
+    .recent-complaints-table th, 
+    .recent-complaints-table td {
         padding: 0.5rem;
         font-size: 0.75rem;
     }
 }
 
-/* Chart Legend Styling */
-.chart-legend {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.chart-legend div {
-    display: flex;
-    align-items: center;
-    font-size: 0.85rem;
-    color: #8e8e93;
-}
-
-.chart-legend span {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    margin-right: 0.5rem;
-    border-radius: 3px;
+/* Chart Center Text (Optional) */
+.chart-center-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #2e5675;
+    pointer-events: none;
 }

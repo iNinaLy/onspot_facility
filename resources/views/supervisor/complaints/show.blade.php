@@ -210,11 +210,11 @@
             <p class="meta"><strong>Status:</strong> 
                 <span class="badge 
                     @if($complaint->comp_status == 'pending') 
-                        badge-pending 
+                        status-pending 
                     @elseif($complaint->comp_status == 'ongoing') 
-                        badge-ongoing 
+                        status-ongoing 
                     @else 
-                        badge-completed 
+                        status-completed 
                     @endif">
                     {{ ucfirst($complaint->comp_status) }}
                 </span>
@@ -234,7 +234,7 @@
         @if($complaint->comp_status == 'pending')
             <!-- Assign Cleaners Form -->
             <div class="assign-section">
-                <h3>Assign Cleaners</h3>
+                <h3>Assign Cleaners for this complaint.</h3>
                 @if($availableCleaners->isEmpty())
                 <div class="alert alert-warning">
                     Oops! No cleaners are currently available. Please try again later.

@@ -115,10 +115,13 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
 
     // Cleaner Management
     Route::prefix('cleaners')->group(function () {
-        Route::get('/', [SupervisorController::class, 'cleaners'])->name('cleaners');
+        Route::get('/', [CleanerController::class, 'index'])->name('cleaners');
         Route::get('/api', [CleanerController::class, 'getAvailableCleaners'])->name('api.available');
         Route::get('/api/search', [CleanerController::class, 'searchCleaners'])->name('api.search');
+        Route::get('/cleaners/ajax-search', [CleanerController::class, 'ajaxSearch'])->name('cleaners.ajaxSearch');
+        
     });
+
 
     // Complaints
     Route::prefix('complaints')->name('complaints.')->group(function () {
@@ -146,12 +149,6 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
 });
 
 
-// ===================
-// General Public Routes
-// ===================
-Route::get('/cleaners', [CleanerController::class, 'index'])->name('cleaners'); // Public cleaner route
-Route::get('/cleaner/my-tasks', [CleanerController::class, 'myTasks'])->name('cleaner.tasks');
-Route::get('/history', [HistoryController::class, 'index'])->name('history'); // General history
 
 // Authentication Routes
 require __DIR__ . '/auth.php';

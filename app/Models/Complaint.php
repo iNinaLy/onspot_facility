@@ -10,6 +10,7 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon; // Make sure to import Carbon
 
 class Complaint extends Model implements HasMedia
 {
@@ -115,6 +116,14 @@ class Complaint extends Model implements HasMedia
     }
 
     /**
+     * Relationship indicating who assigned the complaint.
+     */
+    public function assignedBy()
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
+    }
+
+    /**
      * Update the status of the complaint.
      *
      * @param string $status
@@ -167,4 +176,45 @@ class Complaint extends Model implements HasMedia
         });
     }
 
+  
+    public function scopeStatus($query, $status)
+    {
+        return $query->where('comp_status', $status);
+    }
+
+    /**
+     * Scope a query to include complaints assigned today.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeAssignedToday($query)
+    {
+        return $query->whereDate('assigned_date', Carbon::today());
+    }
+
+    /**
+     * Scope a query to include complaints assigned this week.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeAssignedThisWeek($query)
+    {
+        return $query->whereBetween('assigned_date', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+    }
+
+    /**
+     * Scope a query to include complaints assigned before this week.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeAssignedBeforeThisWeek($query)
+    {
+        return $query->whereDate('assigned_date', '<', Carbon::now()->startOfWeek());
+    }
+
+
+    
 }

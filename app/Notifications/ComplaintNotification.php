@@ -11,17 +11,21 @@ class ComplaintNotification extends Notification
 {
     protected $complaint;
     protected $officer;
+    protected $cleaner;
+    protected $supervisor;
 
-    public function __construct($complaint, $officer)
+    public function __construct($complaint, $officer, $cleaner = null, $supervisor = null)
     {
         $this->complaint = $complaint;
         $this->officer = $officer;
+        $this->cleaner = $cleaner;
+        $this->supervisor = $supervisor;
     }
 
     public function via($notifiable)
     {
         return [
-            'database', // This will store notification data in `notifications` table
+            'database', // This will store notification data in notifications table
             FcmChannel::class, // This will send FCM notification
         ];
     }
@@ -29,6 +33,15 @@ class ComplaintNotification extends Notification
     // Store notification in notifications table
     public function toDatabase($notifiable)
     {
+        if ($this->cleaner) {
+            return [
+                'complaint_id' => $this->complaint->id,
+                'cleaner_name' => $this->cleaner->name,
+                'supervisor_name' => $this->supervisor->name,
+                'message' => 'You have been assigned a new complaint by Supervisor ' . $this->supervisor->name,
+            ];
+        }
+
         return [
             'complaint_id' => $this->complaint->id,
             'officer_name' => $this->officer->name,
@@ -43,6 +56,26 @@ class ComplaintNotification extends Notification
 
         if ($tokens->isEmpty()) {
             return null; // No tokens to send notification
+        }
+
+        if ($this->cleaner) {
+            return (new FcmMessage(notification: new FcmNotification(
+                title: 'New Complaint Assigned',
+                body: 'You have been assigned a new complaint by Supervisor ' . $this->supervisor->name,
+                image: null,
+            )))
+                ->data([
+                    'complaint_id' => $this->complaint->id,
+                    'supervisor_name' => $this->supervisor->name,
+                ])
+                ->to($tokens->toArray()) // Specify tokens to send to
+                ->custom([
+                    'android' => [
+                        'notification' => [
+                            'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                        ],
+                    ],
+                ]);
         }
 
         return (new FcmMessage(notification: new FcmNotification(
@@ -63,5 +96,18 @@ class ComplaintNotification extends Notification
                 ],
             ]);
     }
-}
 
+    // Static helper to notify cleaner and officer
+    public static function notifyAssignment($complaint, $officer, $cleaner, $supervisor)
+    {
+        // Notify Cleaner
+        if ($cleaner) {
+            $cleaner->notify(new self($complaint, $officer, $cleaner, $supervisor));
+        }
+
+        // Notify Officer
+        if ($officer) {
+            $officer->notify(new self($complaint, $officer));
+        }
+    }
+}

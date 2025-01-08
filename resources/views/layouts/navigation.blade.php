@@ -233,13 +233,6 @@
         color: #6b7280;
     }
 
-    /* Dark Mode Support (Optional) */
-    @media (prefers-color-scheme: dark) {
-        .dark\:text-gray-100 {
-            --tw-text-opacity: 1;
-            color: rgb(229 231 235);
-        }
-    }
 </style>
 
 <!-- Font Awesome (for icons) -->

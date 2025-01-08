@@ -333,3 +333,120 @@ table tbody tr:hover td {
     width: 70px;
     display: inline-block;
 }
+
+/* new-user-form.css */
+
+/* 1) Body & Page Background */
+body {
+    background: linear-gradient(to right, #dfe9f3 0%, #ffffff 100%);
+    font-family: 'Poppins', sans-serif;
+    margin: 0; /* Reset default margin */
+    padding: 0;
+}
+
+/* 2) Container for the entire wizard */
+.wizard-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1rem;
+}
+
+/* 3) Frosted Glass / Blurry Background for the Form */
+.frosted-form {
+    background: rgba(255, 255, 255, 0.4); 
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px); /* Safari support */
+    border-radius: 1rem;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    width: 100%;
+    max-width: 600px;
+
+    /* Animate the form container itself on page load */
+    animation: fadeInUp 0.6s ease forwards;
+    opacity: 0; /* start hidden */
+    transform: translateY(20px);
+}
+
+/* Fade in + slide up keyframes */
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 4) Multi-step .step elements */
+.step {
+    position: relative;
+    min-height: 300px; /* optional, for consistency */
+    animation: fadeStep 0.4s ease forwards;
+    opacity: 0; /* hidden by default; only .active is shown */
+}
+
+@keyframes fadeStep {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.step.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Hide steps by default */
+.hidden {
+    display: none !important;
+}
+
+/* 5) Basic heading/button styling */
+.heading.text-center {
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.header-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+/* 6) If you're using .form-floating from Bootstrap, you can tweak labels here */
+.form-floating label {
+    color: #555;
+}
+
+/* 7) Alert styling or other custom classes (optional) */
+.alert {
+    font-weight: 400;
+}
+
+/* 8) Additional utility classes (optional) */
+.text-red-500 {
+    color: #ef4444; /* Tailwind or custom color */
+}
+
+.d-none {
+    display: none !important;
+}
