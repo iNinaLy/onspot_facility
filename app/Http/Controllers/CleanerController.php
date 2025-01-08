@@ -11,88 +11,40 @@ class CleanerController extends Controller
 {
     public function index(Request $request)
     {
-        // Basic search and sort inputs
-        $search        = $request->input('search', '');
-        $sortColumn    = $request->input('sort_column', 'cleaner_name');
-        $sortDirection = $request->input('sort_direction', 'asc');
-
-        // Validate sort column and direction to avoid SQL injection or invalid columns
-        if (! in_array($sortColumn, ['cleaner_name', 'building'])) {
-            $sortColumn = 'cleaner_name';
-        }
-        if (! in_array($sortDirection, ['asc', 'desc'])) {
-            $sortDirection = 'asc';
-        }
-
-        // Retrieve summary counts
+        // Example: however you fetch your data
+        $search = $request->input('search');
+        
+        // Summaries
         $totalCleaners    = Cleaner::count();
         $availableCount   = Cleaner::where('status', 'available')->count();
         $unavailableCount = Cleaner::where('status', 'unavailable')->count();
-
-        // Query builder for "available" cleaners
-        $availableCleanersQuery = Cleaner::where('status', 'available')
+        
+        $availableCleaners = Cleaner::where('status', 'available')
+            ->when($search, fn($q) => $q->where('cleaner_name', 'like', "%{$search}%"))
             ->with(['complaints' => function ($q) {
                 $q->where('comp_status', 'ongoing');
-            }]);
-
-        // If search is present, apply it
-        if ($search) {
-            $availableCleanersQuery->where(function ($query) use ($search) {
-                $query->where('cleaner_name', 'like', "%{$search}%")
-                      ->orWhere('building', 'like', "%{$search}%");
-            });
-        }
-
-        // Order and paginate (using a custom page name to differentiate between tabs)
-        $availableCleaners = $availableCleanersQuery
-            ->orderBy($sortColumn, $sortDirection)
+            }])
             ->paginate(5, ['*'], 'available_page');
-
-        // Query builder for "unavailable" cleaners
-        $unavailableCleanersQuery = Cleaner::where('status', 'unavailable')
+        
+        // Query unavailable cleaners
+        $unavailableCleaners = Cleaner::where('status', 'unavailable')
+            ->when($search, fn($q) => $q->where('cleaner_name', 'like', "%{$search}%"))
             ->with(['complaints' => function ($q) {
                 $q->where('comp_status', 'ongoing');
-            }]);
-
-        if ($search) {
-            $unavailableCleanersQuery->where(function ($query) use ($search) {
-                $query->where('cleaner_name', 'like', "%{$search}%")
-                      ->orWhere('building', 'like', "%{$search}%");
-            });
-        }
-
-        $unavailableCleaners = $unavailableCleanersQuery
-            ->orderBy($sortColumn, $sortDirection)
+            }])
             ->paginate(5, ['*'], 'unavailable_page');
-
-        return view('supervisor.cleaners.index', compact(
-            'totalCleaners',
-            'availableCount',
-            'unavailableCount',
-            'availableCleaners',
-            'unavailableCleaners',
-            'search',
-            'sortColumn',
-            'sortDirection'
-        ));
+        
+        // Pass all these to the view
+        return view('supervisor.cleaners.index', [
+            'search'             => $search,
+            'totalCleaners'      => $totalCleaners,
+            'availableCount'     => $availableCount,
+            'unavailableCount'   => $unavailableCount,
+            'availableCleaners'  => $availableCleaners,
+            'unavailableCleaners'=> $unavailableCleaners,
+        ]);
     }
-
-    public function ajaxSearch(Request $request)
-    {
-        $query = $request->get('query', '');
-
-        // Example: limit results to 10 to keep it fast
-        $cleaners = Cleaner::when($query, function ($q) use ($query) {
-                $q->where('cleaner_name', 'like', "%{$query}%")
-                ->orWhere('building', 'like', "%{$query}%");
-            })
-            ->limit(10)
-            ->get(['id','cleaner_name','cleaner_phoneNo','building','status']);
-
-        // Return as JSON
-        return response()->json($cleaners);
-    }
-
+    
 
     /**
      * Update the status of a cleaner.
