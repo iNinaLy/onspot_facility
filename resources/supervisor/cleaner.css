@@ -36,9 +36,7 @@
   transition: color var(--transition-duration) var(--transition-ease);
 }
 
-.heading:hover {
-  color: var(--secondary-color);
-}
+
 
 /* -----------------------------------------------------
    FILTER FORM STYLES
@@ -178,7 +176,7 @@
   padding: 15px 20px;
   text-align: center;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s var(--transition-ease), box-shadow 0.3s var(--transition-ease);
+  transition: transform 0.5s var(--transition-ease), box-shadow 0.3s var(--transition-ease);
 }
 
 .overview-box:hover {
@@ -292,8 +290,10 @@
   display: flex;
   object-fit: cover;
   align-items: center;
+  justify-content: center;
   margin: 0 auto;
   border: 1px solid #d1d5db;
+  font-size: 0.8rem;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s var(--transition-ease);
 }

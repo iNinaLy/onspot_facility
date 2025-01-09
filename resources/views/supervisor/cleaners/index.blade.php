@@ -71,7 +71,7 @@
                             @if($cleaner->profile_pic)
                                 <img 
                                     src="data:image/jpeg;base64,{{ base64_encode($cleaner->profile_pic) }}"
-                                    alt="{{ $cleaner->cleaner_name }}'s Profile"
+                                    alt="{{ $cleaner->cleaner_name }}"
                                     class="cleaner-profile-pic"
                                 >
                             @else
