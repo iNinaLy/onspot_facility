@@ -1,41 +1,11 @@
 /* -----------------------------------------------------
-   GLOBAL VARIABLES + BASE STYLES FROM YOUR SECOND SNIPPET
+   GLOBAL VARIABLES + BASE STYLES
 ------------------------------------------------------ */
-:root {
-  /* Existing Variables */
-  --primary-color: #2e5675; /* Adjust as per your theme */
-  --secondary-color: #6dd5ed;
-  --available-color: #28a745; /* Original color */
-  --unavailable-color: #dc3545; /* Original color */
-  --on_leave-color: #ffc107; /* Original color */
 
-  /* Modal & Misc */
-  --modal-bg: rgba(0, 0, 0, 0.5);
-  --modal-content-bg: #fff;
-  --modal-border-radius: 10px;
-  --close-button-color: #aaa;
-  --close-button-hover-color: #000;
 
-  /* Tooltip & Transition */
-  --tooltip-bg-color: rgba(0, 0, 0, 0.75);
-  --tooltip-text-color: #fff;
-  --transition-duration: 0.3s;
-
-  /* Badge & Pastel Colors */
-  --badge-font-size: 0.8rem;
-  --badge-padding: 0.3rem 0.6rem;
-  --pastel-green: #a8e6cf;
-  --pastel-red: #ff8b94;
-  --pastel-yellow: #ffe066;
-  --pastel-blue: #d0f4de;
-  --pastel-orange: #ffb347;
-
-  /* "No Image" fallback */
-  --no-image-bg: #f0f0f0; 
-  --no-image-text: #555; 
-}
-
-/* Container (overall layout) */
+/* -----------------------------------------------------
+   BASE CONTAINERS & LAYOUT
+------------------------------------------------------ */
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -43,9 +13,14 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  animation: fadeIn 0.5s ease-in-out;
 }
 
-/* Header with Filters */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .header-container {
   display: flex;
   justify-content: space-between;
@@ -55,12 +30,19 @@
 }
 
 .heading {
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: bold;
   color: var(--primary-color);
+  transition: color var(--transition-duration) var(--transition-ease);
 }
 
-/* Filter Form Styles */
+.heading:hover {
+  color: var(--secondary-color);
+}
+
+/* -----------------------------------------------------
+   FILTER FORM STYLES
+------------------------------------------------------ */
 .filter-container {
   display: flex;
   gap: 1rem;
@@ -75,29 +57,33 @@
   border: 1px solid #d1d5db;
   font-size: 0.875rem;
   width: 200px;
-  transition: border-color var(--transition-duration);
+  transition: border-color var(--transition-duration), box-shadow var(--transition-duration);
 }
 
 .filter-container select:focus,
 .filter-container input:focus {
   outline: none;
   border-color: var(--primary-color);
+  box-shadow: 0 0 8px rgba(46, 86, 117, 0.3);
 }
 
 /* -----------------------------------------------------
- TABS + SEARCH (FROM FIRST SNIPPET)
+   TABS + SEARCH
 ------------------------------------------------------ */
 .tabs-and-search {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
+
 .tab-header {
   display: flex;
   gap: 2rem;
-  margin-bottom: 0;
 }
+
 .tab-btn {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
@@ -107,44 +93,65 @@
   cursor: pointer;
   position: relative;
   outline: none;
-  transition: color 0.3s;
+  transition: color var(--transition-duration) var(--transition-ease);
+  color: #555;
 }
+
 .tab-btn:hover:not(.active) {
-  color: #989898;
-  font-weight: 400;
+  color: #888;
 }
+
 .tab-btn.active {
   color: #272b2f;
 }
-/* Animated underline on tabs */
+
 .tab-btn.active::after {
   content: '';
   position: absolute;
   bottom: -2px;
   left: 50%;
   transform: translateX(-50%);
-  width: 0%;
+  width: 100%;
   height: 3px;
-  background-color: #53626e;
-  transition: width 0.3s;
-}
-.tab-header button.active::after {
-  width: 100%;
-}
-.tab-header button:hover::after {
-  width: 100%;
+  background-color: var(--primary-color);
 }
 
-/* Tab content transitions */
+.filter-container input[type="search"] {
+  padding: 0.5rem;
+  border-radius: 16px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+  min-width: 220px;
+}
+
+.filter-container button[type="submit"] {
+  padding: 0.45rem 1rem;
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background var(--transition-duration) var(--transition-ease);
+}
+
+.filter-container button[type="submit"]:hover {
+  background: #1f3e54;
+}
+
+/* -----------------------------------------------------
+   TAB CONTENT TRANSITIONS
+------------------------------------------------------ */
 .tab-content {
   position: relative;
 }
+
 .tab-panel {
   display: none;
   opacity: 0;
   transform: translateY(10px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
+
 .tab-panel.active {
   display: block;
   opacity: 1;
@@ -152,8 +159,7 @@
 }
 
 /* -----------------------------------------------------
- CLEANER OVERVIEW (TOP STATS)
- (MERGED: using advanced "backdrop-filter" from second snippet)
+   CLEANER OVERVIEW (TOP STATS)
 ------------------------------------------------------ */
 .cleaner-overview {
   display: flex;
@@ -161,148 +167,99 @@
   align-items: center;
   gap: 15px;
   flex-wrap: wrap;
-  margin-bottom: 1.5rem; /* from first snippet */
+  margin-bottom: 1.5rem;
 }
+
 .overview-box {
   flex: 1;
-  background: rgba(255, 255, 255, 0.7); /* from second snippet */
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(5px);
   border-radius: 15px;
   padding: 15px 20px;
   text-align: center;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  transition: transform var(--transition-duration), box-shadow var(--transition-duration);
+  transition: transform 0.3s var(--transition-ease), box-shadow 0.3s var(--transition-ease);
 }
+
 .overview-box:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
 }
+
 .overview-number {
   font-size: 1.6rem;
   font-weight: bold;
   margin-bottom: 0.5rem;
-  color: var(--primary-color); /* Unified color from second snippet */
+  color: var(--primary-color);
 }
+
 .overview-label {
   font-size: 0.95rem;
   font-weight: 500;
   color: #555;
 }
 
-/* -----------------------------------------------------
- CLEANER "CARD" LAYOUT
------------------------------------------------------- */
-.cleaner-list-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem; /* spacing between cards */
-}
-.cleaner-card {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  background: #fff;
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  gap: 1rem;
-}
 
-/* Single container for both "has image" and "no image" states */
-.profile-pic-container {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  border: 2px solid #2e5675;
-  background: #f9f9f9;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden; /* ensures circle cropping */
-  position: relative;
-}
-
-/* Actual image inside container */
-.cleaner-profile-pic {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block; 
-}
-
-/* If there's no image, show text in same container */
-.no-image-text {
-  font-size: 0.8rem;
-  color: #999;
-}
-
-/* Cleaner info next to profile pic */
-.cleaner-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-.cleaner-name {
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 0;
-  color: #2e5675;
-}
-.cleaner-phone,
-.cleaner-building,
-.cleaner-status-label {
+/* Style for the search input within filter container */
+.filter-container input[type="search"] {
+  padding: 0.5rem 1rem;
+  border-radius: 16px;
+  border: 1px solid #ccc;
   font-size: 0.9rem;
-  color: #555;
-}
-.cleaner-status-label {
-  font-weight: 500;
+  min-width: 220px;
+  transition: border-color var(--transition-duration) ease, box-shadow var(--transition-duration) ease;
+  outline: none;
+  background-color: #fff;
 }
 
-/* "View Details" button style */
-.view-details-btn {
-  background: #2e5675;
-  color: #fff;
-  border: none;
+/* Focus state for search input */
+.filter-container input[type="search"]:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 5px rgba(46, 86, 117, 0.5);
+}
+
+/* Style for the search button */
+.filter-container button[type="submit"] {
+  padding: 0.5rem 1rem;
   border-radius: 20px;
-  padding: 0.4rem 0.8rem;
-  font-size: 0.85rem;
+  border: none;
+  background-color: var(--primary-color);
+  color: #fff;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: background 0.3s;
-}
-.view-details-btn:hover {
-  background: #1f3e54;
+  transition: background-color var(--transition-duration) ease, transform var(--transition-duration) ease;
 }
 
-/* If no cleaners found */
-.no-cleaners-msg {
-  font-size: 0.95rem;
-  color: #666;
-  text-align: center;
-  padding: 1rem;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+/* Hover effect for the search button */
+.filter-container button[type="submit"]:hover {
+  background-color: #1f3e54;
+  transform: scale(1.02);
 }
+
 
 /* -----------------------------------------------------
- TABLE LAYOUTS (FROM SECOND SNIPPET)
+   CLEANER LIST & TABLE LAYOUTS
 ------------------------------------------------------ */
-/* Example: .cleaner-list for a table-based layout (if used) */
 .cleaner-list {
   width: 100%;
+  overflow-x: auto;
   border-collapse: collapse;
   background-color: #fff;
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s var(--transition-ease);
 }
+
+.cleaner-list:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
 .cleaner-list thead {
   background-color: var(--primary-color);
   color: #fff;
 }
+
 .cleaner-list th,
 .cleaner-list td {
   padding: 10px 15px;
@@ -311,23 +268,41 @@
   font-size: 0.95rem;
   vertical-align: middle;
 }
+
 .cleaner-list th {
   font-weight: 400;
- 
   letter-spacing: 0.05em;
 }
+
 .cleaner-row {
-  cursor: pointer;
-  transition: background-color var(--transition-duration);
-  display: table-row;
-}
-.cleaner-row:hover {
-  background-color: rgba(88, 127, 157, 0.182);
+  transition: background-color 0.3s var(--transition-ease);
 }
 
-/* "No Image" placeholder in table form */
-.no-image-placeholder, 
-.modal-no-image-placeholder {
+.cleaner-row:hover {
+  background-color: rgba(88, 127, 157, 0.15);
+}
+
+/* -----------------------------------------------------
+   IMAGES & PLACEHOLDERS
+------------------------------------------------------ */
+.cleaner-profile-pic {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  object-fit: cover;
+  align-items: center;
+  margin: 0 auto;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s var(--transition-ease);
+}
+
+.cleaner-profile-pic:hover {
+  transform: scale(1.05);
+}
+
+.no-image-placeholder {
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -337,44 +312,12 @@
   justify-content: center;
   color: var(--no-image-text);
   font-size: 0.8rem;
-  margin-right: 1px;
+  margin: 0 auto;
   border: 1px solid #d1d5db;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-  margin-left: 4rem;
-}
-.modal-no-image-placeholder {
-  width: 100px;
-  height: 100px;
-  margin-bottom: 1rem;
-  font-size: 1rem;
-}
-#no-cleaners-message td {
-  text-align: center;
-  padding: 1rem;
-  font-size: 1rem;
-  color: #555;
-}
-
-/* Another style for "View Details" button from second snippet */
-.view-details-btn {
-  padding: 0.6rem 1rem;
-  background-color: #dce8f261;
-  color: #040404;
-  border: none;
-  border-radius: 2rem;
-  font-weight: 400;
-  transition: background-color var(--transition-duration);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.view-details-btn:hover {
-  background-color: #9ea9b1;
 }
 
 /* -----------------------------------------------------
- CLEANER STATUS BADGES
+   STATUS BADGES & BUTTONS
 ------------------------------------------------------ */
 .cleaner-status {
   font-size: var(--badge-font-size);
@@ -386,36 +329,65 @@
   margin-bottom: 1rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: background-color var(--transition-duration), box-shadow var(--transition-duration);
+  min-width: 80px;
+  text-align: center;
 }
+
+.cleaner-status:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
 .status-available {
-  background: #8db8bd; 
-  color: #f8f8f8; 
+  background: #c7e1f3;
+  color: #123147;
 }
 .status-unavailable {
-  background: #de6c6c;
-  color: #f8f8f8;
+  background: #ff8c84ad;
+  color: #aa0f1e;
 }
-.cleaner-status:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
+.view-details-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background-color: #dce8f261;
+  color: #040404;
+  border: none;
+  border-radius: 2rem;
+  font-weight: 400;
+  transition: background-color var(--transition-duration) var(--transition-ease), transform var(--transition-duration) var(--transition-ease);
+  cursor: pointer;
+}
+
+.view-details-btn i {
+  pointer-events: none;
+}
+
+.view-details-btn:hover {
+  background-color: #9ea9b1;
+  transform: scale(1.02);
 }
 
 /* -----------------------------------------------------
- MODAL STYLES (MERGED)
+   MODAL STYLES
 ------------------------------------------------------ */
 .modal {
-  display: none; /* Hidden by default */
-  position: fixed; 
-  z-index: 1000; /* Sit on top */
+  display: none;
+  position: fixed;
+  z-index: 1000;
   left: 0;
   top: 0;
-  width: 100%; 
-  height: 100%; 
-  overflow: auto; 
-  background-color: var(--modal-bg); /* Semi-transparent background */
-  backdrop-filter: blur(8px); /* Blurred background */
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: var(--modal-bg);
+  backdrop-filter: blur(8px);
   padding-top: 60px;
   transition: opacity var(--transition-duration);
+  animation: fadeIn 0.3s ease-out;
 }
+
 .modal-content {
   background-color: var(--modal-content-bg);
   margin: auto;
@@ -426,13 +398,14 @@
   max-width: 500px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
   position: relative;
-  animation-name: slideIn;
-  animation-duration: 0.3s;
+  animation: slideDown 0.4s var(--transition-ease);
 }
-@keyframes slideIn {
-  from {transform: translateY(-50px); opacity: 0;}
-  to {transform: translateY(0); opacity: 1;}
+
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
+
 .close-button {
   color: var(--close-button-color);
   position: absolute;
@@ -443,11 +416,13 @@
   cursor: pointer;
   transition: color var(--transition-duration);
 }
+
 .close-button:hover,
 .close-button:focus {
   color: var(--close-button-hover-color);
   text-decoration: none;
 }
+
 .modal-body {
   display: flex;
   flex-direction: column;
@@ -461,8 +436,22 @@
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 1rem;
-  border: 4px solid var(--pastel-green); /* Use pastel border color */
+  border: 4px solid var(--pastel-green);
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  display: none;
+}
+
+.modal-no-image-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-color: var(--no-image-bg);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--no-image-text);
+  font-size: 1rem;
+  margin-bottom: 1rem;
 }
 
 .modal-cleaner-name {
@@ -471,37 +460,37 @@
   margin-bottom: 0.3rem;
   color: var(--primary-color);
 }
+
 .modal-cleaner-username {
   font-size: 1.1rem;
   color: #6b7280;
   margin-bottom: 0.8rem;
 }
 
+/* -----------------------------------------------------
+   MODAL CLEANER STATUS
+------------------------------------------------------ */
 .modal-cleaner-status {
   font-size: var(--badge-font-size);
   font-weight: 500;
   padding: var(--badge-padding);
   border-radius: 9999px;
   display: inline-block;
-  color: #fff;
   margin-bottom: 1rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: background-color var(--transition-duration), box-shadow var(--transition-duration);
 }
 
-/* Additional pastel classes for the modal status if needed */
 .modal-cleaner-status.status-available {
-  background: var(--pastel-green); 
-  color: #2e7d32;
+  background: #c7e1f3;
+  color: #123147;
 }
+
 .modal-cleaner-status.status-unavailable {
-  background: var(--pastel-red); 
-  color: #c62828; 
+  background: #ff8c84ad;
+  color: #aa0f1e;
 }
-.modal-cleaner-status.status-on_leave {
-  background: var(--pastel-yellow); 
-  color: #ffb300; 
-}
+
 .modal-cleaner-status:hover {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
@@ -511,6 +500,7 @@
   margin-top: 1rem;
   text-align: left;
 }
+
 .modal-cleaner-details p {
   font-size: 0.95rem;
   margin-bottom: 0.5rem;
@@ -518,26 +508,30 @@
   align-items: center;
   justify-content: space-between;
 }
+
 .modal-cleaner-details strong {
   color: var(--primary-color);
 }
 
-/* Assigned Complaints inside Modal */
 .assigned-complaints {
   width: 100%;
   margin-top: 1.5rem;
   text-align: left;
 }
+
 .assigned-complaints h3 {
   font-size: 1.2rem;
   margin-bottom: 0.5rem;
   color: var(--primary-color);
 }
+
 .assigned-complaints ul {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: none;
 }
+
 .assigned-complaints li {
   background-color: #f9f9f9;
   padding: 0.7rem 1rem;
@@ -547,40 +541,44 @@
   align-items: center;
   gap: 0.5rem;
 }
-.assigned-complaints li .complaint-status {
+
+.complaint-status {
   font-size: var(--badge-font-size);
   font-weight: 500;
   padding: var(--badge-padding);
   border-radius: 9999px;
-  display: inline-block;
-  color: #0c5460;
   margin-left: auto;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: background-color var(--transition-duration), box-shadow var(--transition-duration);
-}
-
-/* Original Complaint Status Colors */
-.complaint-status.ongoing {
-  background: var(--pastel-blue); 
-  color: #75a2bc; 
-  display: flex;
+  display: inline-flex;
   align-items: center;
 }
-.complaint-status.completed {
-  background: var(--pastel-green); 
-  color: #2e7d32; 
+
+/* Spinner and Message Styles */
+#complaint-spinner {
+  display: none;
+  text-align: center;
+  margin: 1rem 0;
 }
-.complaint-status:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
+.loader {
+  margin-right: 0.5rem;
+}
+
+#complaint-message {
+  display: none;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  color: #ff5c5c;
 }
 
 /* -----------------------------------------------------
- TOOLTIP STYLING (IF NEEDED)
+   TOOLTIP STYLING
 ------------------------------------------------------ */
 .tooltip {
   position: relative;
   display: inline-block;
 }
+
 .tooltip .tooltiptext {
   visibility: hidden;
   width: 140px;
@@ -598,6 +596,7 @@
   transition: opacity var(--transition-duration);
   font-size: 0.85rem;
 }
+
 .tooltip:hover .tooltiptext,
 .tooltip:focus .tooltiptext {
   visibility: visible;
@@ -605,53 +604,64 @@
 }
 
 /* -----------------------------------------------------
- RESPONSIVE DESIGN
+   SCROLLBAR STYLING (optional)
 ------------------------------------------------------ */
-@media screen and (max-width: 768px) {
-  .modal-content {
-      width: 95%;
-  }
-  .assigned-complaints h3 {
-      font-size: 1rem;
-  }
-  .cleaner-profile-pic {
-      width: 50px;
-      height: 50px;
-  }
-  .modal-profile-pic {
-      width: 80px;
-      height: 80px;
-  }
-  .modal-cleaner-name {
-      font-size: 1.5rem;
-  }
-  .modal-cleaner-username {
-      font-size: 1rem;
-  }
-  .cleaner-name {
-      font-size: 0.95rem;
-  }
-  .cleaner-status {
-      font-size: 0.8rem;
-      padding: 0.3rem 0.6rem;
-  }
-  .complaint-status {
-      font-size: 0.8rem;
-      padding: 0.3rem 0.6rem;
-  }
-}
-
-/* Scrollbar Styling (optional) */
 ::-webkit-scrollbar {
   width: 8px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #f1f1f1; 
+  background: #f1f1f1;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: var(--primary-color); 
+  background: var(--primary-color);
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #555; 
+  background: #555;
+}
+
+/* -----------------------------------------------------
+   PAGINATION STYLING
+------------------------------------------------------ */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.pagination-container .pagination {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pagination-container .pagination a,
+.pagination-container .pagination span {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  color: #555;
+  text-decoration: none;
+  transition: background-color var(--transition-duration), color var(--transition-duration);
+}
+
+.pagination-container .pagination a:hover {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+.pagination-container .pagination .active span {
+  background-color: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+@media screen and (max-width: 768px) {
+  .cleaner-list th,
+  .cleaner-list td {
+    padding: 8px 10px; /* reduce padding on small screens */
+    font-size: 0.85rem; /* smaller font size for readability */
+  }
 }
