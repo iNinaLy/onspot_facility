@@ -1,20 +1,19 @@
 {{-- resources/views/supervisor/cleaners/index.blade.php --}}
-
 @extends('layouts.app')
 
 @section('title', 'Cleaners')
 
 @push('styles')
-    {{-- Make sure to include your merged CSS file with all the class names --}}
-    <link rel="stylesheet" href="{{ asset('css/supervisor/cleaner.css') }}">
+@vite('resources/supervisor/cleaner.css')
 @endpush
 
 @section('content')
 <div class="container">
+    <!-- Page Heading -->
     <div class="header-container">
-            <h1 class="heading">Cleaners</h1>
-        </div>
-    
+        <h1 class="heading">Cleaners</h1>
+    </div>
+
     <!-- Cleaner Overview (Top Stats) -->
     <div class="cleaner-overview">
         <div class="overview-box">
@@ -31,6 +30,7 @@
         </div>
     </div>
 
+    <!-- Tabs + Search -->
     <div class="tabs-and-search">
         <div class="tab-header">
             <button class="tab-btn active" data-tab="available-panel">Available</button>
@@ -44,21 +44,15 @@
                 placeholder="Search for cleaners..." 
                 aria-label="Search Cleaners"
                 value="{{ request('search') }}"
-                style="padding: 0.5rem; border-radius: 16px; border: 1px solid #ccc;"
             >
-            
-            <button type="submit"
-                    style="padding: 0.45rem 1rem; margin-left: 0.5rem; background: #2e5675; color: #fff; border-radius: 20px;">
-                Search
-            </button>
+            <button type="submit">Search</button>
         </form>
     </div>
 
-    <!-- TAB CONTENT -->
+    <!-- Tab Content -->
     <div class="tab-content">
-        <!-- ============== AVAILABLE CLEANERS ============== -->
+        <!-- ======================= AVAILABLE CLEANERS ======================= -->
         <div class="tab-panel active" id="available-panel">
-            <!-- Modify the table’s columns & arrangement -->
             <table class="cleaner-list" aria-label="Available Cleaners">
                 <thead>
                     <tr>
@@ -71,9 +65,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($availableCleaners as $cleaner)
+                @forelse($availableCleaners as $cleaner)
                     <tr class="cleaner-row">
-                        <!-- Profile -->
                         <td>
                             @if($cleaner->profile_pic)
                                 <img 
@@ -85,23 +78,14 @@
                                 <div class="no-image-placeholder">No Image</div>
                             @endif
                         </td>
-                        <!-- Name -->
                         <td>
                             <span class="cleaner-name">{{ $cleaner->cleaner_name }}</span>
                         </td>
-                        <!-- Building -->
-                        <td>
-                            {{ $cleaner->building }}
-                        </td>
-                        <!-- Phone -->
-                        <td>
-                            {{ $cleaner->cleaner_phoneNo }}
-                        </td>
-                        <!-- Status -->
+                        <td>{{ $cleaner->building }}</td>
+                        <td>{{ $cleaner->cleaner_phoneNo }}</td>
                         <td>
                             <span class="cleaner-status status-available">Available</span>
                         </td>
-                        <!-- Actions -->
                         <td>
                             <button class="view-details-btn"
                                 data-name="{{ $cleaner->cleaner_name }}"
@@ -119,23 +103,23 @@
                             </button>
                         </td>
                     </tr>
-                    @empty
+                @empty
                     <tr>
                         <td colspan="6">No available cleaners found.</td>
                     </tr>
-                    @endforelse
+                @endforelse
                 </tbody>
             </table>
 
             <!-- Pagination for Available Cleaners -->
             @if($availableCleaners->hasPages())
-                <div style="margin-top: 1rem;">
+                <div class="pagination-container" style="margin-top:1rem;">
                     {{ $availableCleaners->links() }}
                 </div>
             @endif
         </div>
 
-        <!-- ============== UNAVAILABLE CLEANERS ============== -->
+        <!-- ======================= UNAVAILABLE CLEANERS ======================= -->
         <div class="tab-panel" id="unavailable-panel">
             <table class="cleaner-list" aria-label="Unavailable Cleaners">
                 <thead>
@@ -145,13 +129,12 @@
                         <th>Building</th>
                         <th>Phone</th>
                         <th>Status</th>
-                        <th>Actions</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($unavailableCleaners as $cleaner)
+                @forelse($unavailableCleaners as $cleaner)
                     <tr class="cleaner-row">
-                        <!-- Profile -->
                         <td>
                             @if($cleaner->profile_pic)
                                 <img 
@@ -163,23 +146,14 @@
                                 <div class="no-image-placeholder">No Image</div>
                             @endif
                         </td>
-                        <!-- Name -->
                         <td>
                             <span class="cleaner-name">{{ $cleaner->cleaner_name }}</span>
                         </td>
-                        <!-- Building -->
-                        <td>
-                            {{ $cleaner->building }}
-                        </td>
-                        <!-- Phone -->
-                        <td>
-                            {{ $cleaner->cleaner_phoneNo }}
-                        </td>
-                        <!-- Status -->
+                        <td>{{ $cleaner->building }}</td>
+                        <td>{{ $cleaner->cleaner_phoneNo }}</td>
                         <td>
                             <span class="cleaner-status status-unavailable">Unavailable</span>
                         </td>
-                        <!-- Actions -->
                         <td>
                             <button class="view-details-btn"
                                 data-name="{{ $cleaner->cleaner_name }}"
@@ -197,17 +171,17 @@
                             </button>
                         </td>
                     </tr>
-                    @empty
+                @empty
                     <tr>
                         <td colspan="6">No unavailable cleaners found.</td>
                     </tr>
-                    @endforelse
+                @endforelse
                 </tbody>
             </table>
 
             <!-- Pagination for Unavailable Cleaners -->
             @if($unavailableCleaners->hasPages())
-                <div style="margin-top: 1rem;">
+                <div class="pagination-container" style="margin-top:1rem;">
                     {{ $unavailableCleaners->links() }}
                 </div>
             @endif
@@ -220,16 +194,16 @@
     <div class="modal-content">
         <span class="close-button" aria-label="Close Modal">&times;</span>
         <div class="modal-body">
-            <!-- If there's an image, show #modal-profile-pic; else show #modal-no-image-placeholder -->
-            <img id="modal-profile-pic" class="modal-profile-pic" alt="Cleaner Profile" style="display: none;">
-            <div class="modal-no-image-placeholder" id="modal-no-image-placeholder" style="display: none;">
-                No Image
-            </div>
+            <!-- Profile Pic / No Image Placeholder -->
+            <img id="modal-profile-pic" class="modal-profile-pic" alt="Cleaner Profile">
+            <div class="modal-no-image-placeholder" id="modal-no-image-placeholder">No Image</div>
 
+            <!-- Basic Info -->
             <h2 class="modal-cleaner-name" id="modal-cleaner-name"></h2>
             <span class="modal-cleaner-username" id="modal-cleaner-username"></span>
-            <p class="modal-cleaner-status" id="modal-cleaner-status"></p>
+            <div id="modal-cleaner-status-container"></div>  <!-- Container for dynamic status -->
 
+            <!-- Additional Info -->
             <div class="modal-cleaner-details">
                 <p>
                     <strong>Phone:</strong>
@@ -245,26 +219,24 @@
                 </p>
             </div>
 
+            <!-- Complaints Section -->
             <div class="assigned-complaints">
                 <h3>Assigned Complaints:</h3>
-                <div id="complaint-spinner" style="display: none;">
+                <div id="complaint-spinner">
                     <i class="fas fa-spinner fa-spin loader"></i> Loading...
                 </div>
-                <ul id="modal-cleaner-complaints" style="display: none;"></ul>
-                <p id="complaint-message" style="display: none;">
-                    Cleaners still have ongoing tasks to be completed.
-                </p>
+                <ul id="modal-cleaner-complaints"></ul>
+                <p id="complaint-message">Cleaner still has ongoing tasks.</p>
             </div>
         </div>
     </div>
 </div>
 @endsection
 
-
 @push('scripts')
 @vite([
-        'resources/supervisor/app.js',
-        'resources/supervisor/dashboard.js',
-        'resources/supervisor/cleaner.js',
-    ])
+    'resources/supervisor/app.js',
+    'resources/supervisor/dashboard.js',
+    'resources/supervisor/cleaner.js',
+])
 @endpush

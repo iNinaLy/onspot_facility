@@ -16,6 +16,7 @@ export default defineConfig({
                 'resources/supervisor/dashboard.js',
                 'resources/supervisor/complaint.js',
                 'resources/supervisor/cleaner.js',
+                'resources/supervisor/cleaner.css',
                 'resources/supervisor/history.js',
             ],
             refresh: true,

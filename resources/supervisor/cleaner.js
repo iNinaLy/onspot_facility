@@ -4,24 +4,26 @@ import 'toastr/build/toastr.min.css';
 import './cleaner.css';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // ====== TABS ======
+    /* --------------------------
+       TABS
+    ---------------------------*/
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabPanels = document.querySelectorAll('.tab-panel');
 
     tabButtons.forEach((btn) => {
         btn.addEventListener('click', () => {
-            // Deactivate all tab buttons and panels
             tabButtons.forEach((b) => b.classList.remove('active'));
             tabPanels.forEach((p) => p.classList.remove('active'));
 
-            // Activate clicked tab
             btn.classList.add('active');
             const targetId = btn.getAttribute('data-tab');
             document.getElementById(targetId).classList.add('active');
         });
     });
 
-    // ====== MODAL ======
+    /* --------------------------
+       MODAL
+    ---------------------------*/
     const modal = document.getElementById('cleanerModal');
     const closeButton = modal.querySelector('.close-button');
 
@@ -33,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalName = document.getElementById('modal-cleaner-name');
     const modalUsername = document.getElementById('modal-cleaner-username');
     const modalUsernameDetail = document.getElementById('modal-cleaner-username-detail');
-    const modalStatus = document.getElementById('modal-cleaner-status');
+    const statusContainer = document.getElementById('modal-cleaner-status-container');
     const modalPhoneLink = document.getElementById('modal-cleaner-phoneNo');
     const modalBuilding = document.getElementById('modal-cleaner-building');
 
@@ -54,19 +56,35 @@ document.addEventListener('DOMContentLoaded', () => {
             const building = btn.getAttribute('data-building');
             const complaints = JSON.parse(btn.getAttribute('data-complaints') || '[]');
 
-            // Reset
+            // Reset everything
             modalProfilePic.style.display = 'none';
             modalNoImagePlaceholder.style.display = 'none';
             complaintSpinner.style.display = 'block';
             modalComplaints.style.display = 'none';
             complaintMessage.style.display = 'none';
             modalComplaints.innerHTML = '';
+            statusContainer.innerHTML = ''; // Clear previous status
 
             // Populate basic info
             modalName.textContent = name;
             modalUsername.textContent = '@' + username;
             modalUsernameDetail.textContent = username;
-            modalStatus.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+
+            // Create and populate status element
+            let statusElement = document.createElement('span');
+            statusElement.classList.add('modal-cleaner-status');
+
+            if (status.toLowerCase() === 'available') {
+                statusElement.classList.add('status-available');
+                statusElement.textContent = 'Available';
+            } else if (status.toLowerCase() === 'unavailable') {
+                statusElement.classList.add('status-unavailable');
+                statusElement.textContent = 'Unavailable';
+            } else {
+                statusElement.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            }
+            statusContainer.appendChild(statusElement);
+
             modalPhoneLink.textContent = phoneNo;
             modalPhoneLink.href = 'tel:' + phoneNo;
             modalBuilding.textContent = building;
@@ -92,11 +110,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         const li = document.createElement('li');
                         li.textContent = c.desc + ' ';
 
-                        // Status span
+                        // Status span for complaints
                         const statusSpan = document.createElement('span');
                         statusSpan.classList.add('complaint-status');
                         if (c.status.toLowerCase() === 'ongoing') {
-                            // Insert spinner + text
                             statusSpan.innerHTML = `
                                 <i class="fas fa-spinner fa-spin" style="margin-right: 4px;"></i>
                                 ${c.status.charAt(0).toUpperCase() + c.status.slice(1)}
@@ -112,7 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         modalComplaints.appendChild(li);
                     });
 
-                    // If there's at least one ongoing complaint, show the message
                     if (complaints.some(comp => comp.status.toLowerCase() === 'ongoing')) {
                         complaintMessage.style.display = 'block';
                     }
