@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use App\Models\NotificationToken;
 
-
-
-    class AuthController extends Controller
+class AuthController extends Controller
     {
     public function register(Request $request)
     {

@@ -5,215 +5,385 @@ namespace App\Http\Controllers;
 use App\Models\Complaint;
 use App\Models\Cleaner;
 use App\Models\User;
+use App\Services\SupabaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\ComplaintCleaner;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\NewCleaningComplaint;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage; // Ensure Storage facade is imported
+use App\Notifications\ComplaintNotification;
 use Illuminate\Support\Facades\Log;
 
 
 class ComplaintController extends Controller
 {
-    // Admin: Fetch complaints with optional filtering and sorting (Web)
+    protected $supabase;
+
+    // Constructor to initialize SupabaseService
+    public function __construct(SupabaseService $supabase)
+    {
+        $this->supabase = $supabase;
+    }
+
+    /**
+     * Display a listing of the complaints with optional filtering and sorting.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\View\View
+     */
     public function index(Request $request)
     {
-        $query = Complaint::query();
+        $search = $request->input('search');
+        $status = $request->input('status');
+        $perPage = $request->input('per_page', 10);
 
-        if ($request->filled('status')) {
-            $query->where('comp_status', $request->status);
+        $query = Complaint::with(['officer', 'assignedBy'])->orderBy('created_at', 'desc');
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('comp_desc', 'like', "%{$search}%")
+                  ->orWhere('comp_location', 'like', "%{$search}%");
+            });
         }
 
-        $complaints = $query->with(['officer', 'supervisor'])->paginate(10);
-        return view('admin.complaints.index', compact('complaints'));
+        if ($status) {
+            $query->where('comp_status', $status);
+        }
+
+        $complaints = $query->paginate($perPage);
+
+        $totalComplaints = Complaint::count();
+        $pendingComplaints = Complaint::where('comp_status', 'pending')->count();
+        $ongoingComplaints = Complaint::where('comp_status', 'ongoing')->count();
+        $completedComplaints = Complaint::where('comp_status', 'completed')->count();
+
+        return view('admin.complaints.index', compact(
+            'complaints',
+            'totalComplaints',
+            'pendingComplaints',
+            'ongoingComplaints',
+            'completedComplaints'
+        ));
     }
 
-    // Store a new complaint (Web)
-    public function store(Request $request)
+    /**
+     * Handle bulk actions on complaints.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function bulkAction(Request $request)
     {
-        $validatedData = $request->validate([
-            'comp_desc' => 'required|string|max:255',
-            'comp_location' => 'required|string|max:255',
-            'comp_date' => 'required|date',
-            'comp_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'officer_id' => 'required|exists:users,id',
-            'cleaner_id' => 'nullable|exists:users,id',
+        $action = $request->input('action');
+        $complaintIds = $request->input('selected_complaints', []);
+
+        if (empty($complaintIds)) {
+            return redirect()->route('admin.complaints')->with('error', 'No complaints selected for the action.');
+        }
+
+        switch ($action) {
+            case 'delete':
+                $complaints = Complaint::whereIn('id', $complaintIds)->get();
+                foreach ($complaints as $complaint) {
+                    if ($complaint->comp_image) {
+                        Storage::delete('public/' . $complaint->comp_image);
+                    }
+                    $complaint->delete();
+                }
+
+                $message = count($complaintIds) > 1
+                    ? 'Selected complaints deleted successfully.'
+                    : 'Complaint deleted successfully.';
+                return redirect()->route('admin.complaints')->with('success', $message);
+
+            case 'mark_completed':
+                $complaints = Complaint::whereIn('id', $complaintIds)->get();
+                foreach ($complaints as $complaint) {
+                    $complaint->comp_status = 'completed';
+                    $complaint->save();
+                }
+
+                $message = count($complaintIds) > 1
+                    ? 'Selected complaints marked as completed.'
+                    : 'Complaint marked as completed.';
+                return redirect()->route('admin.complaints')->with('success', $message);
+
+            default:
+                return redirect()->route('admin.complaints')->with('error', 'Invalid action selected.');
+        }
+    }
+
+    /**
+     * Handle inline status updates.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id  Complaint ID
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function inlineUpdate(Request $request, $id)
+    {
+        $complaint = Complaint::findOrFail($id);
+        $request->validate([
+            'comp_status' => 'required|in:pending,ongoing,completed'
         ]);
 
-        $complaint = Complaint::create(array_merge($validatedData, [
-            'comp_status' => 'pending',
-        ]));
+        $complaint->comp_status = $request->comp_status;
+        $complaint->save();
 
-        if ($request->hasFile('comp_image')) {
-            $complaint->addMedia($request->file('comp_image'))
-                      ->toMediaCollection('complaint_images');
-        }
-
-        $supervisors = User::where('role', 'supervisor')->get();
-        Notification::send($supervisors, new NewCleaningComplaint($complaint));
-
-        return redirect()->route('supervisor.complaints.index')
-                         ->with('success', 'Complaint created and notification sent successfully.');
+        return response()->json(['status' => 'success', 'message' => 'Status updated successfully.']);
     }
 
-    // Supervisor: Show complaint details with available cleaners (Web)
+    /**
+     * Show the form for editing the specified complaint.
+     *
+     * @param  int  $id  Complaint ID
+     * @return \Illuminate\View\View
+     */
+    public function editComplaint($id)
+    {
+        $complaint = Complaint::findOrFail($id);
+        $officers = Cleaner::all();
+
+        return view('admin.complaints.edit', compact('complaint', 'officers'));
+    }
+
+    /**
+     * Update the specified complaint in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id  Complaint ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'comp_status'    => 'required|string|in:pending,ongoing,completed',
+            'comp_location'  => 'required|string|max:255',
+            'comp_desc'      => 'required|string',
+            'no_of_cleaners' => 'required|integer|min:1',
+            'comp_image'     => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        $complaint = Complaint::findOrFail($id);
+        $complaint->comp_status = $request->comp_status;
+        $complaint->comp_location = $request->comp_location;
+        $complaint->comp_desc = $request->comp_desc;
+        $complaint->no_of_cleaners = $request->no_of_cleaners;
+
+        if ($request->hasFile('comp_image')) {
+            if ($complaint->comp_image) {
+                Storage::delete($complaint->comp_image);
+            }
+            $path = $request->file('comp_image')->store('complaints');
+            $complaint->comp_image = $path;
+        }
+
+        $complaint->save();
+
+        return redirect()->route('admin.complaints.index')->with('success', 'Complaint updated successfully.');
+    }
+
+    /**
+     * Remove the specified complaint from storage.
+     *
+     * @param  Request $request
+     * @param  int|null  $id  Complaint ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy(Request $request, $id = null)
+    {
+        if ($id) {
+            $complaintIds = [$id];
+        } else {
+            $complaintIds = $request->input('selected_complaints');
+
+            if (!$complaintIds || !is_array($complaintIds)) {
+                return redirect()->route('admin.complaints')->with('error', 'No complaints selected for deletion.');
+            }
+        }
+
+        $complaints = Complaint::whereIn('id', $complaintIds)->get();
+        foreach ($complaints as $complaint) {
+            if ($complaint->comp_image) {
+                Storage::delete('public/' . $complaint->comp_image);
+            }
+            $complaint->delete();
+        }
+
+        return redirect()->route('admin.complaints')->with('success', 'Complaint(s) deleted successfully.');
+    }
+
+    /**
+     * Assign cleaner to the specified complaint.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function assignCleaner(Request $request, $id)
+    {
+        Log::info('AssignCleaner process started', [
+            'complaint_id'  => $id,
+            'supervisor_id' => Auth::id(),
+            'request_data'  => $request->all(),
+        ]);
+
+        try {
+            $validated = $request->validate([
+                'no_of_cleaners' => 'required|integer|min:1|max:3',
+                'cleaners'       => 'required|array|size:' . $request->no_of_cleaners,
+                'cleaners.*'     => 'exists:cleaners,user_id',
+            ]);
+
+            Log::info('Validation passed', ['validated_data' => $validated]);
+
+            $complaint = Complaint::findOrFail($id);
+            Log::info('Complaint fetched', ['complaint' => $complaint]);
+
+            if ($complaint->comp_status !== Complaint::STATUS_PENDING) {
+                Log::warning('Attempt to assign cleaners to a non-pending complaint', ['complaint_id' => $id]);
+                return redirect()->route('supervisor.complaints.show', $id)
+                    ->withErrors('Cleaners have already been assigned or the complaint is not pending.');
+            }
+
+            $complaint->assignCleaners($validated['cleaners'], Auth::id(), $validated['no_of_cleaners']);
+
+            /**
+             * ADDITION: Notify each assigned cleaner AND the officer about the assignment.
+             */
+            foreach ($validated['cleaners'] as $cleanerId) {
+                $cleanerUser = User::find($cleanerId);
+                if ($cleanerUser) {
+                    ComplaintNotification::notifyAssignment($complaint, $complaint->officer, $cleanerUser, Auth::user());
+                }
+            }
+
+            if ($complaint->officer) {
+                ComplaintNotification::notifyAssignment($complaint, $complaint->officer, null, Auth::user());
+            }
+
+            Log::info('AssignCleaner process completed successfully', ['complaint_id' => $id]);
+
+            return redirect()->route('supervisor.complaints.show', $id)
+                ->with('success', 'Cleaners assigned successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error assigning cleaners', [
+                'complaint_id'  => $id,
+                'supervisor_id' => Auth::id(),
+                'error'         => $e->getMessage(),
+                'trace'         => $e->getTraceAsString(),
+            ]);
+
+            if (app()->environment('local')) {
+                return redirect()->route('supervisor.complaints.show', $id)
+                    ->withErrors($e->getMessage());
+            }
+
+            return redirect()->route('supervisor.complaints.show', $id)
+                ->withErrors('An error occurred while assigning cleaners. Please try again.');
+        }
+    }
+
+    /**
+     * [REMOVED] Submit a new complaint via Web.
+     * (As requested, the original submitComplaint() method has been removed.)
+     */
+
+    /**
+     * Show the form for creating a new complaint.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function create()
+    {
+        $officers = Cleaner::all();
+
+        return view('admin.complaints.create', compact('officers'));
+    }
+
+    /**
+     * Display the specified complaint details.
+     *
+     * @param  int  $id  Complaint ID
+     * @return \Illuminate\View\View
+     */
     public function show($id)
     {
-        $complaint = Complaint::with('cleaners')->findOrFail($id);
+        $complaint = Complaint::with(['supervisor', 'cleaners'])->findOrFail($id);
         $availableCleaners = Cleaner::where('status', 'available')->get();
+
         return view('supervisor.complaints.show', compact('complaint', 'availableCleaners'));
     }
 
-    // Assign cleaners to the complaint (Web)
-    public function assignCleaner(Request $request, $id)
-    {
-        $request->validate([
-            'no_of_cleaners' => 'required|integer|min:1|max:3',
-            'cleaners' => 'required|array|size:' . $request->no_of_cleaners,
-            'cleaners.*' => 'exists:users,id', // Validate against users.id
-        ]);
-    
-        $complaint = Complaint::findOrFail($id);
-    
-        // Check if cleaners have already been assigned to this complaint
-        if ($complaint->cleaners()->exists()) {
-            return redirect()->route('supervisor.complaints.show', $id)
-                            ->withErrors('Cleaners have already been assigned for this complaint.');
-        }
-    
-        DB::transaction(function () use ($request, $complaint) {
-            // Prepare assignments with the supervisor ID, date, and number of cleaners
-            $assignments = [];
-            foreach ($request->cleaners as $cleanerUserId) {
-                $cleaner = Cleaner::where('user_id', $cleanerUserId)->firstOrFail(); // Map user_id to cleaner
-                $assignments[$cleaner->user_id] = [ // Use user_id for assignment
-                    'assigned_by' => Auth::id(),
-                    'assigned_date' => now(),
-                    'no_of_cleaners' => $request->no_of_cleaners,
-                ];
-            }
-    
-            // Attach cleaners with pivot data and update complaint status
-            $complaint->cleaners()->attach($assignments);
-            $complaint->update([
-                'comp_status' => 'ongoing',
-                'no_of_cleaners' => $request->no_of_cleaners,
-                'assigned_by' => Auth::id(),
-                'assigned_date' => now(),
-            ]);
-        });
-    
-        return redirect()->route('supervisor.complaints.show', $id)
-                        ->with('success', 'Cleaners assigned successfully.');
-    }    
-
-
-    // Supervisor: List complaints (Web)
-    public function supervisorIndex()
-    {
-        $complaints = Complaint::orderBy('comp_date', 'desc')->paginate(10);
-        return view('supervisor.complaints.index', compact('complaints'));
-    }
-
-    // Admin: Show recent complaint on the dashboard (Web)
+    /**
+     * Show recent complaint on the dashboard (Web)
+     *
+     * @return \Illuminate\View\View
+     */
     public function showDashboard()
     {
         $recentComplaint = Complaint::latest('comp_date')->latest('comp_time')->first();
         return view('dashboard', compact('recentComplaint'));
-    }
-
-    // Update complaint details (Web)
-    public function update(Request $request, $id)
-    {
-        $validatedData = $request->validate([
-            'comp_date' => 'required|date',
-            'comp_time' => 'required|date_format:H:i',
-            'comp_desc' => 'required|string|max:255',
-            'comp_location' => 'required|string|max:255',
-            'comp_status' => 'required|string|in:pending,ongoing,completed',
-        ]);
-
-        $complaint = Complaint::findOrFail($id);
-        $complaint->update($validatedData);
-
-        return response()->json($complaint, 200);
-    }
-
-    // Delete a complaint by ID (Web)
-    public function destroy($id)
-    {
-        Complaint::findOrFail($id)->delete();
-        return response()->json(null, 204);
-    }
-
-    // Update cleaner assignment (Web)
-    public function updateAssignment(Request $request, $complaintId)
-    {
-        $complaint = Complaint::findOrFail($complaintId);
-
-        if ($complaint->comp_status !== 'pending') {
-            return redirect()->back()->with('error', 'Cannot assign cleaners as the complaint is not pending.');
-        }
-
-        $request->validate([
-            'no_of_cleaners' => 'required|integer|min:1|max:3',
-            'cleaners' => 'required|array|min:1|max:' . $request->no_of_cleaners,
-            'cleaners.*' => 'exists:cleaners,id',
-        ]);
-
-        $complaint->cleaners()->syncWithPivotValues($request->cleaners, [
-            'assigned_by' => Auth::id(),
-            'assigned_date' => now(),
-            'no_of_cleaners' => $request->no_of_cleaners,
-        ]);
-
-        $complaint->update(['comp_status' => 'ongoing']);
-        return redirect()->route('supervisor.complaints.show', $complaintId)
-                         ->with('success', 'Cleaners assigned successfully.');
     }
     
         // **API Functions (From Current Version)**
     
         // Store a new complaint (API)
         public function apistore(Request $request)
-        {
-            $request->validate([
-                'comp_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'comp_date' => 'required|date',
-                'comp_time' => 'required',
-                'comp_desc' => 'required|string',
+        { 
+            $validatedData = $request->validate([
+                'comp_image'    => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'comp_date'     => 'required|date',
+                'comp_time'     => 'required',
+                'comp_desc'     => 'required|string',
                 'comp_location' => 'required|string',
             ]);
     
-            $complaint = Complaint::create([
-                'comp_date' => $request->comp_date,
-                'comp_time' => $request->comp_time,
-                'comp_desc' => $request->comp_desc,
-                'comp_location' => $request->comp_location,
-                'officer_id' => Auth::id(),
-                'assigned_by' => null,
-                'cleaner_id' => null,
-                'comp_status' => Complaint::STATUS_PENDING,
-                'comp_image' => null,
-            ]);
+            $complaint = Complaint::create(array_merge($validatedData, [
+                'officer_id'  => Auth::id(),
+                'comp_status' => 'pending',
+            ]));
     
-            // Check if an image is uploaded and attach it using the media library
             if ($request->hasFile('comp_image')) {
-                $media = $complaint->addMediaFromRequest('comp_image')
-                            ->toMediaCollection('complaint_images', 'public');
-    
-                Log::info('Media uploaded:', ['media' => $media]);
-    
+                $media = $complaint->addMediaFromRequest('comp_image')->toMediaCollection('complaint_images', 'public');
                 $complaint->update(['comp_image' => $media->getUrl()]);
-            } else {
-                Log::info('No image was uploaded');
+                Log::info('Media uploaded:', ['media' => $media]);
+            }
+    
+    
+            //$supervisors = User::role('supervisor')->get();
+            //Notification::send($supervisors, new ComplaintNotification($complaint, Auth::user(), false));
+    
+            try {
+                $response = $this->supabase->store('complaint', [
+                    'officer_id'    => $complaint->officer_id,
+                    'comp_date'     => $complaint->comp_date,
+                    'comp_time'     => $complaint->comp_time,
+                    'comp_desc'     => $complaint->comp_desc,
+                    'comp_location' => $complaint->comp_location,
+                    'comp_status'   => $complaint->comp_status,
+                    'comp_image'    => $complaint->comp_image ?? null, // Media URL if available
+                ]);
+    
+                return response()->json([
+                    'message'    => 'Complaint submitted successfully!',
+                    'complaint'  => $complaint,
+                    'supabase'   => $response,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to store complaint in Supabase', ['error' => $e->getMessage()]);
+    
+                return response()->json([
+                    'message' => 'Complaint submitted locally, but failed to store in Supabase.',
+                    'error'   => $e->getMessage(),
+                ], 500);
             }
     
             return response()->json([
-                'message' => 'Complaint submitted successfully!',
+                'message'   => 'Complaint submitted successfully!',
                 'complaint' => $complaint,
-            ], 201);
+            ]);
         }
     
         // Get officer complaints (API)
@@ -240,34 +410,30 @@ class ComplaintController extends Controller
     // Get details of a specific complaint
     public function getComplaintDetails($id)
     {
-        // Retrieve the complaint by its ID
-        $complaint = Complaint::where('id', $id)->first();
+        $complaint = Complaint::find($id);
 
-        // Check if the complaint exists
         if (!$complaint) {
             return response()->json(['error' => 'Complaint not found'], 404);
         }
 
-        // Get the media URL for the complaint image if it exists
-        $compImageUrl = $complaint->getFirstMediaUrl('complaint_images') ? url($complaint->getFirstMediaUrl('complaint_images')) : null;
+        $compImageUrl = $complaint->getFirstMediaUrl('complaint_images')
+            ? url($complaint->getFirstMediaUrl('complaint_images'))
+            : null;
 
-
-        // Format the complaint details for response
         $complaintDetails = [
-            'id' => $complaint->id,
-            'comp_date' => $complaint->comp_date,
-            'comp_time' => $complaint->comp_time,
-            'comp_desc' => $complaint->comp_desc,
-            'comp_location' => $complaint->comp_location,
-            'comp_image' => $compImageUrl,  // Use the media URL
-            'officer_id' => $complaint->officer_id,
-            'assigned_by' => $complaint->assigned_by,
-            'assigned_date' => $complaint->assigned_date,
+            'id'             => $complaint->id,
+            'comp_date'      => $complaint->comp_date,
+            'comp_time'      => $complaint->comp_time,
+            'comp_desc'      => $complaint->comp_desc,
+            'comp_location'  => $complaint->comp_location,
+            'comp_image'     => $compImageUrl,
+            'officer_id'     => $complaint->officer_id,
+            'assigned_by'    => $complaint->assigned_by,
+            'assigned_date'  => $complaint->assigned_date,
             'no_of_cleaners' => $complaint->no_of_cleaners,
-            'cleaner_id' => $complaint->cleaner_id,
-            'created_at' => $complaint->created_at,
-            'updated_at' => $complaint->updated_at,
-            'comp_status' => $complaint->comp_status,
+            'created_at'     => $complaint->created_at,
+            'updated_at'     => $complaint->updated_at,
+            'comp_status'    => $complaint->comp_status,
         ];
 
         return response()->json($complaintDetails, 200);
@@ -276,36 +442,70 @@ class ComplaintController extends Controller
    
     public function getPendingComplaints()
     {
-        // Fetch complaints with 'Pending' status
-        $pendingComplaints = Complaint::where('comp_status', 'Pending')->get();
-
-        // Return as JSON response
+        $pendingComplaints = Complaint::where('comp_status', 'pending')->get();
         return response()->json($pendingComplaints);
     }
 
     public function assignCleanerToComplaint(Request $request)
     {
-        // Validate incoming data
         $validated = $request->validate([
             'complaint_id' => 'required|exists:complaints,id',
-            'cleaner_id' => 'required|exists:users,id', // Validate against users.id
+            'cleaner_id'   => 'required|exists:users,id',
         ]);
-    
-        // Map user_id to cleaner
-        $cleaner = Cleaner::where('user_id', $validated['cleaner_id'])->firstOrFail();
-    
-        // Assign cleaner to complaint
-        DB::table('complaint_cleaner')->insert([
-            'complaint_id' => $validated['complaint_id'],
-            'cleaner_id' => $cleaner->user_id, // Use user_id for assignment
-            'assigned_at' => now(),
-            'assigned_by' => Auth::id(),
-        ]);
-    
-        // Update complaint status to 'Ongoing'
-        Complaint::where('id', $validated['complaint_id'])->update(['comp_status' => 'Ongoing']);
-    
+
+        DB::transaction(function () use ($validated) {
+            DB::table('complaint_cleaner')->insert([
+                'complaint_id'  => $validated['complaint_id'],
+                'cleaner_id'    => $validated['cleaner_id'],
+                'assigned_date' => now(),
+                'assigned_by'   => Auth::id(),
+            ]);
+
+            Complaint::where('id', $validated['complaint_id'])->update(['comp_status' => 'ongoing']);
+            User::where('id', $validated['cleaner_id'])->update(['status' => 'unavailable']);
+        });
+
         return response()->json(['message' => 'Cleaner assigned successfully']);
+    }
+
+    public function notifyRelevantUsers(Complaint $complaint)
+    {
+        $supervisors = User::role('supervisor')->where('is_active', true)->get();
+
+        foreach ($supervisors as $supervisor) {
+            $supervisor->notify(new ComplaintNotification($complaint, $complaint->officer, false));
+        }
+
+        $cleaners = $complaint->cleaners;
+        foreach ($cleaners as $cleaner) {
+            $cleaner->notify(new ComplaintNotification($complaint, $complaint->officer, $cleaner, $complaint->supervisor));
+        }
+
+        $officer = $complaint->officer;
+        $officer->notify(new ComplaintNotification($complaint, $officer, true));
+    }
+
+    public function supervisorIndex(Request $request)
+    {
+        // Always include only 'pending' complaints
+        $query = Complaint::where('comp_status', 'pending');
+
+        // Check if a date filter is provided
+        if ($request->filled('date')) {
+            $query->whereDate('comp_date', $request->date);
+        }
+
+        // Order by date and paginate
+        $complaints = $query->orderBy('comp_date', 'desc')->paginate(10);
+
+        return view('supervisor.complaints.index', compact('complaints'));
+    }
+
+
+    public function edit($id)
+    {
+        $complaint = Complaint::findOrFail($id);
+        return view('supervisor.complaints.edit', compact('complaint'));
     }
     
 
@@ -326,47 +526,126 @@ class ComplaintController extends Controller
     // assign complaint to cleaner
     public function AssignTask(Request $request, $id)
     {
-        $complaint = Complaint::select('id', 'comp_location', 'comp_date', 'comp_desc', 'officer_id', 'comp_status', 'comp_image')
-            ->where('id', $id)
-            ->whereNull('assigned_by') // Only unassigned complaints
+        // Step 1: Fetch the complaint (ensure it's unassigned)
+        $complaint = Complaint::where('id', $id)
+            ->whereNull('assigned_by') // Only fetch unassigned complaints
             ->first();
     
         if (!$complaint) {
-            return response()->json(['message' => 'Complaint not found'], 404);
+            Log::warning('Complaint not found or already assigned', ['complaint_id' => $id]);
+            return response()->json(['message' => 'Complaint not found or already assigned'], 404);
         }
     
-        $validated = $request->validate([
-            'cleaner_ids' => 'required|array|min:1',
-            'no_of_cleaners' => 'required|integer|min:1',
-            'assigned_by' => 'required|integer|exists:users,id',
+        Log::info('Complaint found for assignment', ['complaint' => $complaint]);
+    
+        // Step 2: Validate the request
+        try {
+            $validated = $request->validate([
+                'cleaner_ids' => 'required|array|min:1',
+                'no_of_cleaners' => 'required|integer|min:1',
+                'assigned_by' => 'required|integer', // Ensure assigned_by exists in users table
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation failed for AssignTask', ['errors' => $e->errors()]);
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $e->errors(),
+            ], 422);
+        }
+    
+        Log::info('Validated task assignment request', [
+            'complaint_id' => $complaint->id,
+            'validated_data' => $validated,
         ]);
     
         $assignedDate = now();
     
-        foreach ($validated['cleaner_ids'] as $cleanerUserId) {
-            $cleaner = Cleaner::where('user_id', $cleanerUserId)->firstOrFail();
+        // Step 3: Assign task to cleaners and update complaint_cleaner table
+        try {
+            foreach ($validated['cleaner_ids'] as $cleanerUserId) {
+                $cleaner = Cleaner::where('user_id', $cleanerUserId)->firstOrFail();
     
-            ComplaintCleaner::create([
-                'complaint_id' => $complaint->id,
-                'cleaner_id' => $cleaner->user_id, // Use user_id
-                'no_of_cleaners' => $validated['no_of_cleaners'],
-                'assigned_by' => $validated['assigned_by'],
-                'assigned_date' => $assignedDate,
-            ]);
+                // Add task assignment to complaint_cleaner table
+                ComplaintCleaner::create([
+                    'complaint_id' => $complaint->id,
+                    'cleaner_id' => $cleaner->user_id,
+                    'no_of_cleaners' => $validated['no_of_cleaners'],
+                    'assigned_by' => $validated['assigned_by'],
+                    'assigned_date' => $assignedDate,
+                ]);
     
-            Cleaner::where('user_id', $cleanerUserId)->update(['status' => 'unavailable']);
+                Log::info('Task assigned to cleaner in local database', [
+                    'complaint_id' => $complaint->id,
+                    'cleaner_id' => $cleaner->user_id,
+                ]);
+    
+                // Update cleaner's status to unavailable
+                $cleaner->update(['status' => 'unavailable']);
+                Log::info('Cleaner status updated to unavailable', ['cleaner_id' => $cleanerUserId]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error assigning task to cleaners', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to assign task to cleaners'], 500);
         }
     
-        $complaint->update([
-            'comp_status' => Complaint::STATUS_ON_GOING,
-            'assigned_by' => $validated['assigned_by'],
-            'assigned_date' => $assignedDate,
-            'no_of_cleaners' => $validated['no_of_cleaners'],
-        ]);
+        // Step 4: Update the complaint with assignment details
+        try {
+            $complaint->update([
+                'comp_status' => Complaint::STATUS_ONGOING,
+                'assigned_by' => $validated['assigned_by'], // Record who assigned the task
+                'assigned_date' => $assignedDate,
+                'no_of_cleaners' => $validated['no_of_cleaners'],
+            ]);
     
+            Log::info('Complaint updated with assignment details', [
+                'complaint_id' => $complaint->id,
+                'status' => Complaint::STATUS_ONGOING,
+                'assigned_by' => $validated['assigned_by'],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to update complaint', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to update complaint details'], 500);
+        }
+    
+        // Step 5: Sync data to Supabase
+        try {
+            foreach ($validated['cleaner_ids'] as $cleanerUserId) {
+                $data = [
+                    'complaint_id' => $complaint->id,
+                    'cleaner_id' => $cleanerUserId,
+                    'no_of_cleaners' => $validated['no_of_cleaners'],
+                    'assigned_by' => $validated['assigned_by'],
+                    'assigned_date' => $assignedDate->toIso8601String(),
+                ];
+                Log::info('Sending data to Supabase (complaint_cleaner)', $data);
+                $this->supabase->store('complaint_cleaner', $data);
+            }
+    
+            $complaintData = [
+                'id' => $complaint->id,
+                'comp_status' => $complaint->comp_status,
+                'assigned_by' => $validated['assigned_by'],
+                'assigned_date' => $assignedDate->toIso8601String(),
+                'no_of_cleaners' => $validated['no_of_cleaners'],
+                'comp_date' => $complaint->comp_date,
+                'comp_time' => $complaint->comp_time,
+                'comp_desc' => $complaint->comp_desc,
+                'comp_location' => $complaint->comp_location,
+            ];
+            Log::info('Sending data to Supabase (complaints)', $complaintData);
+            $this->supabase->store('complaint', $complaintData);
+        } catch (\Exception $e) {
+            Log::error('Failed to store task assignment in Supabase', ['error' => $e->getMessage()]);
+            return response()->json([
+                'message' => 'Task assigned locally but failed to sync with Supabase.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    
+        // Step 6: Return success response
+        Log::info('Task assignment process completed successfully', ['complaint_id' => $complaint->id]);
         return response()->json(['message' => 'Task assigned successfully']);
     }
-    
     
 
     // fetch complaint details

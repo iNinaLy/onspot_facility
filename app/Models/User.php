@@ -35,6 +35,25 @@ class User extends Authenticatable implements HasMedia
         'password' => 'hashed',
     ];
 
+
+     /**
+     * Relationship with the Complaint model.
+     */
+    public function complaints()
+    {
+        return $this->belongsToMany(Complaint::class, 'complaint_cleaner', 'cleaner_id', 'complaint_id')
+                    ->withPivot('assigned_by', 'assigned_date', 'no_of_cleaners')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Relationship with NotificationToken model.
+     */
+    public function notificationTokens()
+    {
+        return $this->hasMany(NotificationToken::class, 'user_id');
+    }
+
     protected static function booted()
     {
         static::deleting(function ($user) {
@@ -65,19 +84,28 @@ class User extends Authenticatable implements HasMedia
 
     // Your role-checking and other methods remain the same...
 
-    public function isCleaner()
+   /**
+     * Scope to check if the user is a cleaner.
+     */
+    public function scopeIsCleaner($query)
     {
-        return $this->role === 'cleaner';
+        return $query->where('role', 'cleaner');
     }
 
-    public function isSupervisor()
+    /**
+     * Scope to check if the user is a supervisor.
+     */
+    public function scopeIsSupervisor($query)
     {
-        return $this->role === 'supervisor';
+        return $query->where('role', 'supervisor');
     }
 
-    public function isOfficer()
+    /**
+     * Scope to check if the user is an officer.
+     */
+    public function scopeIsOfficer($query)
     {
-        return $this->role === 'officer';
+        return $query->where('role', 'officer');
     }
 
     public function cleaner()
@@ -85,4 +113,9 @@ class User extends Authenticatable implements HasMedia
         return $this->hasOne(Cleaner::class, 'user_id');
     }
 
+    public function markAllNotificationsAsRead()
+    {
+        $this->unreadNotifications->markAsRead();
+    }
 }
+

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Supervisor;
 use App\Models\Complaint;
 use App\Models\Cleaner;
@@ -43,33 +44,51 @@ class AdminController extends Controller
         ));
     }
 
-    public function complaints(Request $request)
+    public function editProfile(Request $request)
     {
-        $status = $request->input('status');
-        $query = Complaint::query();
+        $user = $request->user();
+        return view('admin.profile.edit', compact('user'));
+    }
 
-        if ($status) {
-            $query->where('comp_status', $status);
+    public function updateProfile(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $request->user()->id,
+            'password' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        $user = $request->user();
+        $user->name = $request->input('name');
+        $user->email = $request->input('email');
+
+        if ($request->filled('password')) {
+            $user->password = bcrypt($request->input('password'));
         }
 
-        $complaints = $query->orderBy('comp_date', 'desc')->paginate(10);
+        $user->save();
 
-        return view('admin.complaints.index', compact('complaints', 'status'));
+        return redirect()->route('admin.profile.edit')->with('success', 'Profile updated successfully.');
     }
 
-    public function createComplaint()
+    public function destroyProfile(Request $request)
     {
-        return view('admin.complaints.create');
+        $request->validate(['password' => ['required', 'current_password']]);
+
+        $user = $request->user();
+        Auth::logout();
+
+        $user->delete();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/')->with('success', 'Account deleted successfully.');
     }
 
-    public function storeComplaint(Request $request)
-    {
-        $this->validateComplaint($request);
 
-        Complaint::create($request->all());
+    
 
-        return redirect()->route('admin.complaints')->with('success', 'Complaint created successfully!');
-    }
 
     public function editComplaint($id)
     {
@@ -133,17 +152,38 @@ class AdminController extends Controller
         $search = $request->query('search');
         $status = $request->query('status');
 
-        $cleaners = Cleaner::when($search, function ($query, $search) {
-                return $query->where('cleaner_name', 'LIKE', "%{$search}%")
-                             ->orWhere('cleaner_phoneNo', 'LIKE', "%{$search}%")
-                             ->orWhere('cleaner_username', 'LIKE', "%{$search}%");
-            })
-            ->when($status, function ($query, $status) {
-                return $query->where('status', strtolower($status));
-            })
-            ->paginate(10);
+        // Build the query with search and status filters
+        $cleanersQuery = Cleaner::query();
 
-        return view('admin.cleaners.index', compact('cleaners', 'search', 'status'));
+        if ($search) {
+            $cleanersQuery->where(function ($query) use ($search) {
+                $query->where('cleaner_name', 'LIKE', "%{$search}%")
+                      ->orWhere('cleaner_phoneNo', 'LIKE', "%{$search}%")
+                      ->orWhere('cleaner_username', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if ($status) {
+            $cleanersQuery->where('status', strtolower($status));
+        }
+
+        // Paginate the results
+        $cleaners = $cleanersQuery->paginate(10);
+
+        // Compute the counts for metrics
+        $totalCleaners = Cleaner::count();
+        $availableCleaners = Cleaner::where('status', 'available')->count();
+        $unavailableCleaners = Cleaner::where('status', 'unavailable')->count();
+
+        // Pass the variables to the view
+        return view('admin.cleaners.index', compact(
+            'cleaners',
+            'search',
+            'status',
+            'totalCleaners',
+            'availableCleaners',
+            'unavailableCleaners'
+        ));
     }
 
     public function createCleaner()
@@ -177,7 +217,7 @@ class AdminController extends Controller
             'user_id' => $user->id,
         ]);
 
-        return redirect()->route('admin.cleaners.index')->with('success', 'Cleaner created successfully!');
+        return redirect()->route('admin.cleaners')->with('success', 'Cleaner created successfully!');
     }
 
     public function editCleaner(Cleaner $cleaner)
@@ -185,27 +225,57 @@ class AdminController extends Controller
         return view('admin.cleaners.edit', compact('cleaner'));
     }
 
-    public function updateCleaner(Request $request, Cleaner $cleaner)
+    public function updateCleaner(Request $request, $id)
     {
-        $this->validateCleaner($request);
+        // Define validation rules
+        $validationRules = [
+            'cleaner_name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:cleaners,cleaner_username,' . $id . ',id',
+            'phone_no' => 'required|string|max:20',
+            'password' => 'nullable|string|min:8|confirmed',
+            'profile_pic' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'building' => 'required|string|in:Building A,Building B,Building C',
+        ];
 
-        $cleaner->update([
-            'cleaner_username' => $request->username ?? $cleaner->cleaner_username,
-            'cleaner_name' => $request->name ?? $cleaner->cleaner_name,
-            'cleaner_phoneNo' => $request->phone_no ?? $cleaner->cleaner_phoneNo,
-            'status' => $request->status ?? $cleaner->status,
-        ]);
+        // Validate the incoming data
+        $validated = $request->validate($validationRules);
 
+        // Find the cleaner by ID
+        $cleaner = Cleaner::findOrFail($id);
+
+        // Prepare data for update
+        $dataToUpdate = [
+            'cleaner_name' => $validated['cleaner_name'],
+            'cleaner_username' => $validated['username'],
+            'cleaner_phoneNo' => $validated['phone_no'],
+            'building' => $validated['building'],
+        ];
+
+        // If a password is provided, hash it and add to update data
         if ($request->filled('password')) {
-            $cleaner->update(['cleaner_password' => bcrypt($request->password)]);
+            $dataToUpdate['cleaner_password'] = Hash::make($validated['password']);
         }
 
+        // Handle profile picture upload if provided
         if ($request->hasFile('profile_pic')) {
-            $cleaner->update(['profile_pic' => file_get_contents($request->file('profile_pic')->getRealPath())]);
+            // Remove previous image if exists
+            // Assuming you're using a package like Spatie Media Library
+            $cleaner->clearMediaCollection('profile_pictures');
+
+            // Add new profile picture
+            $cleaner->addMediaFromRequest('profile_pic')
+                    ->toMediaCollection('profile_pictures', 'public');
         }
 
-        return redirect()->route('admin.cleaners')->with('success', 'Cleaner updated successfully!');
+        // Update the cleaner's data in the database
+        $cleaner->update($dataToUpdate);
+
+        // Redirect back to the edit form with a success message
+        return redirect()->route('admin.cleaners.edit', $cleaner->id)
+                         ->with('success', 'Cleaner details updated successfully!');
     }
+
+
 
     public function resetCleanerPassword(Request $request, $cleaner)
     {
@@ -330,15 +400,22 @@ class AdminController extends Controller
 
     public function supervisors(Request $request)
     {
-        $search = $request->query('search');
-        $supervisors = User::where('role', 'supervisor')
-            ->when($search, function ($query, $search) {
-                return $query->where('name', 'LIKE', "%{$search}%")
-                            ->orWhere('username', 'LIKE', "%{$search}%")
-                            ->orWhere('email', 'LIKE', "%{$search}%");
-            })
-            ->paginate(10);
+        $query = User::where('role', 'supervisor');
 
+        // Apply search filter if provided
+        if ($request->has('search')) {
+            $searchTerm = $request->input('search');
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('email', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('phone_no', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+
+        // Paginate the results
+        $supervisors = $query->paginate(10);
+
+        // Return the view with supervisors data
         return view('admin.supervisors.index', compact('supervisors'));
     }
 

@@ -4,24 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Cleaner;
-use App\Models\Task;
-use App\Models\User; // For officer and supervisor roles
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Foundation\Validation\ValidatesRequests;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon; // Make sure to import Carbon
 
 class Complaint extends Model implements HasMedia
 {
-    use HasFactory, InteractsWithMedia;
+    use AuthorizesRequests, DispatchesJobs, ValidatesRequests, HasFactory, InteractsWithMedia;
 
-    protected $table = 'complaints'; // Specify the table name
-    protected $primaryKey = 'id'; // Primary key (auto-increment)
-    public $incrementing = true; // Ensure it's auto-incrementing
-    protected $keyType = 'int'; // Primary key type
+    protected $table = 'complaints';
+    protected $primaryKey = 'id';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
-    protected $dates = ['comp_date'];
-
-    // Allow mass assignment on these fields
     protected $fillable = [
         'comp_date',
         'comp_time',
@@ -32,79 +31,57 @@ class Complaint extends Model implements HasMedia
         'assigned_by',
         'assigned_date',
         'no_of_cleaners',
-        'comp_image', // Add comp_image to fillable fields
+        'comp_image',
     ];
 
-    // Define status constants
+    protected $casts = [
+        'assigned_date' => 'datetime',
+        'comp_date'      => 'datetime',
+    ];
+
     const STATUS_PENDING = 'pending';
-    const STATUS_ON_GOING = 'ongoing';
+    const STATUS_ONGOING = 'ongoing';
     const STATUS_COMPLETED = 'completed';
 
     /**
      * Retrieve available statuses.
-     *
-     * @return array
      */
     public static function getStatuses()
     {
         return [
             self::STATUS_PENDING,
-            self::STATUS_ON_GOING,
+            self::STATUS_ONGOING,
             self::STATUS_COMPLETED,
         ];
     }
 
     /**
-     * Register media collections for the complaint images.
+     * Register media collections for complaint images.
      */
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('complaint_images')
-             ->useDisk('public'); // Explicitly use the public disk
+             ->useDisk('public');
     }
 
     /**
      * Accessor for the first complaint image URL.
-     * Returns a default image if no media exists for this complaint.
      */
     public function getCompImageAttribute()
     {
-        // Check if there's media associated with 'complaint_images'
-        if ($this->hasMedia('complaint_images')) {
-            return $this->getFirstMediaUrl('complaint_images');
-        }
-
-        // Fall back to stored value or default image
-        return $this->attributes['comp_image'] ?: asset('default-image.png');
+        return $this->getFirstMediaUrl('complaint_images') ?: asset('default-image.png');
     }
 
     /**
-     * Retrieve all complaint images URLs.
-     *
-     * @return array
+     * Accessor for all complaint images URLs.
      */
     public function getAllImagesUrlsAttribute()
     {
-        $mediaItems = $this->getMedia('complaint_images');
-        $imageUrls = [];
-
-        foreach ($mediaItems as $media) {
-            $imageUrls[] = $media->getUrl(); // Collect URLs of all images
-        }
-
-        return $imageUrls; // Return an array of image URLs
+        return $this->getMedia('complaint_images')->map->getUrl()->toArray();
     }
 
     /**
-     * Define relationship with Officer (User model with officer role).
-     */
-    public function officer()
-    {
-        return $this->belongsTo(User::class, 'officer_id')->where('role', 'officer');
-    }
-
-    /**
-     * Define relationship with Supervisor (user who assigned the cleaners).
+     * Relationship with the Supervisor (User who assigned cleaners).
      */
     public function supervisor()
     {
@@ -112,37 +89,53 @@ class Complaint extends Model implements HasMedia
     }
 
     /**
-     * Define many-to-many relationship with Cleaner model.
+     * Relationship with the Officer (User handling the complaint).
      */
-    public function cleaners()
+    public function officer()
     {
-        return $this->belongsToMany(Cleaner::class, 'complaint_cleaner')
-            ->withPivot('no_of_cleaners', 'assigned_by', 'assigned_date')
-            ->withTimestamps();
+        return $this->belongsTo(User::class, 'officer_id');
     }
 
     /**
-     * Define one-to-many relationship with Task model.
+     * Relationship with the User model.
+     * Note: This method seems redundant as 'officer()' already defines the relationship.
      */
-    public function tasks()
+    public function user()
     {
-        return $this->hasMany(Task::class, 'comp_id');
+        return $this->belongsTo(User::class, 'officer_id');
+    }
+
+    /**
+     * Many-to-many relationship with the Cleaner model.
+     */
+    public function cleaners()
+    {
+        return $this->belongsToMany(Cleaner::class, 'complaint_cleaner', 'complaint_id', 'cleaner_id')
+                    ->withPivot('no_of_cleaners', 'assigned_by', 'assigned_date')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Relationship indicating who assigned the complaint.
+     */
+    public function assignedBy()
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
     }
 
     /**
      * Update the status of the complaint.
-     * Throws an exception if the status is invalid.
      *
      * @param string $status
      * @throws \Exception
      */
-    public function updateStatus($status)
+    public function updateStatus(string $status)
     {
         if (in_array($status, self::getStatuses())) {
             $this->comp_status = $status;
             $this->save();
         } else {
-            throw new \Exception("Invalid status: $status");
+            throw new \Exception("Invalid status: {$status}");
         }
     }
 
@@ -150,25 +143,78 @@ class Complaint extends Model implements HasMedia
      * Assign cleaners to the complaint and update relevant details.
      *
      * @param array $cleanerIds
-     * @param string $assignedBy
+     * @param int $assignedBy
      * @param int $noOfCleaners
      * @throws \Exception
      */
-    public function assignCleaners(array $cleanerIds, $assignedBy, $noOfCleaners)
+    public function assignCleaners(array $cleanerIds, int $assignedBy, int $noOfCleaners)
     {
-        // Ensure cleaners are assigned only if status is pending
         if ($this->comp_status !== self::STATUS_PENDING) {
             throw new \Exception("Cleaners can only be assigned when the complaint status is 'pending'.");
         }
 
-        // Assign the cleaners using syncWithPivotValues method
-        $this->cleaners()->syncWithPivotValues($cleanerIds, [
-            'assigned_by' => $assignedBy,
-            'assigned_date' => now(),
-            'no_of_cleaners' => $noOfCleaners,
-        ]);
+        // Begin a database transaction to ensure data integrity
+        DB::transaction(function () use ($cleanerIds, $assignedBy, $noOfCleaners) {
+            // Attach cleaners with pivot data
+            $this->cleaners()->syncWithPivotValues($cleanerIds, [
+                'assigned_by'    => $assignedBy,
+                'assigned_date'  => now(),
+                'no_of_cleaners' => $noOfCleaners,
+            ]);
 
-        // Update the complaint status to on-going
-        $this->updateStatus(self::STATUS_ON_GOING);
+            // Update the complaint's status and assignment details
+            $this->update([
+                'comp_status'    => self::STATUS_ONGOING,
+                'assigned_by'    => $assignedBy,
+                'assigned_date'  => now(),
+                'no_of_cleaners' => $noOfCleaners,
+            ]);
+
+            // Update each cleaner's status to 'unavailable'
+            Cleaner::whereIn('user_id', $cleanerIds)
+                ->update(['status' => Cleaner::STATUS_UNAVAILABLE]);
+        });
     }
+
+  
+    public function scopeStatus($query, $status)
+    {
+        return $query->where('comp_status', $status);
+    }
+
+    /**
+     * Scope a query to include complaints assigned today.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeAssignedToday($query)
+    {
+        return $query->whereDate('assigned_date', Carbon::today());
+    }
+
+    /**
+     * Scope a query to include complaints assigned this week.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeAssignedThisWeek($query)
+    {
+        return $query->whereBetween('assigned_date', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+    }
+
+    /**
+     * Scope a query to include complaints assigned before this week.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeAssignedBeforeThisWeek($query)
+    {
+        return $query->whereDate('assigned_date', '<', Carbon::now()->startOfWeek());
+    }
+
+
+    
 }

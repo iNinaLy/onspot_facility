@@ -3,76 +3,75 @@
 namespace App\Services;
 
 use Kreait\Firebase\Factory;
-use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Auth;
+use Kreait\Firebase\Database;
+use Kreait\Firebase\Firestore\FirestoreClient; // Correct Firestore namespace
 
-class FirebaseNotificationService
+class FirebaseService
 {
-    protected $messaging;
+    protected $firebase;
+    protected $auth;
+    protected $database;
+    protected $firestore;
 
     public function __construct()
     {
-        // Initialize Firebase with the service account credentials
-        $firebase = (new Factory)->withServiceAccount(config('firebase.credentials'));
-        $this->messaging = $firebase->createMessaging();
+        // Initialize Firebase using credentials from the environment file
+        $this->firebase = (new Factory)
+            ->withServiceAccount(config('firebase.credentials'));
+
+        // Create instances of Firebase services
+        $this->auth = $this->firebase->createAuth();
+        $this->database = $this->firebase->createDatabase();
+        $this->firestore = $this->firebase->createFirestore();
     }
 
     /**
-     * Send a notification to a specific device using its FCM token.
+     * Create a new user in Firebase Authentication
      *
-     * @param string $deviceToken
-     * @param string $title
-     * @param string $body
-     * @param array $data (Optional) Additional data to include with the notification
-     * @return void
+     * @param string $email
+     * @param string $password
+     * @return \Kreait\Firebase\Auth\UserRecord
      */
-    public function sendNotificationToDevice($deviceToken, $title, $body, $data = [])
+    public function createUser($email, $password)
     {
-        $message = CloudMessage::withTarget('token', $deviceToken)
-            ->withNotification(["title" => $title, "body" => $body])
-            ->withData($data);
+        $userProperties = [
+            'email' => $email,
+            'password' => $password,
+        ];
 
-        try {
-            $this->messaging->send($message);
-        } catch (\Kreait\Firebase\Exception\MessagingException $e) {
-            // Log or handle the error as needed
-            \Log::error('Firebase Notification Error: ' . $e->getMessage());
-        }
+        return $this->auth->createUser($userProperties);
     }
 
     /**
-     * Send a notification to a specific topic.
+     * Get a reference from Firebase Realtime Database
      *
-     * @param string $topic
-     * @param string $title
-     * @param string $body
-     * @param array $data (Optional) Additional data to include with the notification
-     * @return void
+     * @param string $reference
+     * @return \Kreait\Firebase\Database\Reference
      */
-    public function sendNotificationToTopic($topic, $title, $body, $data = [])
+    public function getDatabaseReference($reference)
     {
-        $message = CloudMessage::withTarget('topic', $topic)
-            ->withNotification(["title" => $title, "body" => $body])
-            ->withData($data);
-
-        try {
-            $this->messaging->send($message);
-        } catch (\Kreait\Firebase\Exception\MessagingException $e) {
-            // Log or handle the error as needed
-            \Log::error('Firebase Topic Notification Error: ' . $e->getMessage());
-        }
+        return $this->database->getReference($reference);
     }
 
     /**
-     * Send a notification when a complaint is submitted.
+     * Add a document to Firestore
      *
-     * @param string $title
-     * @param string $body
-     * @param array $data (Optional) Additional data to include with the notification
-     * @return void
+     * @param string $collection
+     * @param array $data
+     * @return array Firestore Document ID and other metadata
      */
-    public function sendComplaintNotification($title, $body, $data = [])
+    public function addFirestoreDocument($collection, $data)
     {
-        $supervisorTopic = 'supervisors'; // Assuming supervisors are subscribed to this topic
-        $this->sendNotificationToTopic($supervisorTopic, $title, $body, $data);
+        $collectionReference = $this->firestore->database()->collection($collection);
+
+        // Add the document and return the DocumentReference
+        $documentReference = $collectionReference->add($data);
+
+        // Return document metadata
+        return [
+            'id' => $documentReference->id(),
+            'path' => $documentReference->path(),
+        ];
     }
 }

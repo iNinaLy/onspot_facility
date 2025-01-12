@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\SupabaseService;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CleanerController;
 use App\Http\Controllers\OfficerController;
@@ -76,7 +77,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
 //SUPERVISOR ROUTES
 //Notifications
-Route::middleware('auth:api')->get('/notifications', [NotificationController::class, 'getNotifications']);
 
 //Supervisor Search Cleaners
 Route::middleware('auth:sanctum')->group(function () {

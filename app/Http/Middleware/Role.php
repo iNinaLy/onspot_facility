@@ -6,13 +6,14 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log; // Import the Log facade
+use Illuminate\Support\Facades\Log;
 
 class Role
 {
     /**
      * Handle an incoming request.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      * @param  string  $role
      * @return \Symfony\Component\HttpFoundation\Response
@@ -21,19 +22,29 @@ class Role
     {
         // Check if the user is authenticated
         if (!Auth::check()) {
-            // Redirect to role-specific login pages
-            $loginRoute = $role === 'admin' ? 'admin.login' : 'supervisor.login';
-            return redirect()->route($loginRoute)->with('alert', 'Please login first.');
+            // Log unauthorized access attempts
+            Log::warning('Unauthorized access attempt to a role-specific route.');
+
+            // Redirect to a role-specific login page
+            $loginRoute = $role === 'admin' ? 'admin.login' : ($role === 'supervisor' ? 'supervisor.login' : 'login');
+            return redirect()->route($loginRoute)->with('alert', 'Please login to access this page.');
         }
 
-        // Log the user's role for debugging
-        Log::info('User role: ' . $request->user()->role);
+        $user = $request->user();
 
-        // Check if the user's role matches the expected role
-        if ($request->user()->role !== $role) {
-            return redirect()->route('dashboard')->with('alert', 'Access denied for this role.');
+        // Log user details and role for debugging
+        Log::info('User ID: ' . $user->id . ', Role: ' . $user->role . ', Expected Role: ' . $role);
+
+        // Check if the authenticated user's role matches the required role
+        if ($user->role !== $role) {
+            // Log access denial for role mismatch
+            Log::warning('Access denied for User ID: ' . $user->id . ' due to role mismatch. Required: ' . $role . ', User Role: ' . $user->role);
+
+            // Redirect to a general dashboard or an unauthorized page
+            return redirect()->route('dashboard')->with('alert', 'You do not have permission to access this page.');
         }
 
-        return $next($request); // Proceed to the next request
+        // Allow the request to proceed
+        return $next($request);
     }
 }
