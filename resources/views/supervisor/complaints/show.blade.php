@@ -271,11 +271,12 @@
                 <ul class="assigned-cleaners-list">
                     @foreach($complaint->cleaners as $cleaner)
                     <li>
-                        <img src="{{ $cleaner->getProfilePictureUrlAttribute() }}" alt="Cleaner Photo">
+                        
                         <div class="assigned-cleaners-details">
                             <strong>{{ $cleaner->cleaner_name }}</strong>
                             <span>Phone: {{ $cleaner->cleaner_phoneNo }}</span>
-                            <span>Assigned By: {{ $cleaner->pivot->assignedBy->name ?? 'Unknown Supervisor' }}</span>
+                            <span></span>
+                            <span>Assigned by: {{ $complaint->supervisor->name ?? 'Unknown Officer' }}</span>
                             <span>Assigned Date: {{ \Carbon\Carbon::parse($cleaner->pivot->assigned_date)->format('d M Y') }}</span>
                         </div>
                     </li>

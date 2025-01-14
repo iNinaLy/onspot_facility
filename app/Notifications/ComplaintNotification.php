@@ -36,9 +36,14 @@ class ComplaintNotification extends Notification
         if ($this->cleaner) {
             return [
                 'complaint_id' => $this->complaint->id,
-                'cleaner_name' => $this->cleaner->name,
-                'supervisor_name' => $this->supervisor->name,
-                'message' => 'You have been assigned a new complaint by Supervisor ' . $this->supervisor->name,
+                'message' => 'You have been assigned a new complaint.',
+            ];
+        }
+
+        if ($this->officer) {
+            return [
+                'complaint_id' => $this->complaint->id,
+                'message' => 'Your complaint has been updated.',
             ];
         }
 
@@ -59,16 +64,17 @@ class ComplaintNotification extends Notification
         }
 
         if ($this->cleaner) {
+            // Notification for cleaner
             return (new FcmMessage(notification: new FcmNotification(
                 title: 'New Complaint Assigned',
-                body: 'You have been assigned a new complaint by Supervisor ' . $this->supervisor->name,
+                body: 'You have been assigned a new complaint.',
                 image: null,
             )))
                 ->data([
                     'complaint_id' => $this->complaint->id,
-                    'supervisor_name' => $this->supervisor->name,
+                    'cleaner_name' => $this->cleaner->name,
                 ])
-                ->to($tokens->toArray()) // Specify tokens to send to
+                ->to($tokens->toArray())
                 ->custom([
                     'android' => [
                         'notification' => [
@@ -78,6 +84,28 @@ class ComplaintNotification extends Notification
                 ]);
         }
 
+        if ($this->officer) {
+            // Notification for officer
+            return (new FcmMessage(notification: new FcmNotification(
+                title: 'Complaint Updates',
+                
+                image: null,
+            )))
+                ->data([
+                    'complaint_id' => $this->complaint->id,
+                    'officer_name' => $this->officer->name,
+                ])
+                ->to($tokens->toArray())
+                ->custom([
+                    'android' => [
+                        'notification' => [
+                            'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                        ],
+                    ],
+                ]);
+        }
+
+        // Default notification
         return (new FcmMessage(notification: new FcmNotification(
             title: 'New Complaint Submitted',
             body: 'A new complaint has been submitted by Officer ' . $this->officer->name,
@@ -87,7 +115,7 @@ class ComplaintNotification extends Notification
                 'complaint_id' => $this->complaint->id,
                 'officer_name' => $this->officer->name,
             ])
-            ->to($tokens->toArray()) // Specify tokens to send to
+            ->to($tokens->toArray())
             ->custom([
                 'android' => [
                     'notification' => [
@@ -95,19 +123,5 @@ class ComplaintNotification extends Notification
                     ],
                 ],
             ]);
-    }
-
-    // Static helper to notify cleaner and officer
-    public static function notifyAssignment($complaint, $officer, $cleaner, $supervisor)
-    {
-        // Notify Cleaner
-        if ($cleaner) {
-            $cleaner->notify(new self($complaint, $officer, $cleaner, $supervisor));
-        }
-
-        // Notify Officer
-        if ($officer) {
-            $officer->notify(new self($complaint, $officer));
-        }
     }
 }

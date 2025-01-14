@@ -149,6 +149,19 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
 });
 
 
+Route::get('/test-firebase', function () {
+    $filePath = config('firebase.credentials.file');
+
+    if (!file_exists($filePath)) {
+        return 'Service account file does not exist: ' . $filePath;
+    }
+
+    if (!is_readable($filePath)) {
+        return 'Service account file is not readable: ' . $filePath;
+    }
+
+    return 'Service account file is properly configured and accessible!';
+});
 
 // Authentication Routes
 require __DIR__ . '/auth.php';

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Complaint;
 use App\Models\Cleaner;
 use App\Models\User;
+use App\Service\SupabaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -13,8 +14,18 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage; // Ensure Storage facade is imported
 use App\Notifications\ComplaintNotification;
 
+
 class ComplaintController extends Controller
 {
+
+    protected $supabase;
+
+    // Constructor to initialize SupabaseService
+    public function __construct(SupabaseService $supabase)
+    {
+        $this->supabase = $supabase;
+    }
+
     /**
      * Display a listing of the complaints with optional filtering and sorting.
      *
@@ -203,13 +214,6 @@ class ComplaintController extends Controller
         return redirect()->route('admin.complaints')->with('success', 'Complaint(s) deleted successfully.');
     }
 
-    /**
-     * Assign cleaner to the specified complaint.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function assignCleaner(Request $request, $id)
     {
         Log::info('AssignCleaner process started', [
@@ -217,43 +221,52 @@ class ComplaintController extends Controller
             'supervisor_id' => Auth::id(),
             'request_data'  => $request->all(),
         ]);
-
+    
         try {
             $validated = $request->validate([
                 'no_of_cleaners' => 'required|integer|min:1|max:3',
                 'cleaners'       => 'required|array|size:' . $request->no_of_cleaners,
                 'cleaners.*'     => 'exists:cleaners,user_id',
             ]);
-
+    
             Log::info('Validation passed', ['validated_data' => $validated]);
-
+    
             $complaint = Complaint::findOrFail($id);
             Log::info('Complaint fetched', ['complaint' => $complaint]);
-
+    
             if ($complaint->comp_status !== Complaint::STATUS_PENDING) {
                 Log::warning('Attempt to assign cleaners to a non-pending complaint', ['complaint_id' => $id]);
                 return redirect()->route('supervisor.complaints.show', $id)
                     ->withErrors('Cleaners have already been assigned or the complaint is not pending.');
             }
-
+    
             $complaint->assignCleaners($validated['cleaners'], Auth::id(), $validated['no_of_cleaners']);
-
-            /**
-             * ADDITION: Notify each assigned cleaner AND the officer about the assignment.
-             */
+    
+            // Notify assigned cleaners
             foreach ($validated['cleaners'] as $cleanerId) {
-                $cleanerUser = User::find($cleanerId);
-                if ($cleanerUser) {
-                    ComplaintNotification::notifyAssignment($complaint, $complaint->officer, $cleanerUser, Auth::user());
+                $cleaner = Cleaner::find($cleanerId); 
+                if ($cleaner) {
+                    $cleaner->notify(new ComplaintNotification(
+                        $complaint,
+                        $complaint->officer,
+                        $cleaner
+                    ));
+                    Log::info('Notification sent to cleaner', ['cleaner_id' => $cleanerId]);
                 }
             }
-
-            if ($complaint->officer) {
-                ComplaintNotification::notifyAssignment($complaint, $complaint->officer, null, Auth::user());
+    
+            // Notify the officer who submitted the complaint
+            $officer = $complaint->officer; // Assuming `officer` relationship is defined in the `Complaint` model
+            if ($officer) {
+                $officer->notify(new ComplaintNotification(
+                    $complaint,
+                    $officer
+                ));
+                Log::info('Notification sent to officer', ['officer_id' => $officer->id]);
             }
-
-            Log::info('AssignCleaner process completed successfully', ['complaint_id' => $id]);
-
+    
+            Log::info('Assign Cleaner process completed successfully', ['complaint_id' => $id]);
+    
             return redirect()->route('supervisor.complaints.show', $id)
                 ->with('success', 'Cleaners assigned successfully.');
         } catch (\Exception $e) {
@@ -263,32 +276,15 @@ class ComplaintController extends Controller
                 'error'         => $e->getMessage(),
                 'trace'         => $e->getTraceAsString(),
             ]);
-
+    
             if (app()->environment('local')) {
                 return redirect()->route('supervisor.complaints.show', $id)
                     ->withErrors($e->getMessage());
             }
-
+    
             return redirect()->route('supervisor.complaints.show', $id)
                 ->withErrors('An error occurred while assigning cleaners. Please try again.');
         }
-    }
-
-    /**
-     * [REMOVED] Submit a new complaint via Web.
-     * (As requested, the original submitComplaint() method has been removed.)
-     */
-
-    /**
-     * Show the form for creating a new complaint.
-     *
-     * @return \Illuminate\View\View
-     */
-    public function create()
-    {
-        $officers = Cleaner::all();
-
-        return view('admin.complaints.create', compact('officers'));
     }
 
     /**
@@ -325,7 +321,7 @@ class ComplaintController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function apistore(Request $request)
-    {
+    { 
         $validatedData = $request->validate([
             'comp_image'    => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'comp_date'     => 'required|date',
@@ -345,8 +341,34 @@ class ComplaintController extends Controller
             Log::info('Media uploaded:', ['media' => $media]);
         }
 
-        $supervisors = User::role('supervisor')->get();
-        Notification::send($supervisors, new ComplaintNotification($complaint, Auth::user(), false));
+
+        //$supervisors = User::role('supervisor')->get();
+        //Notification::send($supervisors, new ComplaintNotification($complaint, Auth::user(), false));
+
+        try {
+            $response = $this->supabase->store('complaint', [
+                'officer_id'    => $complaint->officer_id,
+                'comp_date'     => $complaint->comp_date,
+                'comp_time'     => $complaint->comp_time,
+                'comp_desc'     => $complaint->comp_desc,
+                'comp_location' => $complaint->comp_location,
+                'comp_status'   => $complaint->comp_status,
+                'comp_image'    => $complaint->comp_image ?? null, // Media URL if available
+            ]);
+
+            return response()->json([
+                'message'    => 'Complaint submitted successfully!',
+                'complaint'  => $complaint,
+                'supabase'   => $response,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to store complaint in Supabase', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'message' => 'Complaint submitted locally, but failed to store in Supabase.',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
 
         return response()->json([
             'message'   => 'Complaint submitted successfully!',
@@ -505,4 +527,7 @@ class ComplaintController extends Controller
         $complaint = Complaint::findOrFail($id);
         return view('supervisor.complaints.edit', compact('complaint'));
     }
+
+    
 }
+

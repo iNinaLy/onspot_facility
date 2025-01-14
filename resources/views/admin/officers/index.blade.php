@@ -73,7 +73,7 @@
                     <th>Email</th>
                     <th>Phone Number</th>
                     <th>Building</th>
-                    <th>Actions</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>

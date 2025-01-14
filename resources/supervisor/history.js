@@ -4,6 +4,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'toastr/build/toastr.min.css';
 import './history.css'; 
 
+
 document.addEventListener('DOMContentLoaded', function() {
     /**
      * Function to Toggle Details Visibility
@@ -20,6 +21,14 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error(`Details div with ID details-${id} not found.`);
         }
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(tooltipTriggerEl => {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+    
 
     /**
      * Function to Toggle Active/Inactive Button States

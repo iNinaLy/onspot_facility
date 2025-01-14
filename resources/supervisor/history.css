@@ -17,6 +17,38 @@ body {
     margin: 4rem 0 2rem 0;
 }
 
+.btn-filter {
+    display: inline-block;
+    padding: .4rem 1rem;
+    font-size: .9rem;
+    font-weight: 400;
+    color: #fff;
+    background: linear-gradient(355deg, #7493b8, #597798);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: transform .6s cubic-bezier(1, 0.41, 1, 1), background .9s cubic-bezier(0.13, 0.19, 0.37, 0.84), box-shadow .3s ease;
+    box-shadow: 0 4px 6px #0000001a;
+}
+
+.btn-filter:hover {
+    background: linear-gradient(45deg, #516e8e, #254667);
+    transform: translateY(-4px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-filter:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-filter:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(194, 217, 243, 0.5);
+}
+
+
+
 /* Filter Bar */
 .filter-bar {
     display: flex;

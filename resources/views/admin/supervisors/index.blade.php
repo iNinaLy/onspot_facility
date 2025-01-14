@@ -66,7 +66,7 @@
                     <th>Name</th>
                     <th>Email</th>
                     <th>Phone Number</th>
-                    <th>Actions</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>

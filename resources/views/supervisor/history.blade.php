@@ -12,7 +12,18 @@
         <div class="filter-bar">
             <input type="text" id="searchInput" placeholder="Search complaints...">
             <input type="date" id="dateFilter">
+            <!-- Toggle Button for 'Assigned By Me' Filter with Conditional Tooltip -->
+            <button 
+                id="assignedByMeFilter" 
+                class="btn-filter" 
+                data-filter="{{ $assignedByMe ? 'false' : 'true' }}"
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                title="{{ $assignedByMe ? 'Display all complaints' : 'Display complaints assigned by you' }}">
+                {{ $assignedByMe ? 'All Complaints' : 'Assigned by me' }}
+            </button>
         </div>
+
 
         <!-- Main Tab Navigation (Complaint Status) -->
         <div class="tab-navigation">
@@ -427,7 +438,7 @@
                                         </div>
                                         <div class="detail-item">
                                             <strong>Assigned By:</strong>
-                                            <span>{{ $complaint->supervisor->name ?? 'Unknown Officer' }}</span>
+                                            <span>{{ $complaint->supervisor->name ?? 'Unknown Supervisor' }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -496,14 +507,32 @@
                 <span id="notification-message"></span>
             </div>
         </div>
-    @endsection
+    </div>
+@endsection
 
-    
-
-    @push('scripts')
+@push('scripts')
     @vite([
         'resources/supervisor/app.js',
         'resources/supervisor/dashboard.js',
         'resources/supervisor/history.js',
     ])
-    @endpush
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const filterButton = document.getElementById('assignedByMeFilter');
+            filterButton.addEventListener('click', () => {
+                const url = new URL(window.location);
+                // Toggle the 'assigned_by_me' query parameter
+                if (url.searchParams.has('assigned_by_me')) {
+                    url.searchParams.delete('assigned_by_me');
+                } else {
+                    url.searchParams.set('assigned_by_me', 'true');
+                }
+                window.location.href = url.toString();
+            });
+        });
+
+    </script>
+    
+
+@endpush

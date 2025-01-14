@@ -307,7 +307,7 @@
                     <th>Assigned Date</th>
                     <th>Complaint By</th>
                     <th>Assigned By</th>
-                    <th>Actions</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
