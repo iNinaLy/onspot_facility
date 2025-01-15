@@ -92,25 +92,28 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     Route::get('/dashboard', [SupervisorController::class, 'dashboard'])->name('dashboard');
 
    
-        // Notifications
+    // Notifications
     Route::prefix('notifications')->name('notifications.')->group(function () {
         // Display notifications index
         Route::get('/', [NotificationController::class, 'index'])->name('index');
-
-        // Fetch all notifications via AJAX
+        
+        // Fetch all notifications via AJAX (if you have that functionality)
         Route::get('/all', [NotificationController::class, 'fetchAll'])->name('all');
-
+        
         // Mark a specific notification as read
         Route::post('/read/{id}', [NotificationController::class, 'markAsRead'])->name('markAsRead');
 
         // Mark all notifications as read
         Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('markAllAsRead');
         
-        //Delete
-        Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+        // Delete a specific notification
+        Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
 
         // Clear all notifications
-        Route::post('/clear-all', [NotificationController::class, 'clearAll'])->name('clearAll');
+        Route::delete('/clear-all', [NotificationController::class, 'clearAll'])->name('clearAll');
+
+        Route::get('/redirect/{notificationId}', [NotificationController::class, 'redirectToComplaint'])
+            ->name('redirectToComplaint');
     });
 
     // Cleaner Management
@@ -149,24 +152,6 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
 });
 
 
-Route::get('/test-firebase', function () {
-    $filePath = config('firebase.credentials.file');
-
-    if (!file_exists($filePath)) {
-        return 'Service account file does not exist: ' . $filePath;
-    }
-
-    if (!is_readable($filePath)) {
-        return 'Service account file is not readable: ' . $filePath;
-    }
-
-    return 'Service account file is properly configured and accessible!';
-});
-
 // Authentication Routes
 require __DIR__ . '/auth.php';
 
-// Test Image Route
-Route::get('/test-image', function () {
-    return view('test_image');
-});

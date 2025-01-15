@@ -227,109 +227,168 @@ class SupervisorController extends Controller
     }
 
 
+ 
+    
     public function history(Request $request)
     {
         // Retrieve the current supervisor ID
         $supervisorId = Auth::id();
-
+    
         // Check if filtering by complaints assigned by the current supervisor is requested
         $filterByMe = $request->query('assigned_by_me', false);
-
-        // Define date ranges based on assigned_date
-        $today = Carbon::today();
+    
+        // Define date ranges
+        $today       = Carbon::today();
         $startOfWeek = Carbon::now()->startOfWeek();
-        $endOfWeek = Carbon::now()->endOfWeek();
-
+        $endOfWeek   = Carbon::now()->endOfWeek();
+    
         // Number of items per "Load More" request
         $perPage = 5;
-
+    
         /**
          * Helper closure to conditionally apply the supervisor filter to a query.
          */
         $applySupervisorFilter = function($query) use ($filterByMe, $supervisorId) {
-            return $filterByMe ? $query->where('assigned_by', $supervisorId) : $query;
+            if ($filterByMe) {
+                $query->where('assigned_by', $supervisorId);
+            }
+            // Return the query for chaining
+            return $query;
         };
-
-        /**
-         * Fetch Ongoing Complaints Categorized by Assigned Date
-         */
-
+    
+        // ------------------------------------------------
         // 1. Ongoing Complaints Assigned Today
+        // ------------------------------------------------
         $ongoingToday = $applySupervisorFilter(
             Complaint::where('comp_status', 'ongoing')
-                ->whereDate('assigned_date', $today)
+                     ->whereDate('assigned_date', $today)
         )
         ->with(['cleaners:id,cleaner_name,cleaner_phoneNo', 'officer:id,name', 'supervisor:id,name'])
         ->orderBy('assigned_date', 'desc')
         ->get();
-
-        // 2. Ongoing Complaints Assigned This Week (Excluding Today)
+    
+        // ------------------------------------------------
+        // 2. Ongoing Complaints Assigned This Week (Excl. Today)
+        // ------------------------------------------------
         $ongoingThisWeek = $applySupervisorFilter(
             Complaint::where('comp_status', 'ongoing')
-                ->whereBetween('assigned_date', [$startOfWeek, $endOfWeek])
-                ->whereDate('assigned_date', '<>', $today)
+                     ->whereBetween('assigned_date', [$startOfWeek, $endOfWeek])
+                     ->whereDate('assigned_date', '<>', $today)
         )
         ->with(['cleaners:id,cleaner_name,cleaner_phoneNo', 'officer:id,name', 'supervisor:id,name'])
         ->orderBy('assigned_date', 'desc')
         ->get();
-
-        // 3. Older Ongoing Complaints (Assigned Before This Week)
+    
+        // ------------------------------------------------
+        // 3. Older Ongoing Complaints (Before This Week)
+        // ------------------------------------------------
         $ongoingOlder = $applySupervisorFilter(
             Complaint::where('comp_status', 'ongoing')
-                ->whereDate('assigned_date', '<', $startOfWeek)
+                     ->whereDate('assigned_date', '<', $startOfWeek)
         )
         ->with(['cleaners:id,cleaner_name,cleaner_phoneNo', 'officer:id,name', 'supervisor:id,name'])
         ->orderBy('assigned_date', 'desc')
         ->paginate($perPage);
-
-        /**
-         * Fetch Completed Complaints Categorized by Assigned Date
-         */
-
+    
+        // ------------------------------------------------
         // 4. Completed Complaints Assigned Today
+        // ------------------------------------------------
         $completedToday = $applySupervisorFilter(
             Complaint::where('comp_status', 'completed')
-                ->whereDate('assigned_date', $today)
+                     ->whereDate('assigned_date', $today)
         )
         ->with(['cleaners:id,cleaner_name,cleaner_phoneNo', 'officer:id,name', 'supervisor:id,name'])
         ->orderBy('assigned_date', 'desc')
         ->get();
-
-        // 5. Completed Complaints Assigned This Week (Excluding Today)
+    
+        // ------------------------------------------------
+        // 5. Completed Complaints Assigned This Week (Excl. Today)
+        // ------------------------------------------------
         $completedThisWeek = $applySupervisorFilter(
             Complaint::where('comp_status', 'completed')
-                ->whereBetween('assigned_date', [$startOfWeek, $endOfWeek])
-                ->whereDate('assigned_date', '<>', $today)
+                     ->whereBetween('assigned_date', [$startOfWeek, $endOfWeek])
+                     ->whereDate('assigned_date', '<>', $today)
         )
         ->with(['cleaners:id,cleaner_name,cleaner_phoneNo', 'officer:id,name', 'supervisor:id,name'])
         ->orderBy('assigned_date', 'desc')
         ->get();
-
-        // 6. Older Completed Complaints (Assigned Before This Week)
+    
+        // ------------------------------------------------
+        // 6. Older Completed Complaints (Before This Week)
+        // ------------------------------------------------
         $completedOlder = $applySupervisorFilter(
             Complaint::where('comp_status', 'completed')
-                ->whereDate('assigned_date', '<', $startOfWeek)
+                     ->whereDate('assigned_date', '<', $startOfWeek)
         )
         ->with(['cleaners:id,cleaner_name,cleaner_phoneNo', 'officer:id,name', 'supervisor:id,name'])
         ->orderBy('assigned_date', 'desc')
         ->paginate($perPage);
-
-        /**
-         * Handle AJAX Requests for "Load More"
-         */
+    
+        // ------------------------------------------------
+        // Handle AJAX "Load More" Requests
+        // ------------------------------------------------
         if ($request->ajax()) {
-            // ... (retain existing AJAX handling logic)
+            // The front-end should send ?status=ongoing|completed&filter=older|thisWeek|today&page=2&search=...
+            $status = $request->get('status'); // 'ongoing' or 'completed'
+            $filter = $request->get('filter'); // 'older', 'thisWeek', 'today'
+            $page   = $request->get('page', 2);
+            $search = $request->get('search'); // optional search param
+    
+            // 1) Build the base query depending on status
+            if ($status === 'ongoing') {
+                $ajaxQuery = Complaint::where('comp_status', 'ongoing');
+            } else {
+                $ajaxQuery = Complaint::where('comp_status', 'completed');
+            }
+    
+            // 2) Apply date range filter
+            if ($filter === 'older') {
+                // older -> assigned_date < startOfWeek
+                $ajaxQuery->whereDate('assigned_date', '<', $startOfWeek);
+            } elseif ($filter === 'thisWeek') {
+                // assigned_date between startOfWeek and endOfWeek, excluding today
+                $ajaxQuery->whereBetween('assigned_date', [$startOfWeek, $endOfWeek])
+                          ->whereDate('assigned_date', '<>', $today);
+            } elseif ($filter === 'today') {
+                $ajaxQuery->whereDate('assigned_date', $today);
+            }
+            // else, if no filter param, do nothing or handle default
+    
+            // 3) Apply supervisor filter if needed
+            $applySupervisorFilter($ajaxQuery);
+    
+            // 4) Optional: Apply search if provided
+            // e.g., search by comp_desc or comp_location
+            if ($search) {
+                $ajaxQuery->where(function($q) use ($search) {
+                    $q->where('comp_desc', 'like', "%{$search}%")
+                      ->orWhere('comp_location', 'like', "%{$search}%");
+                });
+            }
+    
+            // 5) Paginate the results for the requested page
+            $complaints = $ajaxQuery
+                ->with(['cleaners:id,cleaner_name,cleaner_phoneNo', 'officer:id,name', 'supervisor:id,name'])
+                ->orderBy('assigned_date', 'desc')
+                ->paginate($perPage, ['*'], 'page', $page);
+    
+            // Return JSON so the front-end can append
+            return response()->json([
+                'complaints' => $complaints->items(),   // array of complaint data
+                'hasMore'    => $complaints->hasMorePages(),
+            ]);
         }
-
-        // Pass the filter state to the view
+    
+        // If not AJAX, return the main Blade view
         return view('supervisor.history', [
-            'ongoingToday'    => $ongoingToday,
-            'ongoingThisWeek' => $ongoingThisWeek,
-            'ongoingOlder'    => $ongoingOlder,
-            'completedToday'  => $completedToday,
+            'ongoingToday'     => $ongoingToday,
+            'ongoingThisWeek'  => $ongoingThisWeek,
+            'ongoingOlder'     => $ongoingOlder,
+            'completedToday'   => $completedToday,
             'completedThisWeek'=> $completedThisWeek,
-            'completedOlder'  => $completedOlder,
-            'assignedByMe'    => $filterByMe, // pass current filter state
+            'completedOlder'   => $completedOlder,
+            'assignedByMe'     => $filterByMe,
         ]);
     }
+    
 }

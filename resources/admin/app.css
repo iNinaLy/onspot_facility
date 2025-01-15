@@ -11,7 +11,7 @@
 
 
 :root {
-    --primary-color: #2e5675; /* Deep Blue */
+    --primary-color: #496982; /* Deep Blue */
     --secondary-color: #f0f0f0; /* Pastel Grey */
     --accent-color: #a8dadc; /* Soft Teal */
     --text-color: #333333; /* Dark Grey */
@@ -56,10 +56,10 @@ body {
 
 /* ==== Metrics Cards ==== */
 .metrics-card {
-    background-color: var(--card-background);
+    background-color: #fcfcfc;
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 6px rgba(46, 86, 117, 0.1);
-    border-radius: 12px;
+    border-radius: 17px;
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -70,8 +70,8 @@ body {
 
 .metrics-card .card-title {
     font-size: 0.85rem;
-    font-weight: 600;
-    color: #1f3d5a;
+    font-weight: 550;
+    color: #434a50;
 }
 
 .metrics-card .card-text {
@@ -85,7 +85,7 @@ body {
     background-color: var(--primary-color);
     border: none;
     color: #ffffff;
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 0.5rem 1rem;
     transition: background-color 0.2s;
 }
@@ -221,7 +221,7 @@ table {
 }
 
 table thead tr th {
-    background-color: #abb8c3;
+    background-color: #768c9d;
     color: var(--text-color);
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
@@ -229,11 +229,12 @@ table thead tr th {
     font-weight: 600;
     font-size: 1rem;
     border-bottom: none;
+    align-items: center;
 }
 
 table tbody tr td {
     background-color: var(--background-color);
-    padding: 1rem;
+    padding: 1.5rem;
     border-bottom: none;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     border-radius: 8px;
@@ -275,7 +276,7 @@ table tbody tr:hover td {
 
 /* ==== Tooltips ==== */
 .tooltip-inner {
-    background-color: var(--primary-color);
+    background-color: #565e64;
     color: #ffffff;
     border-radius: 8px;
     font-size: 0.9rem;

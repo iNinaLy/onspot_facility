@@ -9,12 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <script src="https://unpkg.com/heroicons@2.0.13/dist/outline/solid.js"></script>
-
 @endpush
 
 @section('content')
-
-
 <div class="container mx-auto px-4 py-8" x-data="notificationComponent()">
     <!-- Notifications Header -->
     <div class="notification-header">
@@ -30,7 +27,9 @@
             >
                 <!-- Trash Icon -->
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7
+                             m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
                 Delete All
             </button>
@@ -101,14 +100,20 @@
                             <button 
                                 type="button" 
                                 class="btn-view" 
-                                @click="viewNotification(notification.id, notification.data.complaint_id, notification.read_at)"
+                                @click="viewNotification(notification.id, notification.read_at)"
                                 :disabled="!notification.data.complaint_id"
                                 :title="!notification.data.complaint_id ? 'No associated complaint' : 'View Notification'"
                             >
                                 <!-- Eye Icon -->
-                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" 
+                                     viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M2.458 12C3.732 7.943 7.523 5 12 5
+                                             c4.477 0 8.268 2.943 9.542 7
+                                             -1.274 4.057-5.065 7-9.542 7
+                                             -4.477 0-8.268-2.943-9.542-7z" />
                                 </svg>
                                 View
                             </button>
@@ -119,8 +124,13 @@
                                 :title="'Delete Notification'"
                             >
                                 <!-- Trash Icon -->
-                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" 
+                                     viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862
+                                             a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6
+                                             m1-10V4a1 1 0 00-1-1h-4
+                                             a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
                                 Delete
                             </button>
@@ -147,22 +157,26 @@
                             <p class="time" x-text="timeSince(notification.created_at)"></p>
                         </div>
                         <div class="actions">
-                            <!-- "View" Button -->
                             <button 
                                 type="button" 
                                 class="btn-view" 
-                                @click="viewNotification(notification.id, notification.data.complaint_id, notification.read_at)"
+                                @click="viewNotification(notification.id, notification.read_at)"
                                 :disabled="!notification.data.complaint_id"
                                 :title="!notification.data.complaint_id ? 'No associated complaint' : 'View Notification'"
                             >
                                 <!-- Eye Icon -->
-                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" 
+                                     viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M2.458 12C3.732 7.943 7.523 5
+                                             12 5c4.477 0 8.268 2.943 9.542 7
+                                             -1.274 4.057-5.065 7-9.542 7
+                                             -4.477 0-8.268-2.943-9.542-7z" />
                                 </svg>
                                 View
                             </button>
-                            <!-- "Delete" Button -->
                             <button 
                                 type="button" 
                                 class="btn-delete" 
@@ -170,8 +184,13 @@
                                 :title="'Delete Notification'"
                             >
                                 <!-- Trash Icon -->
-                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" 
+                                     viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862
+                                             a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6
+                                             m1-10V4a1 1 0 00-1-1h-4
+                                             a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
                                 Delete
                             </button>
@@ -186,6 +205,7 @@
             </div>
         </template>
     </div>
+</div>
 
 @push('scripts')
     @vite([
@@ -201,14 +221,14 @@
         function notificationComponent() {
             return {
                 activeTab: 'new', // 'new' or 'all'
-                notifications: @json($notifications), // Paginated notifications for 'all' tab
-                unreadNotifications: @json($unreadNotifications), // Unread notifications for 'new' tab
+                notifications: @json($notifications), // Paginated notifications for the 'all' tab
+                unreadNotifications: @json($unreadNotifications), // Unread notifications for the 'new' tab
                 unreadCount: @json($unreadNotificationsCount), // Count of unread notifications
 
                 /**
                  * Formats the notification time to a relative format.
                  * @param {string} date - The notification creation date.
-                 * @returns {string} - Formatted time string.
+                 * @returns {string} - Formatted time string (e.g., "5 minutes ago").
                  */
                 timeSince(date) {
                     let seconds = Math.floor((new Date() - new Date(date)) / 1000);
@@ -226,27 +246,18 @@
                 },
 
                 /**
-                 * Marks a single notification as read (if unread) and redirects to the complaint detail page.
+                 * Marks a single notification as read (if unread), then redirects
+                 * to a dedicated route where the server determines complaint status.
+                 *
                  * @param {number} notificationId - The ID of the notification.
-                 * @param {number|null} complaintId - The ID of the associated complaint.
-                 * @param {string|null} readAt - The read_at timestamp of the notification.
+                 * @param {string|null} readAt - The read_at timestamp (null if unread).
                  */
-                async viewNotification(notificationId, complaintId, readAt) {
-                    console.log('View button clicked:', notificationId, complaintId, readAt);
-
-                    // Check if the complaintId exists
-                    if (!complaintId) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'No associated complaint for this notification.',
-                        });
-                        return;
-                    }
+                async viewNotification(notificationId, readAt) {
+                    console.log('View button clicked:', { notificationId, readAt });
 
                     try {
-                        if (!readAt) { // If the notification is unread
-                            // Show a loading indicator
+                        // If the notification is unread, mark it as read first
+                        if (!readAt) {
                             Swal.fire({
                                 title: 'Processing...',
                                 text: 'Marking notification as read.',
@@ -256,7 +267,6 @@
                                 }
                             });
 
-                            // Send POST request to mark the notification as read
                             const response = await fetch(`/supervisor/notifications/read/${notificationId}`, {
                                 method: 'POST',
                                 headers: {
@@ -272,9 +282,8 @@
                             }
 
                             const data = await response.json();
-
                             if (data.status === 'success') {
-                                // Update the notification's read_at status in the 'all' tab
+                                // Update 'all' tab
                                 this.notifications.data = this.notifications.data.map(n => {
                                     if (n.id === notificationId) {
                                         return { ...n, read_at: new Date().toISOString() };
@@ -282,18 +291,17 @@
                                     return n;
                                 });
 
-                                // Remove the notification from the 'new' tab
+                                // Remove from 'new' tab
                                 this.unreadNotifications = this.unreadNotifications.filter(n => n.id !== notificationId);
                                 this.unreadCount--;
 
-                                // Close the loading indicator
                                 Swal.close();
                             } else {
                                 throw new Error(data.message || 'Failed to mark notification as read.');
                             }
                         }
 
-                        // Show a redirecting loading indicator
+                        // Now let the server handle the redirect
                         Swal.fire({
                             title: 'Redirecting...',
                             text: 'Opening the complaint details.',
@@ -303,8 +311,8 @@
                             }
                         });
 
-                        // Perform the redirect
-                        window.location.href = `/supervisor/complaints/${complaintId}`;
+                        // We always call the new redirect route
+                        window.location.href = `/supervisor/notifications/redirect/${notificationId}`;
                     } catch (error) {
                         console.error('Error in viewNotification:', error);
                         Swal.fire({
@@ -317,7 +325,6 @@
 
                 /**
                  * Deletes a single notification after confirmation.
-                 * @param {number} notificationId - The ID of the notification to delete.
                  */
                 async deleteNotification(notificationId) {
                     Swal.fire({
@@ -331,7 +338,6 @@
                     }).then(async (result) => {
                         if (result.isConfirmed) {
                             try {
-                                // Show a loading indicator
                                 Swal.fire({
                                     title: 'Deleting...',
                                     text: 'Please wait while the notification is being deleted.',
@@ -341,7 +347,6 @@
                                     }
                                 });
 
-                                // Send DELETE request to delete the notification
                                 const response = await fetch(`/supervisor/notifications/${notificationId}`, {
                                     method: 'DELETE',
                                     headers: {
@@ -356,20 +361,16 @@
                                 }
 
                                 const data = await response.json();
-
                                 if (data.status === 'success') {
-                                    // Remove the notification from the 'all' tab
+                                    // Remove from 'all' tab
                                     this.notifications.data = this.notifications.data.filter(n => n.id !== notificationId);
 
-                                    // If it's in the 'new' tab, also remove it and update the count
+                                    // If it's in 'new' tab, remove it too
                                     this.unreadNotifications = this.unreadNotifications.filter(n => n.id !== notificationId);
-                                    // Assuming 'read_at' is present in the notification data
-                                    const isUnread = !data.read_at; // Adjust based on actual response
-                                    if (isUnread) {
-                                        this.unreadCount--;
-                                    }
 
-                                    // Close the loading indicator and show success message
+                                    // (Optionally decrement unreadCount if it was unread)
+                                    // this.unreadCount--;
+
                                     Swal.close();
                                     Swal.fire({
                                         icon: 'success',
@@ -408,7 +409,6 @@
                     }).then(async (result) => {
                         if (result.isConfirmed) {
                             try {
-                                // Show a loading indicator
                                 Swal.fire({
                                     title: 'Deleting...',
                                     text: 'Please wait while all notifications are being deleted.',
@@ -418,7 +418,6 @@
                                     }
                                 });
 
-                                // Send DELETE request to delete all notifications
                                 const response = await fetch(`/supervisor/notifications/clear-all`, {
                                     method: 'DELETE',
                                     headers: {
@@ -433,14 +432,12 @@
                                 }
 
                                 const data = await response.json();
-
                                 if (data.status === 'success') {
-                                    // Clear all notifications from both tabs
+                                    // Clear both arrays & reset unread count
                                     this.notifications.data = [];
                                     this.unreadNotifications = [];
                                     this.unreadCount = 0;
 
-                                    // Close the loading indicator and show success message
                                     Swal.close();
                                     Swal.fire({
                                         icon: 'success',
@@ -489,7 +486,6 @@
 
                     if (result.isConfirmed) {
                         try {
-                            // Show a loading indicator
                             Swal.fire({
                                 title: 'Processing...',
                                 text: 'Marking all notifications as read.',
@@ -499,7 +495,6 @@
                                 }
                             });
 
-                            // Send POST request to mark all as read
                             const response = await fetch(`/supervisor/notifications/mark-all-as-read`, {
                                 method: 'POST',
                                 headers: {
@@ -515,21 +510,18 @@
                             }
 
                             const data = await response.json();
-
                             if (data.status === 'success') {
                                 // Clear all unread notifications
                                 this.unreadNotifications = [];
                                 this.unreadCount = 0;
 
-                                // Update all notifications in the 'all' tab as read
+                                // Mark every notification in "all" as read
                                 this.notifications.data = this.notifications.data.map(n => ({
                                     ...n,
                                     read_at: n.read_at || new Date().toISOString()
                                 }));
 
-                                // Close the loading indicator
                                 Swal.close();
-
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Success',

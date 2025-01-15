@@ -26,38 +26,38 @@ class ComplaintController extends Controller
         $this->supabase = $supabase;
     }
 
-    /**
-     * Display a listing of the complaints with optional filtering and sorting.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\View\View
-     */
     public function index(Request $request)
     {
+        // Get any search or status filter from the query string
         $search = $request->input('search');
         $status = $request->input('status');
-        $perPage = $request->input('per_page', 10);
 
-        $query = Complaint::with(['officer', 'assignedBy'])->orderBy('created_at', 'desc');
+        // Base query: eager load relationships if needed (officer, assignedBy, etc.)
+        $query = Complaint::with(['officer', 'assignedBy']);
 
+        // If a search term is present, filter by comp_desc or comp_location
         if ($search) {
             $query->where(function($q) use ($search) {
                 $q->where('comp_desc', 'like', "%{$search}%")
-                  ->orWhere('comp_location', 'like', "%{$search}%");
+                ->orWhere('comp_location', 'like', "%{$search}%");
             });
         }
 
+        // If a status is specified, filter by that comp_status
         if ($status) {
             $query->where('comp_status', $status);
         }
 
-        $complaints = $query->paginate($perPage);
+        // Order by date descending and paginate 10 per page
+        $complaints = $query->orderBy('comp_date', 'desc')->paginate(10);
 
-        $totalComplaints = Complaint::count();
-        $pendingComplaints = Complaint::where('comp_status', 'pending')->count();
-        $ongoingComplaints = Complaint::where('comp_status', 'ongoing')->count();
+        // Metrics: total, pending, ongoing, completed
+        $totalComplaints     = Complaint::count();
+        $pendingComplaints   = Complaint::where('comp_status', 'pending')->count();
+        $ongoingComplaints   = Complaint::where('comp_status', 'ongoing')->count();
         $completedComplaints = Complaint::where('comp_status', 'completed')->count();
 
+        // Return the Blade view, passing the paginated complaints & metrics
         return view('admin.complaints.index', compact(
             'complaints',
             'totalComplaints',
@@ -67,32 +67,31 @@ class ComplaintController extends Controller
         ));
     }
 
-    /**
-     * Handle bulk actions on complaints.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
+        
+
     public function bulkAction(Request $request)
     {
         $action = $request->input('action');
         $complaintIds = $request->input('selected_complaints', []);
 
         if (empty($complaintIds)) {
-            return redirect()->route('admin.complaints')->with('error', 'No complaints selected for the action.');
+            return redirect()->route('admin.complaints')
+                ->with('error', 'No complaints selected for the action.');
         }
 
         switch ($action) {
             case 'delete':
                 $complaints = Complaint::whereIn('id', $complaintIds)->get();
                 foreach ($complaints as $complaint) {
+                    // If complaint has an image, delete from storage
                     if ($complaint->comp_image) {
                         Storage::delete('public/' . $complaint->comp_image);
                     }
+                    // Delete complaint
                     $complaint->delete();
                 }
 
-                $message = count($complaintIds) > 1
+                $message = (count($complaintIds) > 1)
                     ? 'Selected complaints deleted successfully.'
                     : 'Complaint deleted successfully.';
                 return redirect()->route('admin.complaints')->with('success', $message);
@@ -100,17 +99,29 @@ class ComplaintController extends Controller
             case 'mark_completed':
                 $complaints = Complaint::whereIn('id', $complaintIds)->get();
                 foreach ($complaints as $complaint) {
+                    // 1) Set complaint to "completed"
                     $complaint->comp_status = 'completed';
                     $complaint->save();
+
+                    // 2) If complaint is "completed" or "pending", 
+                    //    set assigned cleaners to "available"
+                    //    (Currently we only do "completed", but let's keep the check)
+                    if (in_array($complaint->comp_status, ['completed', 'pending'])) {
+                        foreach ($complaint->cleaners as $cleaner) {
+                            $cleaner->status = 'available';
+                            $cleaner->save();
+                        }
+                    }
                 }
 
-                $message = count($complaintIds) > 1
+                $message = (count($complaintIds) > 1)
                     ? 'Selected complaints marked as completed.'
                     : 'Complaint marked as completed.';
                 return redirect()->route('admin.complaints')->with('success', $message);
 
             default:
-                return redirect()->route('admin.complaints')->with('error', 'Invalid action selected.');
+                return redirect()->route('admin.complaints')
+                    ->with('error', 'Invalid action selected.');
         }
     }
 
@@ -124,15 +135,31 @@ class ComplaintController extends Controller
     public function inlineUpdate(Request $request, $id)
     {
         $complaint = Complaint::findOrFail($id);
+
         $request->validate([
             'comp_status' => 'required|in:pending,ongoing,completed'
         ]);
 
+        // 1) Update complaint status
         $complaint->comp_status = $request->comp_status;
         $complaint->save();
 
-        return response()->json(['status' => 'success', 'message' => 'Status updated successfully.']);
+        // 2) If new status is "completed" or "pending", 
+        //    mark assigned cleaners as "available"
+        if (in_array($complaint->comp_status, ['completed', 'pending'])) {
+            foreach ($complaint->cleaners as $cleaner) {
+                $cleaner->status = 'available';
+                $cleaner->save();
+            }
+        }
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Status updated successfully.'
+        ]);
     }
+
+
 
     /**
      * Show the form for editing the specified complaint.
@@ -445,33 +472,6 @@ class ComplaintController extends Controller
         return response()->json($pendingComplaints);
     }
 
-    /**
-     * Assign cleaner to complaint (API)
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function assignCleanerToComplaint(Request $request)
-    {
-        $validated = $request->validate([
-            'complaint_id' => 'required|exists:complaints,id',
-            'cleaner_id'   => 'required|exists:users,id',
-        ]);
-
-        DB::transaction(function () use ($validated) {
-            DB::table('complaint_cleaner')->insert([
-                'complaint_id'  => $validated['complaint_id'],
-                'cleaner_id'    => $validated['cleaner_id'],
-                'assigned_date' => now(),
-                'assigned_by'   => Auth::id(),
-            ]);
-
-            Complaint::where('id', $validated['complaint_id'])->update(['comp_status' => 'ongoing']);
-            User::where('id', $validated['cleaner_id'])->update(['status' => 'unavailable']);
-        });
-
-        return response()->json(['message' => 'Cleaner assigned successfully']);
-    }
 
     /**
      * Notify relevant users about a complaint
