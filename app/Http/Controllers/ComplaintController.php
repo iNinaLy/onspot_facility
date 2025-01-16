@@ -331,7 +331,8 @@ class ComplaintController extends Controller
     
         // Store a new complaint (API)
         public function apistore(Request $request)
-        { 
+        {
+            // Step 1: Validate the request data
             $validatedData = $request->validate([
                 'comp_image'    => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'comp_date'     => 'required|date',
@@ -339,33 +340,34 @@ class ComplaintController extends Controller
                 'comp_desc'     => 'required|string',
                 'comp_location' => 'required|string',
             ]);
-    
+        
+            // Step 2: Create the complaint in MySQL
             $complaint = Complaint::create(array_merge($validatedData, [
-                'officer_id'  => Auth::id(),
-                'comp_status' => 'pending',
+                'officer_id'    => Auth::id(),
+                'comp_status'   => 'pending',
             ]));
-    
+        
+            // Step 3: Handle optional image upload
             if ($request->hasFile('comp_image')) {
-                $media = $complaint->addMediaFromRequest('comp_image')->toMediaCollection('complaint_images', 'public');
+                $media = $complaint->addMediaFromRequest('comp_image')
+                                   ->toMediaCollection('complaint_images', 'public');
                 $complaint->update(['comp_image' => $media->getUrl()]);
                 Log::info('Media uploaded:', ['media' => $media]);
             }
-    
-    
-            //$supervisors = User::role('supervisor')->get();
-            //Notification::send($supervisors, new ComplaintNotification($complaint, Auth::user(), false));
-    
+        
+            // Step 4: Sync complaint data to Supabase
             try {
                 $response = $this->supabase->store('complaint', [
+                    'id'            => $complaint->id, // Explicitly use the same ID to avoid mismatches
                     'officer_id'    => $complaint->officer_id,
                     'comp_date'     => $complaint->comp_date,
                     'comp_time'     => $complaint->comp_time,
                     'comp_desc'     => $complaint->comp_desc,
                     'comp_location' => $complaint->comp_location,
                     'comp_status'   => $complaint->comp_status,
-                    'comp_image'    => $complaint->comp_image ?? null, // Media URL if available
+                    'comp_image'    => $complaint->comp_image ?? null, // Include image URL if uploaded
                 ]);
-    
+        
                 return response()->json([
                     'message'    => 'Complaint submitted successfully!',
                     'complaint'  => $complaint,
@@ -373,18 +375,19 @@ class ComplaintController extends Controller
                 ]);
             } catch (\Exception $e) {
                 Log::error('Failed to store complaint in Supabase', ['error' => $e->getMessage()]);
-    
+        
                 return response()->json([
                     'message' => 'Complaint submitted locally, but failed to store in Supabase.',
                     'error'   => $e->getMessage(),
                 ], 500);
             }
-    
+        
+            // Step 5: Return a fallback success response
             return response()->json([
                 'message'   => 'Complaint submitted successfully!',
                 'complaint' => $complaint,
             ]);
-        }
+        }        
     
         // Get officer complaints (API)
         public function getOfficerComplaints()
@@ -521,12 +524,10 @@ class ComplaintController extends Controller
         return response()->json($complaints);
     } 
 
-    
-  
-    // assign complaint to cleaner
+
     public function AssignTask(Request $request, $id)
     {
-        // Step 1: Fetch the complaint (ensure it's unassigned)
+        // Step 1: Fetch the complaint from MySQL (complaints table)
         $complaint = Complaint::where('id', $id)
             ->whereNull('assigned_by') // Only fetch unassigned complaints
             ->first();
@@ -539,19 +540,11 @@ class ComplaintController extends Controller
         Log::info('Complaint found for assignment', ['complaint' => $complaint]);
     
         // Step 2: Validate the request
-        try {
-            $validated = $request->validate([
-                'cleaner_ids' => 'required|array|min:1',
-                'no_of_cleaners' => 'required|integer|min:1',
-                'assigned_by' => 'required|integer', // Ensure assigned_by exists in users table
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Validation failed for AssignTask', ['errors' => $e->errors()]);
-            return response()->json([
-                'message' => 'Validation error',
-                'errors' => $e->errors(),
-            ], 422);
-        }
+        $validated = $request->validate([
+            'cleaner_ids' => 'required|array|min:1',
+            'no_of_cleaners' => 'required|integer|min:1',
+            'assigned_by' => 'required|integer',
+        ]);
     
         Log::info('Validated task assignment request', [
             'complaint_id' => $complaint->id,
@@ -560,12 +553,11 @@ class ComplaintController extends Controller
     
         $assignedDate = now();
     
-        // Step 3: Assign task to cleaners and update complaint_cleaner table
+        // Step 3: Assign task to cleaners and update complaint_cleaner table in MySQL
         try {
             foreach ($validated['cleaner_ids'] as $cleanerUserId) {
                 $cleaner = Cleaner::where('user_id', $cleanerUserId)->firstOrFail();
     
-                // Add task assignment to complaint_cleaner table
                 ComplaintCleaner::create([
                     'complaint_id' => $complaint->id,
                     'cleaner_id' => $cleaner->user_id,
@@ -574,78 +566,104 @@ class ComplaintController extends Controller
                     'assigned_date' => $assignedDate,
                 ]);
     
-                Log::info('Task assigned to cleaner in local database', [
+                Log::info('Task assigned to cleaner in MySQL', [
                     'complaint_id' => $complaint->id,
                     'cleaner_id' => $cleaner->user_id,
                 ]);
     
                 // Update cleaner's status to unavailable
                 $cleaner->update(['status' => 'unavailable']);
-                Log::info('Cleaner status updated to unavailable', ['cleaner_id' => $cleanerUserId]);
             }
+    
+            // Notify cleaners via ComplaintNotification
+            foreach ($validated['cleaner_ids'] as $cleanerUserId) {
+                $cleaner = Cleaner::where('user_id', $cleanerUserId)->first();
+                if (!$cleaner) {
+                    Log::warning('Cleaner not found in database', ['cleaner_id' => $cleanerUserId]);
+                } elseif (!$cleaner->name) {
+                    Log::warning('Cleaner found but missing name', ['cleaner_id' => $cleanerUserId]);
+                } else {
+                    // Proceed with notification
+                    ComplaintNotification::notifyAssignment($complaint, Auth::user(), $cleaner, null);
+                    Log::info('Notification sent to cleaner', ['cleaner_id' => $cleaner->user_id]);
+                }
+                
+            }
+            
         } catch (\Exception $e) {
-            Log::error('Error assigning task to cleaners', ['error' => $e->getMessage()]);
+            Log::error('Error assigning task to cleaners in MySQL', ['error' => $e->getMessage()]);
             return response()->json(['message' => 'Failed to assign task to cleaners'], 500);
         }
     
-        // Step 4: Update the complaint with assignment details
+        // Step 4: Update the complaint with assignment details in MySQL
         try {
             $complaint->update([
                 'comp_status' => Complaint::STATUS_ONGOING,
-                'assigned_by' => $validated['assigned_by'], // Record who assigned the task
+                'assigned_by' => $validated['assigned_by'],
                 'assigned_date' => $assignedDate,
                 'no_of_cleaners' => $validated['no_of_cleaners'],
             ]);
     
-            Log::info('Complaint updated with assignment details', [
+            Log::info('Complaint updated with assignment details in MySQL', [
                 'complaint_id' => $complaint->id,
                 'status' => Complaint::STATUS_ONGOING,
                 'assigned_by' => $validated['assigned_by'],
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to update complaint', ['error' => $e->getMessage()]);
+            Log::error('Failed to update complaint in MySQL', ['error' => $e->getMessage()]);
             return response()->json(['message' => 'Failed to update complaint details'], 500);
         }
     
+        $supabaseComplaintCleaner = [];
+        $supabaseComplaintUpdate = null;
+    
         // Step 5: Sync data to Supabase
         try {
+            $supabaseComplaintUpdate = $this->supabase->update('complaint', $complaint->id, [
+                'comp_status' => Complaint::STATUS_ONGOING,
+            ]);
+    
+            Log::info('Updated complaint status in Supabase', ['complaint_id' => $complaint->id]);
+    
             foreach ($validated['cleaner_ids'] as $cleanerUserId) {
+                $mysqlCleaner = User::where('id', $cleanerUserId)->first();
+                if (!$mysqlCleaner) {
+                    Log::error('Cleaner not found in MySQL', ['cleaner_id' => $cleanerUserId]);
+                    continue;
+                }
+    
                 $data = [
                     'complaint_id' => $complaint->id,
-                    'cleaner_id' => $cleanerUserId,
+                    'cleaner_id' => $mysqlCleaner->id,
                     'no_of_cleaners' => $validated['no_of_cleaners'],
                     'assigned_by' => $validated['assigned_by'],
                     'assigned_date' => $assignedDate->toIso8601String(),
                 ];
-                Log::info('Sending data to Supabase (complaint_cleaner)', $data);
-                $this->supabase->store('complaint_cleaner', $data);
+                $supabaseComplaintCleaner[] = $this->supabase->store('complaint_cleaner', $data);
+                Log::info('Inserted task into Supabase (complaint_cleaner)', $data);
             }
-    
-            $complaintData = [
-                'id' => $complaint->id,
-                'comp_status' => $complaint->comp_status,
-                'assigned_by' => $validated['assigned_by'],
-                'assigned_date' => $assignedDate->toIso8601String(),
-                'no_of_cleaners' => $validated['no_of_cleaners'],
-                'comp_date' => $complaint->comp_date,
-                'comp_time' => $complaint->comp_time,
-                'comp_desc' => $complaint->comp_desc,
-                'comp_location' => $complaint->comp_location,
-            ];
-            Log::info('Sending data to Supabase (complaints)', $complaintData);
-            $this->supabase->store('complaint', $complaintData);
         } catch (\Exception $e) {
-            Log::error('Failed to store task assignment in Supabase', ['error' => $e->getMessage()]);
+            Log::error('Failed to sync data with Supabase', ['error' => $e->getMessage()]);
             return response()->json([
                 'message' => 'Task assigned locally but failed to sync with Supabase.',
                 'error' => $e->getMessage(),
             ], 500);
         }
     
-        // Step 6: Return success response
-        Log::info('Task assignment process completed successfully', ['complaint_id' => $complaint->id]);
-        return response()->json(['message' => 'Task assigned successfully']);
-    }
+        // Step 6: Return success response with MySQL and Supabase data
+        return response()->json([
+            'message' => 'Task assigned successfully',
+            'mysql' => [
+                'complaint' => $complaint->only(['id', 'status', 'assigned_date']),
+                'complaint_cleaners' => ComplaintCleaner::where('complaint_id', $complaint->id)->pluck('cleaner_id'),
+            ],
+            'supabase' => [
+                'complaint' => $supabaseComplaintUpdate,
+                'complaint_cleaners' => $supabaseComplaintCleaner,
+            ],
+        ]);
+        
+    }    
     
 
     // fetch complaint details
@@ -768,6 +786,25 @@ class ComplaintController extends Controller
 
         return response()->json($responseData);
     }
+
+
+    // Laravel Controller Method
+public function getUserNames(Request $request)
+{
+    $userIds = $request->input('user_ids');
+
+    if (!$userIds || !is_array($userIds)) {
+        return response()->json(['message' => 'Invalid user IDs'], 400);
+    }
+
+    // Fetch user names directly from MySQL `users` table
+    $users = DB::table('users')
+        ->whereIn('id', $userIds)
+        ->select('id', 'name')
+        ->get();
+
+    return response()->json($users);
+}
 
     public function completeComplaint(Request $request, $id)
         {

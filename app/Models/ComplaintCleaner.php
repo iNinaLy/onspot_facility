@@ -14,7 +14,6 @@ class ComplaintCleaner extends Model
     protected $table = 'complaint_cleaner';
 
     protected $fillable = [
-        'id',
         'complaint_id',
         'cleaner_id',
         'no_of_cleaners',

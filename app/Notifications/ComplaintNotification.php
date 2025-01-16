@@ -33,7 +33,13 @@ class ComplaintNotification extends Notification
     // Store notification in notifications table
     public function toDatabase($notifiable)
     {
-        if ($this->cleaner) {
+        if ($notifiable->hasRole('supervisor') && !$this->cleaner) {
+            return [
+                'complaint_id' => $this->complaint->id,
+                'officer_name' => $this->officer->name,
+                'message' => 'A new complaint has been submitted by Officer ' . $this->officer->name,
+            ];
+        } elseif ($notifiable->hasRole('cleaner') && $this->cleaner) {
             return [
                 'complaint_id' => $this->complaint->id,
                 'cleaner_name' => $this->cleaner->name,
@@ -41,13 +47,9 @@ class ComplaintNotification extends Notification
                 'message' => 'You have been assigned a new complaint by Supervisor ' . $this->supervisor->name,
             ];
         }
-
-        return [
-            'complaint_id' => $this->complaint->id,
-            'officer_name' => $this->officer->name,
-            'message' => 'A new complaint has been submitted by Officer ' . $this->officer->name,
-        ];
-    }
+    
+        return [];
+    }    
 
     // Use device tokens to send FCM notification
     public function toFcm($notifiable): ?FcmMessage
@@ -58,10 +60,32 @@ class ComplaintNotification extends Notification
             return null; // No tokens to send notification
         }
 
-        if ($this->cleaner) {
+        if ($notifiable->hasRole('supervisor') && !$this->cleaner) {
+            // Notify supervisors of new complaints only
             return (new FcmMessage(notification: new FcmNotification(
-                title: 'New Complaint Assigned',
-                body: 'You have been assigned a new complaint by Supervisor ' . $this->supervisor->name,
+                title: 'New Complaint Submitted',
+                body: 'A new complaint has been submitted by Officer ' . $this->officer->name,
+                image: null,
+            )))
+                ->data([
+                    'complaint_id' => $this->complaint->id,
+                    'officer_name' => $this->officer->name,
+                ])
+                ->to($tokens->toArray()) // Specify tokens to send to
+                ->custom([
+                    'android' => [
+                        'notification' => [
+                            'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                        ],
+                    ],
+                ]);
+        }
+
+        if ($notifiable->hasRole('cleaner') && $this->cleaner) {
+            // Notify cleaners of task assignments only
+            return (new FcmMessage(notification: new FcmNotification(
+                title: 'Tugasan Baru',
+                body: 'Anda telah ditugaskan tugasan baru oleh  ' . $this->supervisor->name,
                 image: null,
             )))
                 ->data([
@@ -78,23 +102,7 @@ class ComplaintNotification extends Notification
                 ]);
         }
 
-        return (new FcmMessage(notification: new FcmNotification(
-            title: 'New Complaint Submitted',
-            body: 'A new complaint has been submitted by Officer ' . $this->officer->name,
-            image: null,
-        )))
-            ->data([
-                'complaint_id' => $this->complaint->id,
-                'officer_name' => $this->officer->name,
-            ])
-            ->to($tokens->toArray()) // Specify tokens to send to
-            ->custom([
-                'android' => [
-                    'notification' => [
-                        'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                    ],
-                ],
-            ]);
+        return null;
     }
 
     // Static helper to notify cleaner and officer

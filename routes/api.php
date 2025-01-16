@@ -92,6 +92,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/supervisor/history/{id}', [ComplaintController::class, 'getHistoryDetails']);
 });
 
+// API route for fetching user names
+Route::post('/user-names', [ComplaintController::class, 'getUserNames']);
+
+
 Route::get('/test', function () {
     return response()->json(['message' => 'API is working']);
 });
