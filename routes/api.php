@@ -29,10 +29,11 @@ Route::middleware('auth:sanctum')->get('/supabase-config', function () {
 //CLEANER ROUTES
 // Cleaner Task and Complaint Routes
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/cleaner/{cleaner_id}/tasks', [ComplaintCleanerController::class, 'getCleanerTasks']); // List all tasks for a specific cleaner
     Route::get('/complaints/{id}/details', [ComplaintCleanerController::class, 'getComplaintDetailsConditional']); // Get details of a specific complaint
     Route::post('/tasks/{complaint_id}/mark-unavailable', [ComplaintCleanerController::class, 'markCleanerUnavailable']);
-    Route::put('/tasks/{complaint_id}/toggle-notification', [ComplaintCleanerController::class, 'toggleNotification']);
+    Route::post('/tasks/notified', [ComplaintCleanerController::class, 'notifiedTasks']);
+    Route::get('/tasks/history/{cleaner_id}', [ComplaintCleanerController::class, 'getHistoryTasks']);
+    Route::get('/tasks/unnotified/{cleaner_id}', [ComplaintCleanerController::class, 'unnotifiedTasks']);
 });
 
 // Cleaner Attendance Routes

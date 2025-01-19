@@ -81,18 +81,23 @@ class ComplaintNotification extends Notification
                 ]);
         }
 
+        // Ensure this notification is sent only to the cleaner
         if ($notifiable->hasRole('cleaner') && $this->cleaner) {
-            // Notify cleaners of task assignments only
+            $tokens = $this->cleaner->notificationTokens()->pluck('device_token');
+
+            if ($tokens->isEmpty()) {
+                return null; // No tokens to send notification
+            }
+
             return (new FcmMessage(notification: new FcmNotification(
                 title: 'Tugasan Baru',
-                body: 'Anda telah ditugaskan tugasan baru oleh  ' . $this->supervisor->name,
-                image: null,
+                body: 'Anda telah ditugaskan tugasan baru oleh ' . $this->supervisor->name,
             )))
                 ->data([
                     'complaint_id' => $this->complaint->id,
                     'supervisor_name' => $this->supervisor->name,
                 ])
-                ->to($tokens->toArray()) // Specify tokens to send to
+                ->to($tokens->toArray()) // Only send to this cleaner's tokens
                 ->custom([
                     'android' => [
                         'notification' => [
@@ -101,16 +106,32 @@ class ComplaintNotification extends Notification
                     ],
                 ]);
         }
-
         return null;
     }
 
     // Static helper to notify cleaner and officer
     public static function notifyAssignment($complaint, $officer, $cleaner, $supervisor)
     {
-        // Notify Cleaner
-        if ($cleaner) {
+        foreach ($cleaners as $cleaner) {
+            // Ensure the cleaner is not already notified
+            $alreadyNotified = $cleaner->notifications()
+                ->where('data->complaint_id', $complaint->id)
+                ->exists();
+    
+            if ($alreadyNotified) {
+                \Log::info("Cleaner already notified for complaint", [
+                    'cleaner_id' => $cleaner->id,
+                    'complaint_id' => $complaint->id,
+                ]);
+                continue;
+            }
+    
+            // Send notification to cleaner
             $cleaner->notify(new self($complaint, $officer, $cleaner, $supervisor));
+            \Log::info("Notification sent to cleaner", [
+                'cleaner_id' => $cleaner->id,
+                'complaint_id' => $complaint->id,
+            ]);
         }
 
         // Notify Officer

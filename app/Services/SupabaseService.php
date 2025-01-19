@@ -11,17 +11,19 @@ class SupabaseService
 
     public function __construct()
     {
-        $this->url = env('SUPABASE_URL');
-        $this->secretKey = env('SUPABASE_SECRET_KEY');
-
-        // Debugging: Ensure required environment variables are set
+        $this->url = config('services.supabase.url');
+        $this->secretKey = config('services.supabase.secret');
+        
         if (empty($this->url)) {
+            \Log::error('Supabase URL is empty', ['url' => $this->url]);
             throw new \Exception("Supabase URL is not set in .env");
         }
-
+        
         if (empty($this->secretKey)) {
+            \Log::error('Supabase Secret Key is empty', ['key' => $this->secretKey]);
             throw new \Exception("Supabase Secret Key is not set in .env");
-        }
+        }        
+        
     }
 
     public function store($table, $data)

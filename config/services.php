@@ -36,8 +36,9 @@ return [
     ],
 
     'supabase' => [
-            'url' => env('SUPABASE_URL'),
-            'key' => env('SUPABASE_KEY'),
-        ],  
+        'url' => env('SUPABASE_URL'),
+        'secret' => env('SUPABASE_SECRET_KEY'),
+    ],
+ 
 
 ];

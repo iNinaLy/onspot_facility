@@ -16,94 +16,47 @@ class ComplaintCleanerController extends Controller
      * @param int $cleaner_id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getCleanerTasks(Request $request, $cleaner_id)
+    public function unnotifiedTasks(Request $request, $cleaner_id)
     {
         try {
-            $notified = $request->query('notified', null); // Optional 'notified' filter (true/false)
+            // Log the filter
+            \Log::info("Fetching tasks for cleaner_id: $cleaner_id where is_notified = 0 and assigned_by IS NOT NULL");
     
-            // Log the filter parameters for debugging
-            \Log::info("Fetching ongoing tasks for cleaner_id: $cleaner_id with notified: $notified");
-    
-            // Retrieve complaints assigned to the cleaner
+            // Retrieve complaints from MySQL with `is_notified = 0` and `assigned_by IS NOT NULL`
             $tasks = ComplaintCleaner::where('cleaner_id', $cleaner_id)
-                ->when(!is_null($notified), function ($query) use ($notified) {
-                    $query->where('is_notified', filter_var($notified, FILTER_VALIDATE_BOOLEAN)); // Apply 'is_notified' filter
-                })
-                ->whereHas('complaint', function ($query) {
-                    $query->where('comp_status', 'ongoing'); // Filter by 'ongoing' status in the 'complaints' table
-                })
-                ->with('complaint') // Include complaint details
+                ->where('is_notified', false) // Explicitly filter for `is_notified = 0`
+                ->whereNotNull('assigned_by') // Filter for `assigned_by IS NOT NULL`
+                ->with('complaint') // Include related complaints
                 ->get()
-                ->map(function ($complaintCleaner) {
-                    if (!$complaintCleaner->complaint) {
-                        return null; // Skip tasks without a matching complaint
+                ->map(function ($task) {
+                    if (!$task->complaint) {
+                        return null; // Skip tasks without complaints
                     }
     
-                    // Return the structured task data
                     return [
-                        'complaint_id' => $complaintCleaner->complaint->id,
-                        'comp_desc' => $complaintCleaner->complaint->comp_desc,
-                        'comp_location' => $complaintCleaner->complaint->comp_location,
-                        'comp_date' => $complaintCleaner->complaint->comp_date,
-                        'comp_time' => $complaintCleaner->complaint->comp_time,
-                        'comp_status' => $complaintCleaner->complaint->comp_status,
-                        'assigned_date' => $complaintCleaner->assigned_date,
-                        'no_of_cleaners' => $complaintCleaner->no_of_cleaners,
-                        'assigned_by' => $complaintCleaner->assigned_by,
-                        'is_notified' => $complaintCleaner->is_notified, // Include the notification status
+                        'complaint_id' => $task->complaint->id,
+                        'comp_desc' => $task->complaint->comp_desc,
+                        'comp_location' => $task->complaint->comp_location,
+                        'comp_date' => $task->complaint->comp_date,
+                        'comp_time' => $task->complaint->comp_time,
+                        'comp_status' => $task->complaint->comp_status,
+                        'assigned_date' => $task->assigned_date,
+                        'no_of_cleaners' => $task->no_of_cleaners,
+                        'assigned_by' => $task->assigned_by, // Ensure assigned_by is included
+                        'is_notified' => $task->is_notified, // Retrieved from MySQL
                     ];
                 })
                 ->filter() // Remove null values
-                ->values(); // Re-index the array
+                ->values();
     
-            // Log the fetched tasks for debugging
-            \Log::info("Ongoing tasks fetched: " . json_encode($tasks));
-    
-            return response()->json([
-                'status' => 'success',
-                'data' => $tasks,
-            ], 200);
-    
+            // Return the tasks in the response
+            return response()->json(['status' => 'success', 'data' => $tasks], 200);
         } catch (\Exception $e) {
-            // Log the error
-            \Log::error("Error fetching ongoing tasks: " . $e->getMessage());
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to retrieve ongoing tasks.',
-                'error' => $e->getMessage(),
-            ], 500);
+            // Log the error and return an error response
+            \Log::error("Error fetching tasks: " . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }    
-      
-    
-    public function toggleNotification(Request $request, $complaint_id)
-    {
-        try {
-            $complaintCleaner = ComplaintCleaner::where('complaint_id', $complaint_id)->first();
-
-            if (!$complaintCleaner) {
-                return response()->json(['error' => 'Complaint not found'], 404);
-            }
-
-            // Toggle is_notified status
-            $complaintCleaner->is_notified = !$complaintCleaner->is_notified;
-            $complaintCleaner->save();
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Notification status updated.',
-                'is_notified' => $complaintCleaner->is_notified,
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to update notification status.',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-
     /**
      * Get complaints created by the authenticated officer.
      *
@@ -159,6 +112,10 @@ class ComplaintCleanerController extends Controller
     
             $compImageUrl = $complaint->getFirstMediaUrl('complaint_images') ?: null;
     
+            // Fetch officer and supervisor names
+            $officer = DB::table('users')->where('id', $complaint->officer_id)->select('id', 'name')->first();
+            $supervisor = DB::table('users')->where('id', $complaint->assigned_by)->select('id', 'name')->first();
+    
             if (!$hasCleanerAssignment) {
                 // No entry in `complaint_cleaner`, fetch basic details for officer
                 $complaintDetails = [
@@ -168,8 +125,8 @@ class ComplaintCleanerController extends Controller
                     'comp_desc' => $complaint->comp_desc,
                     'comp_location' => $complaint->comp_location,
                     'comp_image' => $compImageUrl,
-                    'officer_id' => $complaint->officer_id,
-                    'assigned_by' => $complaint->assigned_by,
+                    'officer' => $officer, // Include officer details
+                    'supervisor' => $supervisor, // Include supervisor details
                     'assigned_date' => $complaint->assigned_date,
                     'no_of_cleaners' => $complaint->no_of_cleaners,
                     'comp_status' => $complaint->comp_status,
@@ -195,8 +152,8 @@ class ComplaintCleanerController extends Controller
                     'comp_desc' => $complaint->comp_desc,
                     'comp_location' => $complaint->comp_location,
                     'comp_image' => $compImageUrl,
-                    'officer_id' => $complaint->officer_id,
-                    'assigned_by' => $complaint->assigned_by,
+                    'officer' => $officer, // Include officer details
+                    'supervisor' => $supervisor, // Include supervisor details
                     'assigned_date' => $complaint->assigned_date,
                     'no_of_cleaners' => $complaint->no_of_cleaners,
                     'comp_status' => $complaint->comp_status,
@@ -215,6 +172,66 @@ class ComplaintCleanerController extends Controller
             ], 500);
         }
     }
+
+        public function notifiedTasks(Request $request)
+    {
+        try {
+            $complaintId = $request->input('complaint_id');
+            $cleanerId = $request->input('cleaner_id');
+
+            // Find the record in the complaint_cleaner table
+            $task = ComplaintCleaner::where('complaint_id', $complaintId)
+                                    ->where('cleaner_id', $cleanerId)
+                                    ->first();
+
+            if (!$task) {
+                return response()->json(['status' => 'error', 'message' => 'Task not found'], 404);
+            }
+
+            // Update is_notified to true
+            $task->is_notified = true;
+            $task->save();
+
+            return response()->json(['status' => 'success', 'message' => 'Task marked as completed'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+        public function getHistoryTasks(Request $request, $cleaner_id)
+    {
+        try {
+            // Fetch tasks where is_notified is true for the specified cleaner_id
+            $tasks = ComplaintCleaner::where('cleaner_id', $cleaner_id)
+                ->where('is_notified', true)
+                ->with('complaint') // Include related complaint details
+                ->get()
+                ->map(function ($complaintCleaner) {
+                    if (!$complaintCleaner->complaint) {
+                        return null; // Skip tasks without a matching complaint
+                    }
+
+                    return [
+                        'complaint_id' => $complaintCleaner->complaint->id,
+                        'comp_desc' => $complaintCleaner->complaint->comp_desc,
+                        'comp_location' => $complaintCleaner->complaint->comp_location,
+                        'comp_date' => $complaintCleaner->complaint->comp_date,
+                        'comp_time' => $complaintCleaner->complaint->comp_time,
+                        'comp_status' => $complaintCleaner->complaint->comp_status,
+                        'assigned_date' => $complaintCleaner->assigned_date,
+                        'no_of_cleaners' => $complaintCleaner->no_of_cleaners,
+                        'assigned_by' => $complaintCleaner->assigned_by,
+                    ];
+                })
+                ->filter()
+                ->values();
+
+            return response()->json(['status' => 'success', 'data' => $tasks], 200);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+    
     
     public function markCleanerUnavailable(Request $request, $complaint_id)
     {
