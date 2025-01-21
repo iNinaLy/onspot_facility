@@ -7,6 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use App\Models\NotificationToken;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
     {
@@ -37,6 +41,7 @@ class AuthController extends Controller
             'password' => bcrypt($request->password),
             'phone_no' => $request->phone_no,
             'role' => $request->role,
+            'email_verified_at' => now(),
         ]);
     
         \Log::info('User created successfully: ' . $user->id);
@@ -61,6 +66,15 @@ class AuthController extends Controller
             }
         }
         
+            // Send a welcome email
+            try {
+                Mail::send('emails.welcome', ['user' => $user], function ($message) use ($user) {
+                    $message->to($user->email)->subject('Welcome to OnSpot Facility');
+                });
+                \Log::info('Welcome email sent to: ' . $user->email);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send welcome email: ' . $e->getMessage());
+            }
     
         // Generate a token for the newly registered user
         $token = $user->createToken('YourAppName')->plainTextToken;
@@ -197,10 +211,7 @@ class AuthController extends Controller
         $code = rand(100000, 999999); // Generate a 6-digit code
     
         try {
-            // Log code generation
-            Log::info("Generated reset code for {$request->email}: $code");
-    
-            // Store the code in the password_resets table
+            // Store the code in the database
             DB::table('password_reset_tokens')->updateOrInsert(
                 ['email' => $request->email],
                 [
@@ -209,8 +220,8 @@ class AuthController extends Controller
                 ]
             );
     
-            // Send the code via email
-            Mail::raw("Your password reset code is: $code", function ($message) use ($request) {
+            // Send the email using the Blade template
+            Mail::send('emails.reset_code', ['code' => $code], function ($message) use ($request) {
                 $message->to($request->email)
                         ->subject('Password Reset Code');
             });
@@ -218,45 +229,38 @@ class AuthController extends Controller
             return response()->json(['message' => 'Reset code sent successfully.']);
         } catch (\Exception $e) {
             Log::error('Error sending reset code: ' . $e->getMessage());
-            return response()->json(['message' => 'Unable to send reset link. Please check your email.'], 500);
+            return response()->json(['message' => 'Unable to send reset code. Please try again later.'], 500);
         }
     }
     
-
 
     public function verifyResetCode(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
             'code' => 'required|numeric|digits:6',
-            'password' => 'required|confirmed|min:8'
+            'password' => 'required|confirmed|min:8',
         ]);
-    
-        Log::info("Verifying reset code for {$request->email} with code {$request->code}");
     
         $resetRecord = DB::table('password_reset_tokens')
             ->where('email', $request->email)
             ->where('code', $request->code)
+            ->where('created_at', '>', now()->subMinutes(15)) // Expire code after 15 minutes
             ->first();
     
         if (!$resetRecord) {
-            Log::warning("Invalid code or email for {$request->email}");
-            return response()->json(['message' => 'Invalid code or email.'], 400);
+            return response()->json(['message' => 'Invalid or expired reset code.'], 400);
         }
     
-        // Reset the password
+        // Update the password
         DB::table('users')->where('email', $request->email)->update([
-            'password' => bcrypt($request->password)
+            'password' => Hash::make($request->password),
         ]);
     
-        // Log successful reset
-        Log::info("Password reset successfully for {$request->email}");
-    
-        // Delete the reset code from the database
+        // Delete the reset token
         DB::table('password_reset_tokens')->where('email', $request->email)->delete();
     
         return response()->json(['message' => 'Password has been reset successfully.']);
-    }
-
+    }    
 
 }

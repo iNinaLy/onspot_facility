@@ -16,6 +16,7 @@ use App\Models\ComplaintCleaner;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ComplaintCleanerController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 
 // Route to expose Supabase configuration
@@ -31,9 +32,9 @@ Route::middleware('auth:sanctum')->get('/supabase-config', function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/complaints/{id}/details', [ComplaintCleanerController::class, 'getComplaintDetailsConditional']); // Get details of a specific complaint
     Route::post('/tasks/{complaint_id}/mark-unavailable', [ComplaintCleanerController::class, 'markCleanerUnavailable']);
+    Route::get('/tasks/unnotified/{cleaner_id}', [ComplaintCleanerController::class, 'unnotifiedTasks']);
     Route::post('/tasks/notified', [ComplaintCleanerController::class, 'notifiedTasks']);
     Route::get('/tasks/history/{cleaner_id}', [ComplaintCleanerController::class, 'getHistoryTasks']);
-    Route::get('/tasks/unnotified/{cleaner_id}', [ComplaintCleanerController::class, 'unnotifiedTasks']);
 });
 
 // Cleaner Attendance Routes
@@ -101,4 +102,10 @@ Route::get('/test', function () {
     return response()->json(['message' => 'API is working']);
 });
 
+Route::get('/test-email', function () {
+    Mail::raw('This is a test email.', function ($message) {
+        $message->to('your_email@example.com')->subject('Test Email');
+    });
+    return 'Email sent successfully!';
+});
 

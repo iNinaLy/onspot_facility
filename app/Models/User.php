@@ -77,7 +77,7 @@ class User extends Authenticatable implements HasMedia
      */
     public function getProfilePicAttribute($value)
     {
-        return $value ?: asset('storage/profile_pic/default.webp');
+        return $this->getFirstMediaUrl('profile_pictures') ?: asset('storage/profile_pic/default.webp');
     }
     
     

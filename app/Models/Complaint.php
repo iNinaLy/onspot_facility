@@ -69,7 +69,7 @@ class Complaint extends Model implements HasMedia
      */
     public function getCompImageAttribute()
     {
-        return $this->getFirstMediaUrl('complaint_images') ?: asset('default-image.png');
+        return $this->getFirstMediaUrl('complaint_images') ?: asset('default-image.jpg');
     }
 
     /**

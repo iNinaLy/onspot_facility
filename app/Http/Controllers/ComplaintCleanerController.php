@@ -100,78 +100,71 @@ class ComplaintCleanerController extends Controller
     public function getComplaintDetailsConditional($id)
     {
         try {
-            // Check if the complaint exists in the `complaints` table
             $complaint = Complaint::find($id);
     
             if (!$complaint) {
                 return response()->json(['error' => 'Complaint not found'], 404);
             }
     
-            // Check if the complaint has an entry in `complaint_cleaner` table
-            $hasCleanerAssignment = DB::table('complaint_cleaner')->where('complaint_id', $id)->exists();
+            $compImageUrl = $complaint->getFirstMediaUrl('complaint_images') 
+                ? url($complaint->getFirstMediaUrl('complaint_images')) // Full URL for public access
+                : null;
     
-            $compImageUrl = $complaint->getFirstMediaUrl('complaint_images') ?: null;
-    
-            // Fetch officer and supervisor names
             $officer = DB::table('users')->where('id', $complaint->officer_id)->select('id', 'name')->first();
             $supervisor = DB::table('users')->where('id', $complaint->assigned_by)->select('id', 'name')->first();
     
+            $hasCleanerAssignment = DB::table('complaint_cleaner')->where('complaint_id', $id)->exists();
+    
             if (!$hasCleanerAssignment) {
-                // No entry in `complaint_cleaner`, fetch basic details for officer
-                $complaintDetails = [
-                    'id' => $complaint->id,
-                    'comp_date' => $complaint->comp_date,
-                    'comp_time' => $complaint->comp_time,
-                    'comp_desc' => $complaint->comp_desc,
-                    'comp_location' => $complaint->comp_location,
-                    'comp_image' => $compImageUrl,
-                    'officer' => $officer, // Include officer details
-                    'supervisor' => $supervisor, // Include supervisor details
-                    'assigned_date' => $complaint->assigned_date,
+                return response()->json([
+                    'id'             => $complaint->id,
+                    'comp_date'      => $complaint->comp_date,
+                    'comp_time'      => $complaint->comp_time,
+                    'comp_desc'      => $complaint->comp_desc,
+                    'comp_location'  => $complaint->comp_location,
+                    'comp_image'     => $compImageUrl,
+                    'officer'        => $officer,
+                    'supervisor'     => $supervisor,
+                    'assigned_date'  => $complaint->assigned_date,
                     'no_of_cleaners' => $complaint->no_of_cleaners,
-                    'comp_status' => $complaint->comp_status,
-                    'created_at' => $complaint->created_at,
-                    'updated_at' => $complaint->updated_at,
-                    'cleaners' => [], // Empty cleaners list
-                ];
-    
-                return response()->json($complaintDetails, 200);
-            } else {
-                // Fetch cleaner details from the users table
-                $cleaners = DB::table('complaint_cleaner')
-                    ->join('users', 'complaint_cleaner.cleaner_id', '=', 'users.id') // cleaner_id references users.id
-                    ->where('complaint_cleaner.complaint_id', $id)
-                    ->select('users.id as cleaner_id', 'users.name as cleaner_name')
-                    ->get();
-    
-                // Prepare the extended complaint details
-                $complaintDetails = [
-                    'id' => $complaint->id,
-                    'comp_date' => $complaint->comp_date,
-                    'comp_time' => $complaint->comp_time,
-                    'comp_desc' => $complaint->comp_desc,
-                    'comp_location' => $complaint->comp_location,
-                    'comp_image' => $compImageUrl,
-                    'officer' => $officer, // Include officer details
-                    'supervisor' => $supervisor, // Include supervisor details
-                    'assigned_date' => $complaint->assigned_date,
-                    'no_of_cleaners' => $complaint->no_of_cleaners,
-                    'comp_status' => $complaint->comp_status,
-                    'created_at' => $complaint->created_at,
-                    'updated_at' => $complaint->updated_at,
-                    'cleaners' => $cleaners, // List of cleaner details
-                ];
-    
-                return response()->json($complaintDetails, 200);
+                    'comp_status'    => $complaint->comp_status,
+                    'created_at'     => $complaint->created_at,
+                    'updated_at'     => $complaint->updated_at,
+                    'cleaners'       => [],
+                ], 200);
             }
+    
+            $cleaners = DB::table('complaint_cleaner')
+                ->join('users', 'complaint_cleaner.cleaner_id', '=', 'users.id')
+                ->where('complaint_cleaner.complaint_id', $id)
+                ->select('users.id as cleaner_id', 'users.name as cleaner_name')
+                ->get();
+    
+            return response()->json([
+                'id'             => $complaint->id,
+                'comp_date'      => $complaint->comp_date,
+                'comp_time'      => $complaint->comp_time,
+                'comp_desc'      => $complaint->comp_desc,
+                'comp_location'  => $complaint->comp_location,
+                'comp_image'     => $compImageUrl,
+                'officer'        => $officer,
+                'supervisor'     => $supervisor,
+                'assigned_date'  => $complaint->assigned_date,
+                'no_of_cleaners' => $complaint->no_of_cleaners,
+                'comp_status'    => $complaint->comp_status,
+                'created_at'     => $complaint->created_at,
+                'updated_at'     => $complaint->updated_at,
+                'cleaners'       => $cleaners,
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
-                'status' => 'error',
+                'status'  => 'error',
                 'message' => 'Failed to retrieve complaint details.',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
+    
 
         public function notifiedTasks(Request $request)
     {

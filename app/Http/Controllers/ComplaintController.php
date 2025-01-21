@@ -679,28 +679,38 @@ class ComplaintController extends Controller
             return response()->json(['message' => 'Complaint not found'], 404);
         }
 
-        // Retrieve officer name from `users` table
-        $user = User::select('name')
+        // Get the public URL for the complaint image
+        $compImageUrl = $complaint->getFirstMediaUrl('complaint_images')
+            ? url($complaint->getFirstMediaUrl('complaint_images')) // Public URL for image
+            : null;
+
+        // Retrieve the officer's name from the `users` table
+        $officer = User::select('id', 'name')
             ->where('id', $complaint->officer_id)
             ->first();
-        $officerName = $user ? $user->name : 'Unknown Officer';
+        $officerName = $officer ? $officer->name : 'Unknown Officer';
 
         // Retrieve available cleaners' `user_id` and `cleaner_name`
         $availableCleaners = Cleaner::select('user_id', 'cleaner_name')
             ->where('status', 'available')
             ->get();
 
-        // Prepare data to send to frontend
-        $complaintData = [
+        // Prepare the complaint details
+        $complaintDetails = [
             'id' => (string) $complaint->id,
-            'comp_location' => $complaint->comp_location ?? 'No Location',
             'comp_date' => (string) $complaint->comp_date,
-            'comp_desc' => (string) $complaint->comp_desc,
+            'comp_time' => $complaint->comp_time,
+            'comp_desc' => $complaint->comp_desc ?? 'No Description',
+            'comp_location' => $complaint->comp_location ?? 'No Location',
+            'comp_image_url' => $compImageUrl, // Public image URL
+            'officer_id' => $complaint->officer_id,
             'officer_name' => $officerName,
             'comp_status' => $complaint->comp_status,
-            'comp_image_url' => $complaint->comp_image && file_exists(storage_path('app/public/' . $complaint->comp_image))
-                ? url('storage/' . $complaint->comp_image)
-                : null, // Return null if no image
+            'assigned_by' => $complaint->assigned_by,
+            'assigned_date' => $complaint->assigned_date,
+            'no_of_cleaners' => $complaint->no_of_cleaners,
+            'created_at' => $complaint->created_at,
+            'updated_at' => $complaint->updated_at,
             'available_cleaners' => $availableCleaners->map(function ($cleaner) {
                 return [
                     'cleaner_id' => (string) $cleaner->user_id, // Use user_id instead of id
@@ -709,7 +719,7 @@ class ComplaintController extends Controller
             }),
         ];
 
-        return response()->json($complaintData);
+        return response()->json($complaintDetails, 200);
     }
         
     public function getHistory(Request $request)
