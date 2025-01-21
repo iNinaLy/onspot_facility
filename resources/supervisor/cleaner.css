@@ -283,19 +283,19 @@
 /* -----------------------------------------------------
    IMAGES & PLACEHOLDERS
 ------------------------------------------------------ */
-.cleaner-profile-pic {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  display: flex;
-  object-fit: cover;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-  border: 1px solid #d1d5db;
-  font-size: 0.8rem;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s var(--transition-ease);
+.profile-pic {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    object-fit: cover;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    border:none;
+    font-size: 0.8rem;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s var(--transition-ease);
 }
 
 .cleaner-profile-pic:hover {
@@ -303,18 +303,20 @@
 }
 
 .no-image-placeholder {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background-color: var(--no-image-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--no-image-text);
-  font-size: 0.8rem;
-  margin: 0 auto;
-  border: 1px solid #d1d5db;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    object-fit: cover;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    border: none;
+    font-size: 0.8rem;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s var(--transition-ease);
 }
+
 
 /* -----------------------------------------------------
    STATUS BADGES & BUTTONS
@@ -326,7 +328,7 @@
   border-radius: 9999px;
   display: inline-block;
   color: #1f1f1f;
-  margin-bottom: 1rem;
+  margin-bottom: auto;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: background-color var(--transition-duration), box-shadow var(--transition-duration);
   min-width: 80px;
@@ -431,27 +433,35 @@
 }
 
 .modal-profile-pic {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 1rem;
-  border: 4px solid var(--pastel-green);
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-  display: none;
+  width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    object-fit: cover;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    border: 2px rgba(154, 197, 231, 0.5);
+    font-size: 0.8rem;
+    text-align: center;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s var(--transition-ease);
 }
 
 .modal-no-image-placeholder {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  background-color: var(--no-image-bg);
-  display: none;
+  display: flex;
+  object-fit: cover;
   align-items: center;
   justify-content: center;
-  color: var(--no-image-text);
-  font-size: 1rem;
-  margin-bottom: 1rem;
+  margin: 0 auto;
+  border: none;
+  font-size: 0.8rem;
+  text-align: center;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s var(--transition-ease);
 }
 
 .modal-cleaner-name {

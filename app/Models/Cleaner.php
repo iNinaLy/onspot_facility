@@ -14,9 +14,10 @@ class Cleaner extends Authenticatable implements HasMedia
     use HasFactory, InteractsWithMedia, Notifiable;
 
     protected $table = 'cleaners';
-    protected $primaryKey = 'user_id';
-    public $incrementing = false;
-    protected $keyType = 'int';
+    protected $primaryKey = 'id';  
+    public $incrementing = true;   
+    protected $keyType = 'int';   
+    
 
     protected $fillable = [
         'user_id',
@@ -29,9 +30,7 @@ class Cleaner extends Authenticatable implements HasMedia
         'building',
     ];
 
-    protected $attributes = [
-        'role' => 'cleaner',
-    ];
+
 
     const STATUS_AVAILABLE = 'available';
     const STATUS_UNAVAILABLE = 'unavailable';

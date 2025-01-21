@@ -71,7 +71,7 @@
             {{ __('Update Profile Information') }}
         </h3>
         <div class="max-w-xl">
-            @include('profile.partials.update-profile-information-form')
+            @include('admin.profile.partials.update-profile-information-form')
         </div>
     </div>
 
@@ -91,7 +91,7 @@
             {{ __('Delete Account') }}
         </h3>
         <div class="max-w-xl">
-            @include('profile.partials.delete-user-form')
+            @include('admin.profile.partials.delete-user-form')
         </div>
     </div>
 </div>

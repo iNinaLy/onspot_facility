@@ -36,7 +36,6 @@
 
     <!-- Multi-Step Form Container -->
     <div class="bg-white shadow-lg rounded-lg p-8">
-
         <form id="newUserForm" action="{{ route('admin.users.store') }}" method="POST" enctype="multipart/form-data" novalidate>
             @csrf <!-- CSRF Token -->
 
@@ -99,10 +98,13 @@
                     <label for="email">Email <span class="text-red-500">*</span></label>
                 </div>
 
-                <!-- Phone Number -->
+                <!-- Phone Number with +60 Prefix -->
                 <div class="form-floating mb-4">
-                    <input type="text" name="phone_no" class="form-control" id="phone_no" placeholder="Phone Number" 
-                           value="{{ old('phone_no') }}">
+                    <div class="input-group">
+                        <span class="input-group-text">+60</span>
+                        <input type="text" name="phone_no" class="form-control" id="phone_no" placeholder="Phone Number" 
+                               value="{{ old('phone_no') }}">
+                    </div>
                     <label for="phone_no">Phone Number <span class="text-red-500">*</span></label>
                 </div>
 
@@ -155,6 +157,11 @@
                     <input type="file" class="form-control" id="profile_pic" name="profile_pic" accept="image/*">
                 </div>
 
+                <!-- Image Preview -->
+                <div class="mb-4">
+                    <img id="profilePicPreview" src="#" alt="Image Preview" style="display: none; max-width: 200px; max-height: 200px;"/>
+                </div>
+
                 <!-- Final Step Buttons -->
                 <div class="flex justify-between">
                     <button type="button" class="btn btn-secondary" id="prevStep3">
@@ -168,12 +175,11 @@
         </form>
     </div>
 </div>
+@endsection
 
 @push('scripts')
-
-@vite([
+    @vite([
         'resources/admin/app.js',
-
     ])
     <!-- Bootstrap Bundle (optional) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
@@ -181,10 +187,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet">
 
     <script>
-        // ------- Multi-step Wizard Logic -------
         document.addEventListener("DOMContentLoaded", function() {
             let currentStep = 1;
-            const totalSteps = 3;
 
             const step1El = document.getElementById('step1');
             const step2El = document.getElementById('step2');
@@ -196,7 +200,6 @@
             const prevStep2 = document.getElementById('prevStep2');
             const prevStep3 = document.getElementById('prevStep3');
 
-            // Show/hide steps
             function showStep(step) {
                 step1El.classList.add('hidden');
                 step2El.classList.add('hidden');
@@ -210,35 +213,32 @@
             // Initial display
             showStep(currentStep);
 
-            // Step button event listeners
-            nextStep1.addEventListener('click', function() {
+            nextStep1.addEventListener('click', () => {
                 currentStep = 2;
                 showStep(currentStep);
             });
 
-            nextStep2.addEventListener('click', function() {
+            nextStep2.addEventListener('click', () => {
                 currentStep = 3;
                 showStep(currentStep);
             });
 
-            prevStep2.addEventListener('click', function() {
+            prevStep2.addEventListener('click', () => {
                 currentStep = 1;
                 showStep(currentStep);
             });
 
-            prevStep3.addEventListener('click', function() {
+            prevStep3.addEventListener('click', () => {
                 currentStep = 2;
                 showStep(currentStep);
             });
 
-            // ------- Password Validation Logic -------
+            // Password Validation Logic
             const passwordInput = document.getElementById('password');
             const confirmPasswordInput = document.getElementById('password_confirmation');
             const passwordFeedback = document.getElementById('passwordFeedback');
             const passwordMatchError = document.getElementById('passwordMatchError');
             const addUserButton = document.getElementById('addUserButton');
-
-            // Regex: 8 chars, upper/lowercase, digit, special char
             const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
 
             function validatePassword() {
@@ -248,14 +248,13 @@
                 passwordFeedback.classList.toggle('d-none', isPasswordValid);
                 passwordMatchError.classList.toggle('d-none', doPasswordsMatch || confirmPasswordInput.value === "");
 
-                // Enable "Add User" only if password is valid & passwords match
                 addUserButton.disabled = !(isPasswordValid && doPasswordsMatch);
             }
 
             passwordInput.addEventListener('input', validatePassword);
             confirmPasswordInput.addEventListener('input', validatePassword);
 
-            // ------- Toggle Password Visibility -------
+            // Toggle Password Visibility
             document.querySelectorAll('.toggle-password').forEach(item => {
                 item.addEventListener('click', function () {
                     const targetId = this.getAttribute('data-target');
@@ -271,7 +270,33 @@
                     }
                 });
             });
+
+            // Image Preview Logic
+            const profilePicInput = document.getElementById('profile_pic');
+            const profilePicPreview = document.getElementById('profilePicPreview');
+
+            profilePicInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        profilePicPreview.src = e.target.result;
+                        profilePicPreview.style.display = 'block';
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    profilePicPreview.src = '#';
+                    profilePicPreview.style.display = 'none';
+                }
+            });
+
+            // Prepend +60 to the phone number on form submission
+            document.getElementById('newUserForm').addEventListener('submit', function(e) {
+                const phoneInput = document.getElementById('phone_no');
+                if (phoneInput.value && !phoneInput.value.startsWith('+60')) {
+                    phoneInput.value = '+60' + phoneInput.value;
+                }
+            });
         });
     </script>
 @endpush
-@endsection

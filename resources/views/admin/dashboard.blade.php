@@ -25,9 +25,9 @@
             @php
                 $metrics = [
                     [
-                        'title' => 'Total Complaints',
+                        'title' => 'Total Complaints Received',
                         'value' => $totalComplaints,
-                        'icon' => 'bi-exclamation-triangle',
+                        'icon' => 'bi bi-envelope-exclamation',
                         'icon_class' => 'icon-black'
                     ],
                     [
@@ -39,13 +39,13 @@
                     [
                         'title' => 'Total Officers',
                         'value' => $totalOfficers,
-                        'icon' => 'bi-shield-fill-check',
+                        'icon' => 'bi bi-person',
                         'icon_class' => 'icon-black'
                     ],
                     [
                         'title' => 'Total Supervisors',
                         'value' => $totalSupervisors,
-                        'icon' => 'bi-person-fill',
+                        'icon' => 'bi bi-person',
                         'icon_class' => 'icon-black'
                     ],
                 ];

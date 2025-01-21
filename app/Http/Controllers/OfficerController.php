@@ -12,19 +12,19 @@ class OfficerController extends Controller
 {
     // Fetch officers from the users table
     public function index(Request $request)
-{
-    $search = $request->query('search');
+    {
+        $search = $request->query('search');
 
-    // Apply search query to paginate officers
-    $officers = Officer::when($search, function ($query, $search) {
-            return $query->where('name', 'LIKE', "%{$search}%")
-                         ->orWhere('phone_no', 'LIKE', "%{$search}%")
-                         ->orWhere('email', 'LIKE', "%{$search}%");
-        })
-        ->paginate(10); // This ensures pagination is used
+            $officers = User::where('role', 'officer')
+                ->when($search, function ($query, $search) {
+                    return $query->where('name', 'LIKE', "%{$search}%")
+                                ->orWhere('phone_no', 'LIKE', "%{$search}%")
+                                ->orWhere('email', 'LIKE', "%{$search}%");
+                })
+                ->paginate(10);
 
-    return view('admin.officers.index', compact('officers'));
-}
+            return view('admin.officers.index', compact('officers'));
+    }
 
 
 
@@ -65,7 +65,7 @@ class OfficerController extends Controller
 
 
     // Method to display the officer edit form
-    public function editOfficer($id)
+    public function edit($id)
     {
         // Fetch the officer by ID from the users table where role is 'officer'
         $officer = User::where('id', $id)->where('role', 'officer')->firstOrFail();
@@ -75,7 +75,7 @@ class OfficerController extends Controller
     }
 
     // Method to update the officer
-    public function updateOfficer(Request $request, $id)
+    public function update(Request $request, $id)
     {
         // Validate the incoming data
         $request->validate([
@@ -122,5 +122,28 @@ class OfficerController extends Controller
         $officer->delete();
 
         return redirect()->route('admin.officers')->with('success', 'Officer deleted successfully.');
+    }
+
+
+    public function resetPassword(Request $request, $id)
+    {
+        $request->validate([
+            'new_password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[@$!%*#?&]/',
+            ],
+        ]);
+
+        $officer = User::findOrFail($id);
+        $officer->password = Hash::make($request->new_password);
+        $officer->save();
+
+        return back()->with('status', 'Password updated successfully.');
     }
 }

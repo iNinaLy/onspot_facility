@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Complaint;
 use App\Models\Cleaner;
 use Illuminate\Http\Request;
+use App\Http\Requests\ProfileUpdateRequest;  
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -17,44 +18,44 @@ class SupervisorController extends Controller
      * Display the supervisor dashboard.
      */
     public function dashboard()
-{
-    $supervisorId = Auth::id();
+    {
+        $supervisorId = Auth::id();
 
-    // Retrieve cleaner stats
-    $totalCleaners = Cleaner::count();
-    $availableCleaners = Cleaner::where('status', 'available')->count();
-    $unavailableCleaners = Cleaner::where('status', 'unavailable')->count();
+        // Retrieve cleaner stats
+        $totalCleaners = Cleaner::count();
+        $availableCleaners = Cleaner::where('status', 'available')->count();
+        $unavailableCleaners = Cleaner::where('status', 'unavailable')->count();
 
-    // Fetch the total number of supervisors from the users table where role is 'supervisor'
-    $totalSupervisors = User::where('role', 'supervisor')->count();
+        // Fetch the total number of supervisors from the users table where role is 'supervisor'
+        $totalSupervisors = User::where('role', 'supervisor')->count();
 
-    // Notifications
-    $user = Auth::user();
-    $unreadNotifications = $user->unreadNotifications;
-    $notifications = $user->notifications->sortByDesc('created_at')->take(10);
-    
-    // Fetch the most recent ongoing complaint assigned by the supervisor
-    $recentOngoingComplaint = Complaint::with(['user', 'cleaners'])
-        ->where('comp_status', 'ongoing')
-        ->where('assigned_by', $supervisorId)
-        ->orderBy('comp_date', 'desc')
-        ->first();
+        // Notifications
+        $user = Auth::user();
+        $unreadNotifications = $user->unreadNotifications;
+        $notifications = $user->notifications->sortByDesc('created_at')->take(10);
+        
+        // Fetch the most recent ongoing complaint assigned by the supervisor
+        $recentOngoingComplaint = Complaint::with(['user', 'cleaners'])
+            ->where('comp_status', 'ongoing')
+            ->where('assigned_by', $supervisorId)
+            ->orderBy('comp_date', 'desc')
+            ->first();
 
-    // Fetch count of pending complaints
-    $pendingComplaints = Complaint::where('comp_status', 'Pending')->count();
+        // Fetch count of pending complaints
+        $pendingComplaints = Complaint::where('comp_status', 'Pending')->count();
 
-    // Pass data to the view
-    return view('supervisor.dashboard', compact(
-        'totalCleaners',
-        'availableCleaners',
-        'unavailableCleaners',
-        'totalSupervisors',
-        'recentOngoingComplaint',
-        'unreadNotifications',
-        'notifications',
-        'pendingComplaints' // Pass the new variable
-    ));
-}
+        // Pass data to the view
+        return view('supervisor.dashboard', compact(
+            'totalCleaners',
+            'availableCleaners',
+            'unavailableCleaners',
+            'totalSupervisors',
+            'recentOngoingComplaint',
+            'unreadNotifications',
+            'notifications',
+            'pendingComplaints' 
+        ));
+    }
 
     public function editProfile(Request $request)
     {
@@ -62,18 +63,18 @@ class SupervisorController extends Controller
         return view('supervisor.profile.edit', compact('user'));
     }
 
-    public function updateProfile(Request $request)
+
+    public function updateProfile(ProfileUpdateRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email,' . $request->user()->id,
-            'password' => 'nullable|string|min:8|confirmed',
-        ]);
-
         $user = $request->user();
-        $user->name = $request->input('name');
-        $user->email = $request->input('email');
+        $user->fill($request->validated());
 
+        // Check if the email was changed and reset verification if necessary
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        // If password provided in the request, hash and update it
         if ($request->filled('password')) {
             $user->password = Hash::make($request->input('password'));
         }
@@ -83,11 +84,15 @@ class SupervisorController extends Controller
         return redirect()->route('supervisor.profile.edit')->with('success', 'Profile updated successfully.');
     }
 
+
     public function destroyProfile(Request $request)
     {
-        $request->validate(['password' => ['required', 'current_password']]);
+        $request->validateWithBag('userDeletion', [
+            'password' => ['required', 'current_password'],
+        ]);
 
         $user = $request->user();
+
         Auth::logout();
 
         $user->delete();
@@ -98,9 +103,7 @@ class SupervisorController extends Controller
         return redirect('/')->with('success', 'Account deleted successfully.');
     }
 
-   
 
-    
     /**
      * List all supervisors (API).
      */
@@ -390,5 +393,118 @@ class SupervisorController extends Controller
             'assignedByMe'     => $filterByMe,
         ]);
     }
+
+
+    //Admin
+
+    public function supervisors(Request $request)
+    {
+        $query = User::where('role', 'supervisor');
+
+        // Apply search filter if provided
+        if ($request->has('search')) {
+            $searchTerm = $request->input('search');
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('email', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('phone_no', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+
+        // Paginate the results
+        $supervisors = $query->paginate(10);
+
+        // Return the view with supervisors data
+        return view('admin.supervisors.index', compact('supervisors'));
+    }
+
+    public function createSupervisor()
+    {
+        return view('admin.supervisors.create');
+    }
+
+    public function storeSupervisor(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'phone_no' => 'required|string|max:20',
+            'profile_pic' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        $data = $request->all();
+
+        if ($request->hasFile('profile_pic')) {
+            $data['profile_pic'] = $request->file('profile_pic')->store('profile_pics', 'public');
+        }
+
+        User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone_no' => $data['phone_no'],
+            'role' => 'supervisor',
+            'profile_pic' => $data['profile_pic'] ?? null,
+        ]);
+
+        return redirect()->route('admin.supervisors.index')->with('success', 'Supervisor created successfully!');
+    }
+
+    public function editSupervisor($id)
+    {
+        $supervisor = User::where('id', $id)->where('role', 'supervisor')->firstOrFail();
+        return view('admin.supervisors.edit', compact('supervisor'));
+    }
+
+    public function updateSupervisor(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'phone_no' => 'required|string|max:20',
+            'profile_pic' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        $supervisor = User::where('id', $id)->where('role', 'supervisor')->firstOrFail();
+
+        $supervisor->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone_no' => $request->phone_no,
+        ]);
+
+        if ($request->hasFile('profile_pic')) {
+            $path = $request->file('profile_pic')->store('profile_pics', 'public');
+            $supervisor->update(['profile_pic' => $path]);
+        }
+
+        return redirect()->route('admin.supervisors.index')->with('success', 'Supervisor updated successfully!');
+    }
+
+    public function resetSupervisorPassword(Request $request, $id)
+    {
+        $request->validate([
+            'new_password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/[a-z]/', // at least one lowercase letter
+                'regex:/[A-Z]/', // at least one uppercase letter
+                'regex:/[0-9]/', // at least one digit
+                'regex:/[@$!%*#?&]/' // at least one special character
+            ],
+        ]);
+
+        $supervisor = User::findOrFail($id); // Ensure the user exists in the `users` table
+        $supervisor->password = Hash::make($request->new_password); // Hash the new password
+        $supervisor->save(); // Save the updated password to the database
+
+        return redirect()->route('admin.supervisors.index', $id)->with('status', 'Password has been reset successfully.');
+    }
+
+
+    //Profile Settings
+
+    
     
 }

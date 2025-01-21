@@ -1,13 +1,51 @@
-<title>{{ config('app.name','OnSpot Facility') }}</title>
-<link rel="icon" href="{{ asset('images/favicon-32x32.png') }}" type="image/png">
-
 @extends('layouts.admin')
 
+{{-- Set the page title --}}
+@section('title', 'Profile Settings')
+
+{{-- Optional: Push additional styles or meta if needed --}}
+@push('styles')
+    <link rel="icon" href="{{ asset('images/favicon-32x32.png') }}" type="image/png">
+    <style>
+        /* Additional Styles */
+        .container {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .alert-success {
+            color: #3A533B;
+            background-color: #EBF5E1;
+            border-color: #A6D785;
+        }
+
+        .alert-danger {
+            color: #B52A2A;
+            background-color: #FDE2E1;
+            border-color: #E53E3E;
+        }
+
+        .alert {
+            display: flex;
+            align-items: center;
+            border-radius: 5px;
+            padding: 1rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+        }
+
+        .bi {
+            font-size: 1.25rem;
+            margin-right: 0.5rem;
+        }
+    </style>
+@endpush
+
+{{-- Main Content --}}
 @section('content')
 <div class="container mx-auto my-10 px-4 md:px-6 max-w-screen-xl">
     <!-- Page Title -->
     <div class="flex justify-between items-center mb-8 flex-col md:flex-row">
-        <h1 class="text-3xl font-semibold text-gray-900 text-center md:text-left">Admin Profile</h1>
+        <h1 class="text-3xl font-semibold text-gray-900 text-center md:text-left">Profile</h1>
     </div>
 
     <!-- Success or Error Message -->
@@ -58,36 +96,3 @@
     </div>
 </div>
 @endsection
-
-<!-- Additional Styles -->
-<style>
-    .container {
-        font-family: 'Poppins', sans-serif;
-    }
-
-    .alert-success {
-        color: #3A533B;
-        background-color: #EBF5E1;
-        border-color: #A6D785;
-    }
-
-    .alert-danger {
-        color: #B52A2A;
-        background-color: #FDE2E1;
-        border-color: #E53E3E;
-    }
-
-    .alert {
-        display: flex;
-        align-items: center;
-        border-radius: 5px;
-        padding: 1rem;
-        font-weight: 500;
-        margin-bottom: 1.5rem;
-    }
-
-    .bi {
-        font-size: 1.25rem;
-        margin-right: 0.5rem;
-    }
-</style>

@@ -1,89 +1,98 @@
-<!-- resources/views/profile/edit.blade.php -->
-
 @extends('layouts.app')
 
+{{-- Set the page title --}}
 @section('title', 'Profile Settings')
 
+{{-- Optional: Push additional styles or meta if needed --}}
 @push('styles')
+    <link rel="icon" href="{{ asset('images/favicon-32x32.png') }}" type="image/png">
     <style>
-        .heading {
-            font-size: 2rem;
-            font-weight: 700rem;
-            color: #2E5675;
+        /* Additional Styles */
+        .container {
+            font-family: 'Poppins', sans-serif;
         }
-        
-        @media (min-width: 640px) {
-            .sm\:px-6 {
-                padding-left: 1.5rem;
-                padding-top: 1rem;
-                padding-right: 1.5rem;
-            }
+
+        .alert-success {
+            color: #3A533B;
+            background-color: #EBF5E1;
+            border-color: #A6D785;
         }
-         
-        .toggle-content {
-            display: none;
+
+        .alert-danger {
+            color: #B52A2A;
+            background-color: #FDE2E1;
+            border-color: #E53E3E;
         }
-        .toggle-content.active {
-            display: block;
+
+        .alert {
+            display: flex;
+            align-items: center;
+            border-radius: 5px;
+            padding: 1rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+        }
+
+        .bi {
+            font-size: 1.25rem;
+            margin-right: 0.5rem;
         }
     </style>
 @endpush
 
+{{-- Main Content --}}
 @section('content')
-<div class="py-12 bg-gradient-to-b from-gray-100 via-gray to-blue-50 min-h-screen">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
-            
-            <!-- Profile Settings Heading -->
-            <div class="heading">
-                <h1 class="text-[2rem] text-[#2e5657] mb-8">{{ __('Profile Settings') }}</h1>
-            </div>
+<div class="container mx-auto my-10 px-4 md:px-6 max-w-screen-xl">
+    <!-- Page Title -->
+    <div class="flex justify-between items-center mb-8 flex-col md:flex-row">
+        <h1 class="text-3xl font-semibold text-gray-900 text-center md:text-left" style="margin-top:3rem;">Profile Settings</h1>
+    </div>
 
-            <!-- Profile Information -->
-            <div class="p-8 bg-white rounded-lg shadow-md">
-                <h3 class="text-2xl font-semibold text-gray-800 mb-6">
-                    {{ __('Update Profile Information') }}
-                </h3>
-                <div class="max-w-xl">
-                    @include('profile.partials.update-profile-information-form')
-                </div>
-            </div>
-
-            <!-- Update Password -->
-            <div class="p-8 bg-white rounded-lg shadow-md">
-                <h3 class="text-2xl font-semibold text-gray-800 mb-6">
-                    {{ __('Change Password') }}
-                </h3>
-                <div class="max-w-xl">
-                    @include('profile.partials.update-password-form')
-                </div>
-            </div>
-
-            <!-- Delete Account -->
-            <div class="p-8 bg-white rounded-lg shadow-md">
-                <h3 class="text-2xl font-semibold text-red-500 mb-6">
-                    {{ __('Delete Account') }}
-                </h3>
-                <div class="max-w-xl">
-                    @include('profile.partials.delete-user-form')
-                </div>
+    <!-- Success or Error Message -->
+    @if(session('success'))
+        <div class="alert alert-success bg-green-100 border-t-4 border-green-500 rounded-b text-green-900 px-4 py-3 shadow-md mb-8" role="alert">
+            <div class="flex items-center">
+                <i class="bi bi-check-circle-fill mr-2 text-green-500"></i>
+                <span>{{ session('success') }}</span>
             </div>
         </div>
+    @elseif(session('error'))
+        <div class="alert alert-danger bg-red-100 border-t-4 border-red-500 rounded-b text-red-900 px-4 py-3 shadow-md mb-8" role="alert">
+            <div class="flex items-center">
+                <i class="bi bi-exclamation-triangle-fill mr-2 text-red-500"></i>
+                <span>{{ session('error') }}</span>
+            </div>
+        </div>
+    @endif
+
+    <!-- Profile Information Section -->
+    <div class="p-8 bg-white shadow-lg rounded-lg mb-8">
+        <h3 class="text-2xl font-bold text-gray-700 mb-6">
+            {{ __('Update Profile Information') }}
+        </h3>
+        <div class="max-w-xl">
+            @include('supervisor.profile.partials.update-profile-information-form')
+        </div>
     </div>
+
+    <!-- Update Password Section -->
+    <div class="p-8 bg-white shadow-lg rounded-lg mb-8">
+        <h3 class="text-2xl font-bold text-gray-700 mb-6">
+            {{ __('Change Password') }}
+        </h3>
+        <div class="max-w-xl">
+            @include('supervisor.profile.partials.update-password-form')
+        </div>
+    </div>
+
+    <!-- Delete Account Section -->
+    <div class="p-8 bg-white shadow-lg rounded-lg">
+        <h3 class="text-2xl font-bold text-red-600 mb-6">
+            {{ __('Delete Account') }}
+        </h3>
+        <div class="max-w-xl">
+            @include('supervisor.profile.partials.delete-user-form')
+        </div>
+    </div>
+</div>
 @endsection
-
-@push('scripts')
-@vite([
-    'resources/supervisor/app.js',
-    'resources/supervisor/dashboard.js',
-])
-    <script>
-        // Function to toggle the visibility of the details section
-        function toggleDetails(id) {
-            const details = document.getElementById(`details-${id}`);
-            if (details) {
-                details.classList.toggle('active');
-            }
-        }
-
-    </script>
-@endpush

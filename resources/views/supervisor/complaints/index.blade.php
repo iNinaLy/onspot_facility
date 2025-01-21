@@ -38,12 +38,19 @@
         @endif
 
         <div class="complaint-image-container">
-            @if ($complaint->comp_image)
-              <img src="{{ $complaint->getFirstMediaUrl('complaint_images') }}" alt="Complaint Image" class="complaint-image" />
-            @else
+          @if ($complaint->comp_image)
+              <img src="{{ $complaint->getFirstMediaUrl('complaint_images') }}" 
+                  alt="Complaint Image" 
+                  class="complaint-image"
+                  onerror="this.onerror=null; this.src='{{ asset('images/no-image.png') }}';" />
+          @else
               <span>No Image Available</span>
-            @endif
-        </div>
+              <img src="{{ asset('images/no-image.png') }}"
+                  alt="Complaint Image"
+                  class="complaint-image">
+          @endif
+      </div>
+
 
         <div class="complaint-details">
           <h3 class="complaint-title">{{ $complaint->comp_desc }}</h3>

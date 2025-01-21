@@ -6,10 +6,11 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\SupervisorController;
 use App\Http\Controllers\CleanerController;
 use App\Http\Controllers\ComplaintController;
-use App\Http\Controllers\HistoryController;
+use App\Http\Controllers\OfficerController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NotificationTokenController;
+use App\Models\Supervisor;
 
 // Redirect root to login
 Route::get('/', function () {
@@ -31,33 +32,33 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
     // Cleaners Management
-    Route::get('/cleaners', [AdminController::class, 'cleaners'])->name('cleaners');
-    Route::get('/cleaners/create', [AdminController::class, 'createCleaner'])->name('cleaners.create');
-    Route::post('/cleaners', [AdminController::class, 'storeCleaner'])->name('cleaners.store');
-    Route::get('/cleaners/{cleaner}', [AdminController::class, 'showCleaner'])->name('cleaners.show');
-    Route::get('/cleaners/{cleaner}/edit', [AdminController::class, 'editCleaner'])->name('cleaners.edit');
-    Route::put('/cleaners/{cleaner}', [AdminController::class, 'updateCleaner'])->name('cleaners.update');
-    Route::delete('/cleaners/{cleaner}', [AdminController::class, 'destroyCleaner'])->name('cleaners.destroy');
+    Route::get('/cleaners', [CleanerController::class, 'cleaners'])->name('cleaners');
+    Route::get('/cleaners/create', [CleanerController::class, 'createCleaner'])->name('cleaners.create');
+    Route::post('/cleaners', [CleanerController::class, 'storeCleaner'])->name('cleaners.store');
+    Route::get('/cleaners/{cleaner}', [CleanerController::class, 'showCleaner'])->name('cleaners.show');
+    Route::get('/cleaners/{cleaner}/edit', [CleanerController::class, 'editCleaner'])->name('cleaners.edit');
+    Route::put('/cleaners/{cleaner}', [CleanerController::class, 'updateCleaner'])->name('cleaners.update');
+    Route::delete('/cleaners/{cleaner}', [CleanerController::class, 'destroyCleaner'])->name('cleaners.destroy');
     Route::patch('/cleaners/{id}/update-status', [CleanerController::class, 'updateStatus'])->name('cleaners.updateStatus');
     Route::patch('/cleaners/{id}/reset-password', [CleanerController::class, 'resetPassword'])->name('cleaners.resetPassword');
 
     // Officers Management
-    Route::get('/officers', [AdminController::class, 'officers'])->name('officers');
-    Route::get('/officers/create', [AdminController::class, 'createOfficer'])->name('officers.create');
-    Route::post('/officers', [AdminController::class, 'storeOfficer'])->name('officers.store');
-    Route::get('/officers/{officer}/edit', [AdminController::class, 'editOfficer'])->name('officers.edit');
-    Route::put('/officers/{officer}', [AdminController::class, 'updateOfficer'])->name('officers.update');
-    Route::delete('/officers/{officer}', [AdminController::class, 'destroyOfficer'])->name('officers.destroy');
-    Route::patch('/officers/{id}/reset-password', [AdminController::class, 'resetOfficerPassword'])->name('officers.resetPassword');
+    Route::get('/officers', [OfficerController::class, 'index'])->name('officers');
+    Route::get('/officers/create', [OfficerController::class, 'create'])->name('officers.create');
+    Route::post('/officers', [OfficerController::class, 'store'])->name('officers.store');
+    Route::get('/officers/{officer}/edit', [OfficerController::class, 'edit'])->name('officers.edit');
+    Route::put('/officers/{officer}', [OfficerController::class, 'update'])->name('officers.update');
+    Route::delete('/officers/{officer}', [OfficerController::class, 'destroy'])->name('officers.destroy');
+    Route::patch('/officers/{id}/reset-password', [OfficerController::class, 'resetPassword'])->name('officers.resetPassword');
 
     // Supervisors Management
-    Route::get('/supervisors', [AdminController::class, 'supervisors'])->name('supervisors.index');
-    Route::get('/supervisors/create', [AdminController::class, 'createSupervisor'])->name('supervisors.create');
-    Route::post('/supervisors', [AdminController::class, 'storeSupervisor'])->name('supervisors.store');
-    Route::get('/supervisors/{supervisor}/edit', [AdminController::class, 'editSupervisor'])->name('supervisors.edit');
-    Route::put('/supervisors/{supervisor}', [AdminController::class, 'updateSupervisor'])->name('supervisors.update');
-    Route::delete('/supervisors/{supervisor}', [AdminController::class, 'destroySupervisor'])->name('supervisors.destroy');
-    Route::patch('/supervisors/{id}/reset-password', [AdminController::class, 'resetSupervisorPassword'])->name('supervisors.resetPassword');
+    Route::get('/supervisors', [SupervisorController::class, 'supervisors'])->name('supervisors.index');
+    Route::get('/supervisors/create', [SupervisorController::class, 'createSupervisor'])->name('supervisors.create');
+    Route::post('/supervisors', [SupervisorController::class, 'storeSupervisor'])->name('supervisors.store');
+    Route::get('/supervisors/{supervisor}/edit', [SupervisorController::class, 'editSupervisor'])->name('supervisors.edit');
+    Route::put('/supervisors/{supervisor}', [SupervisorController::class, 'updateSupervisor'])->name('supervisors.update');
+    Route::delete('/supervisors/{supervisor}', [SupervisorController::class, 'destroySupervisor'])->name('supervisors.destroy');
+    Route::patch('/supervisors/{id}/reset-password', [SupervisorController::class, 'resetSupervisorPassword'])->name('supervisors.resetPassword');
 
     // Users Management
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
@@ -78,9 +79,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/edit', [AdminController::class, 'editProfile'])->name('edit');
-        Route::patch('/', [AdminController::class, 'updateProfile'])->name('update');
+        Route::put('/', [AdminController::class, 'updateProfile'])->name('update');
         Route::delete('/', [AdminController::class, 'destroyProfile'])->name('destroy');
     });
+    
 });
 
 // ===================
@@ -143,10 +145,9 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     // History
     Route::get('/history', [SupervisorController::class, 'history'])->name('history');
 
-    // Profile Management
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/edit', [SupervisorController::class, 'editProfile'])->name('edit');
-        Route::patch('/', [SupervisorController::class, 'updateProfile'])->name('update');
+        Route::put('/', [SupervisorController::class, 'updateProfile'])->name('update');
         Route::delete('/', [SupervisorController::class, 'destroyProfile'])->name('destroy');
     });
 });

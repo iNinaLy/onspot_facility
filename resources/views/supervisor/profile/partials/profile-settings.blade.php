@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.app')
 
 @section('content')
 <!-- Google Fonts -->
@@ -87,9 +87,9 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="font-weight-bold mb-3">Update Profile Information</h5>
-                    <form method="POST" action="{{ route('admin.profile.update') }}">
+                    <form method="POST" action="{{ route('supervisor.profile.update') }}">
                         @csrf
-                        @method('PATCH')
+                        @method('PUT')
                         <div class="form-group mb-3">
                             <label for="name" class="key-metric">Name</label>
                             <input type="text" id="name" name="name" value="{{ old('name', auth()->user()->name) }}" class="form-control" required>
@@ -98,9 +98,11 @@
                             <label for="email" class="key-metric">Email</label>
                             <input type="email" id="email" name="email" value="{{ old('email', auth()->user()->email) }}" class="form-control" required>
                         </div>
-                        <button type="submit" class="btn-save mt-2">Save Changes</button>
+
+                        <button type="submit" class="btn-save mt-2">Save</button> 
+                        
                     </form>
-                </div>
+                </di>
             </div>
         </div>
 
@@ -110,7 +112,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="font-weight-bold mb-3">Change Password</h5>
-                    <form method="POST" action="{{ route('admin.password.update') }}">
+                    <form method="POST" action="{{ route('supervisor.password.update') }}">
                         @csrf
                         @method('PUT')
                         <div class="form-group mb-3">
@@ -135,7 +137,7 @@
                 <div class="card-body">
                     <h5 class="font-weight-bold text-danger mb-3">Delete Account</h5>
                     <p class="text-muted">Once your account is deleted, all of its resources and data will be permanently deleted.</p>
-                    <form method="POST" action="{{ route('admin.profile.destroy') }}">
+                    <form method="POST" action="{{ route('profile.destroy') }}">
                         @csrf
                         @method('DELETE')
                         <div class="form-group mb-3">

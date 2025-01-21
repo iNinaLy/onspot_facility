@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.app')
 
 {{-- Set the page title --}}
 @section('title', 'Profile Settings')

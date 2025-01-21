@@ -124,7 +124,7 @@
 
         .notification-text a {
             color: #2e5675;
-            text-decoration: underline;
+        
             font-weight: 600;
         }
 
@@ -162,7 +162,6 @@
         .section-title a {
             font-size: 1rem;
             color: #2e5675;
-            text-decoration: underline;
             font-weight: 600;
         }
 

@@ -68,14 +68,16 @@
                 @forelse($availableCleaners as $cleaner)
                     <tr class="cleaner-row">
                         <td>
-                            @if($cleaner->profile_pic)
-                                <img 
-                                    src="data:image/jpeg;base64,{{ base64_encode($cleaner->profile_pic) }}"
-                                    alt="{{ $cleaner->cleaner_name }}"
-                                    class="cleaner-profile-pic"
-                                >
+                        @if($cleaner->profile_pic)
+                        <img src="{{ asset('images/default-image.png') }}"
+                                alt="Profile picture"
+                                class="profile-pic"
+                                onerror="this.onerror=null; this.src='@asset('images/default-image.png')';">
+
                             @else
-                                <div class="no-image-placeholder">No Image</div>
+                                <img src="{{ asset('images/default-image.png') }}"
+                                     alt="No image"
+                                     class="profile-pic">
                             @endif
                         </td>
                         <td>
@@ -137,13 +139,14 @@
                     <tr class="cleaner-row">
                         <td>
                             @if($cleaner->profile_pic)
-                                <img 
-                                    src="data:image/jpeg;base64,{{ base64_encode($cleaner->profile_pic) }}"
-                                    alt="{{ $cleaner->cleaner_name }}'s Profile"
-                                    class="cleaner-profile-pic"
-                                >
+                                <img src="data:image/jpeg;base64,{{ base64_encode($cleaner->profile_pic) }}"
+                                     alt="{{ $cleaner->cleaner_name }}" 
+                                     class="modal-profile-pic"
+                                     onerror="this.onerror=null; this.src='{{ asset('images/default-image.png') }}';">
                             @else
-                                <div class="no-image-placeholder">No Image</div>
+                                <img src="{{ asset('images/default-image.png') }}"
+                                     alt="Default Image"
+                                     class="modal-no-image-placeholder">
                             @endif
                         </td>
                         <td>
@@ -195,7 +198,7 @@
         <span class="close-button" aria-label="Close Modal">&times;</span>
         <div class="modal-body">
             <!-- Profile Pic / No Image Placeholder -->
-            <img id="modal-profile-pic" class="modal-profile-pic" alt="Cleaner Profile">
+            <img id="modal-profile-pic" class="modal-profile-pic" >
             <div class="modal-no-image-placeholder" id="modal-no-image-placeholder">No Image</div>
 
             <!-- Basic Info -->

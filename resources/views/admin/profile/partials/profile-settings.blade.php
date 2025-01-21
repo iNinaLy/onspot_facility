@@ -89,7 +89,7 @@
                     <h5 class="font-weight-bold mb-3">Update Profile Information</h5>
                     <form method="POST" action="{{ route('admin.profile.update') }}">
                         @csrf
-                        @method('PATCH')
+                        
                         <div class="form-group mb-3">
                             <label for="name" class="key-metric">Name</label>
                             <input type="text" id="name" name="name" value="{{ old('name', auth()->user()->name) }}" class="form-control" required>
@@ -135,7 +135,7 @@
                 <div class="card-body">
                     <h5 class="font-weight-bold text-danger mb-3">Delete Account</h5>
                     <p class="text-muted">Once your account is deleted, all of its resources and data will be permanently deleted.</p>
-                    <form method="POST" action="{{ route('admin.profile.destroy') }}">
+                    <form method="POST" action="{{ route('profile.destroy') }}">
                         @csrf
                         @method('DELETE')
                         <div class="form-group mb-3">

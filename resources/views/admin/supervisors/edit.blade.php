@@ -9,13 +9,28 @@
 @push('styles')
 
 <style>
+    .profile-pic {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            object-fit: cover;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            border: none;
+            font-size: 0.8rem;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s var(--transition-ease);
+        }
+
     .form-control {
         background-color: #f9fafb;
-        border: 1px solid #d1d5db;
+        border: 7px solidrgb(113, 113, 113);
         border-radius: 0.375rem;
         padding: 0.75rem;
-        padding-right: 2.5rem; /* Extra padding for the eye icon */
-        width: 100%;
+        padding-right: 2.5rem;
+        width: 70%;
     }
 
     .form-control:focus {
@@ -43,12 +58,23 @@
 
 @section('content')
 <div class="container mx-auto my-10 px-6 max-w-screen-md">
-    <!-- Page Title -->
     <div class="text-center mb-8">
-        <h1 class="text-3xl font-semibold text-gray-900">Edit Supervisor</h1>
+        <h1 class="text-3xl font-semibold text-gray-900">Edit Details</h1>
         <p class="text-gray-600">Update the supervisor's details below.</p>
     </div>
 
+    @if ($supervisor->profile_pic)
+        <img src="data:image/jpeg;base64,{{ base64_encode($supervisor->profile_pic) }}"
+            alt="{{ $supervisor->name }}" 
+            class="profile-pic"
+            onerror="this.onerror=null; this.src='{{ asset('images/default-image.png') }}';">
+    @else
+        <img src="{{ asset('images/default-image.jpeg') }}"
+            alt="Default Image"
+            class="profile-pic">
+    @endif
+
+                             
     <!-- Success Message -->
     @if (session('status'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6" role="alert">
@@ -96,25 +122,21 @@
             <input type="text" name="phone_no" class="form-control border-gray-300 rounded-lg w-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{ old('phone_no', $supervisor->phone_no) }}" placeholder="Enter Phone Number" required>
         </div>
 
-        <!-- Profile Picture -->
-        <div class="mb-6">
+        <!-- Profile Picture Field -->
+        <div class="mb-6 relative">
             <label for="profile_pic" class="block text-gray-700 font-medium mb-2">Profile Picture</label>
-            <input type="file" name="profile_pic" class="form-control border-gray-300 rounded-lg w-full px-4 py-2">
-            
-            <!-- Display Current Profile Picture if available -->
-            @if ($supervisor->profile_pic)
-                <div class="mt-4">
-                    <label class="block text-gray-700 font-medium mb-2">Current Profile Picture</label>
-                    <img src="{{ asset('storage/' . $supervisor->profile_pic) }}" alt="Profile Picture" class="w-24 h-24 rounded-full border-2 border-gray-300 object-cover">
-                </div>
-            @else
-                <p class="text-gray-500 text-sm mt-2">No profile picture uploaded yet.</p>
-            @endif
+                
+            <input type="file" name="profile_pic" id="profile_pic" class="form-control" onchange="previewImage(event)">
+
+            <!-- Preview selected image -->
+            <div class="mt-4" id="profile-pic-container" style="display: none;">
+                <img id="profile-pic-preview" src="" alt="Profile Picture" class="w-24 h-24 rounded-full border-2 border-gray-300 object-cover">
+            </div>
         </div>
 
         <!-- Reset Password Button -->
         <div class="mb-6">
-            <button type="button" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
+            <button type="button" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 " style="background-color:rgb(206, 77, 77); margin-top:3rem;" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
                 Reset Password
             </button>
         </div>
@@ -122,7 +144,7 @@
         <!-- Submit and Cancel Buttons -->
         <div class="flex justify-between">
             <a href="{{ route('admin.supervisors.index') }}" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-all">Cancel</a>
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all">Save</button>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all" style="background-color: #3e4e6a;">Save</button>
         </div>
     </form>
 </div>
@@ -183,6 +205,11 @@
 
 
 @push('scripts')
+
+@vite(['resources/admin/app.js', 
+                        'resources/admin/complaint.js'
+    ])
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const passwordInput = document.getElementById('new_password');

@@ -97,14 +97,20 @@
             @php
                 $adminUser = \App\Models\User::where('role', 'admin')->first();
             @endphp
-            <div class="flex items-center py-4 px-5 border-b">
+           <div class="flex items-center py-4 px-5 border-b">
                 @if($adminUser)
                     <div class="flex items-center profile-container">
-                        <img src="{{ $adminUser->profile_pic 
-                                     ? 'data:image/jpeg;base64,' . base64_encode($adminUser->profile_pic) 
-                                     : 'https://via.placeholder.com/40' }}"
-                             alt="Profile Picture"
-                             class="w-12 h-12 mr-3">
+                        @if($adminUser->profile_pic)
+                            <img src="data:image/jpeg;base64,{{ base64_encode($adminUser->profile_pic) }}"
+                                alt="{{ $adminUser->name }}" 
+                                class="w-12 h-12 mr-3 profile-pic"
+                                onerror="this.onerror=null; this.src='{{ asset('images/default-image.png') }}';">
+                        @else
+                            <img src="{{ asset('images/default-image.png') }}"
+                                alt="Default Image"
+                                class="w-12 h-12 mr-3 profile-pic">
+                        @endif
+
                         <div>
                             <div class="text-sm font-bold">{{ $adminUser->name }}</div>
                             <div class="text-xs text-gray-400">{{ $adminUser->email }}</div>
@@ -113,10 +119,13 @@
                 @else
                     <p class="text-gray-400">Admin user not found.</p>
                 @endif
+
                 <button id="toggle-button" class="ml-auto p-2 focus:outline-none md:hidden">
                     <img src="{{ asset('img/svg/menu.svg') }}" alt="Menu Icon" class="h-6 w-6">
                 </button>
             </div>
+
+
 
             <!-- Sidebar Content -->
             <div class="flex-1 px-4 py-6 space-y-3">

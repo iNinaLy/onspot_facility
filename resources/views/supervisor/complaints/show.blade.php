@@ -239,21 +239,16 @@
     <div class="complaint-layout">
         <!-- Image Section -->
         <div class="image-section">
-            @if($complaint->getFirstMediaUrl('complaint_images'))
-                <!-- Show complaint image with zoom onclick -->
-                <img
-                    src="{{ $complaint->getFirstMediaUrl('complaint_images') }}"
-                    alt="Complaint Image"
+            @if ($complaint->comp_image)
+                <img src="{{ $complaint->getFirstMediaUrl('complaint_images') }}" 
+                    alt="Complaint Image" 
                     class="complaint-image"
-                    onclick="openImageModal(this.src)"
-                >
+                    onerror="this.onerror=null; this.src='{{ asset('images/no-image.png') }}';" />
             @else
-                <!-- Default placeholder if no image -->
-                <img
-                    src="{{ asset('img/default_placeholder.png') }}"
-                    alt="No Image Available"
-                    class="complaint-image"
-                >
+                <span>No Image Available</span>
+                <img src="{{ asset('images/no-image.png') }}"
+                    alt="Complaint Image"
+                    class="complaint-image">
             @endif
         </div>
 

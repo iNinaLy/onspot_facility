@@ -8,6 +8,12 @@ use Illuminate\Validation\Rule;
 
 class ProfileUpdateRequest extends FormRequest
 {
+    public function authorize()
+    {
+        // Authorization logic for supervisors, if needed
+        return true;
+    }
+    
     /**
      * Get the validation rules that apply to the request.
      *
@@ -15,6 +21,7 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
+        $userId = $this->user()->id;
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => [

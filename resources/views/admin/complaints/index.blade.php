@@ -7,174 +7,6 @@
 <link href="resources/admin/complaint.css" rel="stylesheet" />
 @endpush
 
-@push('scripts')
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-<meta name="csrf-token" content="{{ csrf_token() }}">
-
-<script>
-    $(document).ready(function() {
-        // CSRF token from meta
-        var csrfToken = $('meta[name="csrf-token"]').attr('content');
-
-        // Initialize tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-
-        // 1) Individual delete button
-        $('.delete-button').on('click', function() {
-            var complaintId = $(this).data('complaint-id');
-            $('#deleteComplaintId').val(complaintId);
-            $('#deleteModal').modal('show');
-        });
-
-        $('#confirmDeleteComplaintButton').on('click', function() {
-            var complaintId = $('#deleteComplaintId').val();
-            var actionUrl = '{{ route("admin.complaints.bulkAction") }}';
-
-            var form = $('<form>', {
-                method: 'POST',
-                action: actionUrl
-            });
-            form.append('<input type="hidden" name="_token" value="' + csrfToken + '">');
-            form.append('<input type="hidden" name="action" value="delete">');
-            form.append('<input type="hidden" name="selected_complaints[]" value="' + complaintId + '">');
-            $('body').append(form);
-            form.submit();
-        });
-
-        // 2) Bulk delete
-        $('#bulkDeleteButton').on('click', function(e) {
-            e.preventDefault();
-            var selectedComplaints = $('.select-box:checked').map(function() {
-                return $(this).val();
-            }).get();
-
-            if (!selectedComplaints.length) {
-                toastr.warning('Please select at least one complaint to delete.');
-                return;
-            }
-            $('#bulkDeleteModal').modal('show');
-        });
-
-        $('#confirmBulkDeleteButton').on('click', function() {
-            var actionUrl = '{{ route("admin.complaints.bulkAction") }}';
-            var selectedComplaints = $('.select-box:checked').map(function() {
-                return $(this).val();
-            }).get();
-
-            var form = $('<form>', {
-                method: 'POST',
-                action: actionUrl
-            });
-            form.append('<input type="hidden" name="_token" value="' + csrfToken + '">');
-            form.append('<input type="hidden" name="action" value="delete">');
-
-            selectedComplaints.forEach(function(id) {
-                form.append('<input type="hidden" name="selected_complaints[]" value="' + id + '">');
-            });
-
-            $('body').append(form);
-            form.submit();
-        });
-
-        // 3) Bulk mark as completed
-        $('#bulkMarkCompletedButton').on('click', function(e) {
-            e.preventDefault();
-            var selectedComplaints = $('.select-box:checked').map(function() {
-                return $(this).val();
-            }).get();
-
-            if (!selectedComplaints.length) {
-                toastr.warning('Please select at least one complaint to mark as completed.');
-                return;
-            }
-            $('#bulkMarkCompletedModal').modal('show');
-        });
-
-        $('#confirmBulkMarkCompletedButton').on('click', function() {
-            var actionUrl = '{{ route("admin.complaints.bulkAction") }}';
-            var selectedComplaints = $('.select-box:checked').map(function() {
-                return $(this).val();
-            }).get();
-
-            var form = $('<form>', {
-                method: 'POST',
-                action: actionUrl
-            });
-            form.append('<input type="hidden" name="_token" value="' + csrfToken + '">');
-            form.append('<input type="hidden" name="action" value="mark_completed">');
-
-            selectedComplaints.forEach(function(id) {
-                form.append('<input type="hidden" name="selected_complaints[]" value="' + id + '">');
-            });
-
-            $('body').append(form);
-            form.submit();
-        });
-
-        // 4) "Select All" checkbox
-        $('#select-all').on('click', function(){
-            $('.select-box').prop('checked', this.checked);
-            toggleBulkActions();
-        });
-        $('.select-box').on('change', toggleBulkActions);
-
-        function toggleBulkActions() {
-            var selectedCount = $('.select-box:checked').length;
-            if (selectedCount > 0) {
-                $('.bulk-actions-toolbar').addClass('active');
-            } else {
-                $('.bulk-actions-toolbar').removeClass('active');
-            }
-        }
-
-        // 5) Inline status update
-        $('.status-select').on('change', function(e) {
-            e.stopPropagation();
-            var selectElement = $(this);
-            var complaintId   = selectElement.data('complaint-id');
-            var newStatus     = selectElement.val();
-            var url           = selectElement.data('url');
-
-            selectElement.addClass('loading').prop('disabled', true);
-
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: {
-                    comp_status: newStatus,
-                    _token: csrfToken
-                },
-                success: function(response) {
-                    selectElement.removeClass('loading').prop('disabled', false);
-                    if(response.status !== 'success') {
-                        toastr.error(response.message || 'An error occurred while updating the status.');
-                    } else {
-                        toastr.success('Status updated successfully.');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    selectElement.removeClass('loading').prop('disabled', false);
-                    toastr.error('An error occurred while updating the status.');
-                }
-            });
-        });
-
-        // 6) Toastr notifications for success/error
-        @if(session('success'))
-            toastr.success("{{ session('success') }}");
-        @endif
-        @if(session('error'))
-            toastr.error("{{ session('error') }}");
-        @endif
-    });
-</script>
-@endpush
 
 @section('content')
 <div class="container my-5">
@@ -558,3 +390,179 @@
 
 </div>
 @endsection
+
+
+@push('scripts')
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+
+@vite([
+        'resources/admin/app.js',
+        'resources/admin/dashboard.js',
+        'resources/admin/complaint.js',
+    ])
+<script>
+    $(document).ready(function() {
+    // CSRF token from meta
+    var csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // 1) Individual delete button
+    $('.delete-button').on('click', function() {
+        var complaintId = $(this).data('complaint-id');
+        $('#deleteComplaintId').val(complaintId);
+        $('#deleteModal').modal('show');
+    });
+
+    $('#confirmDeleteComplaintButton').on('click', function() {
+        var complaintId = $('#deleteComplaintId').val();
+        var actionUrl = '{{ route("admin.complaints.bulkAction") }}';
+
+        var form = $('<form>', {
+            method: 'POST',
+            action: actionUrl
+        });
+        form.append('<input type="hidden" name="_token" value="' + csrfToken + '">');
+        form.append('<input type="hidden" name="action" value="delete">');
+        form.append('<input type="hidden" name="selected_complaints[]" value="' + complaintId + '">');
+        $('body').append(form);
+        form.submit();
+    });
+
+    // 2) Bulk delete
+    $('#bulkDeleteButton').on('click', function(e) {
+        e.preventDefault();
+        var selectedComplaints = $('.select-box:checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        if (!selectedComplaints.length) {
+            toastr.warning('Please select at least one complaint to delete.');
+            return;
+        }
+        $('#bulkDeleteModal').modal('show');
+    });
+
+    $('#confirmBulkDeleteButton').on('click', function() {
+        var actionUrl = '{{ route("admin.complaints.bulkAction") }}';
+        var selectedComplaints = $('.select-box:checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        var form = $('<form>', {
+            method: 'POST',
+            action: actionUrl
+        });
+        form.append('<input type="hidden" name="_token" value="' + csrfToken + '">');
+        form.append('<input type="hidden" name="action" value="delete">');
+
+        selectedComplaints.forEach(function(id) {
+            form.append('<input type="hidden" name="selected_complaints[]" value="' + id + '">');
+        });
+
+        $('body').append(form);
+        form.submit();
+    });
+
+    // 3) Bulk mark as completed
+    $('#bulkMarkCompletedButton').on('click', function(e) {
+        e.preventDefault();
+        var selectedComplaints = $('.select-box:checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        if (!selectedComplaints.length) {
+            toastr.warning('Please select at least one complaint to mark as completed.');
+            return;
+        }
+        $('#bulkMarkCompletedModal').modal('show');
+    });
+
+    $('#confirmBulkMarkCompletedButton').on('click', function() {
+        var actionUrl = '{{ route("admin.complaints.bulkAction") }}';
+        var selectedComplaints = $('.select-box:checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        var form = $('<form>', {
+            method: 'POST',
+            action: actionUrl
+        });
+        form.append('<input type="hidden" name="_token" value="' + csrfToken + '">');
+        form.append('<input type="hidden" name="action" value="mark_completed">');
+
+        selectedComplaints.forEach(function(id) {
+            form.append('<input type="hidden" name="selected_complaints[]" value="' + id + '">');
+        });
+
+        $('body').append(form);
+        form.submit();
+    });
+
+    // 4) "Select All" checkbox
+    $('#select-all').on('click', function(){
+        $('.select-box').prop('checked', this.checked);
+        toggleBulkActions();
+    });
+    $('.select-box').on('change', toggleBulkActions);
+
+    function toggleBulkActions() {
+        var selectedCount = $('.select-box:checked').length;
+        if (selectedCount > 0) {
+            $('.bulk-actions-toolbar').addClass('active');
+        } else {
+            $('.bulk-actions-toolbar').removeClass('active');
+        }
+    }
+
+    // 5) Inline status update
+    $('.status-select').on('change', function(e) {
+        e.stopPropagation();
+        var selectElement = $(this);
+        var complaintId   = selectElement.data('complaint-id');
+        var newStatus     = selectElement.val();
+        var url           = selectElement.data('url');
+
+        selectElement.addClass('loading').prop('disabled', true);
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: {
+                comp_status: newStatus,
+                _token: csrfToken
+            },
+            success: function(response) {
+                selectElement.removeClass('loading').prop('disabled', false);
+                if(response.status !== 'success') {
+                    toastr.error(response.message || 'An error occurred while updating the status.');
+                } else {
+                    toastr.success('Status updated successfully.');
+                }
+            },
+            error: function(xhr, status, error) {
+                selectElement.removeClass('loading').prop('disabled', false);
+                toastr.error('An error occurred while updating the status.');
+            }
+        });
+    });
+
+    // 6) Toastr notifications for success/error
+    @if(session('success'))
+        toastr.success("{{ session('success') }}");
+    @endif
+    @if(session('error'))
+        toastr.error("{{ session('error') }}");
+    @endif
+});
+</script>
+@endpush

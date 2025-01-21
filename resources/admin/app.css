@@ -302,6 +302,7 @@ table tbody tr:hover td {
     color: #ffffff;
 }
 
+
 /* ==== Select All Checkbox ==== */
 #select-all {
     transform: scale(1.2);
