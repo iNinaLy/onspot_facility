@@ -99,14 +99,15 @@
                 </div>
 
                 <!-- Phone Number with +60 Prefix -->
-                <div class="form-floating mb-4">
+                <div class="mb-4">
+                    <label for="phone_no" class="form-label">Phone Number <span class="text-red-500">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text">+60</span>
-                        <input type="text" name="phone_no" class="form-control" id="phone_no" placeholder="Phone Number" 
-                               value="{{ old('phone_no') }}">
+                        <input type="text" name="phone_no" class="form-control" id="phone_no" placeholder="Enter your phone number" 
+                            value="{{ old('phone_no') }}">
                     </div>
-                    <label for="phone_no">Phone Number <span class="text-red-500">*</span></label>
                 </div>
+
 
                 <!-- Step 2 Buttons -->
                 <div class="flex justify-between">

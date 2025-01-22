@@ -225,13 +225,13 @@
                     </tr>
 
 
-                    <!-- Edit Modal -->
+                   <!-- Edit Modal -->
                     <div class="modal fade" id="editModal{{ $cleaner->id }}" tabindex="-1"
-                         aria-labelledby="editModalLabel{{ $cleaner->id }}" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered modal-md" >
+                        aria-labelledby="editModalLabel{{ $cleaner->id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-md">
                             <div class="modal-content">
                                 <form action="{{ route('admin.cleaners.update', $cleaner->id) }}" method="POST"
-                                      enctype="multipart/form-data">
+                                    enctype="multipart/form-data">
                                     @csrf
                                     @method('PUT')
 
@@ -239,15 +239,14 @@
                                         <h5 class="modal-title" id="editModalLabel{{ $cleaner->id }}">Edit Details</h5>
                                         <button type="button" class="btn-close" style="background-color:#fff" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
-                                  
+                                
                                     @if($cleaner->profile_pic)
                                         <img src="data:image/jpeg;base64,{{ base64_encode($cleaner->profile_pic) }}"
                                             alt="{{ $cleaner->cleaner_name }}"
                                             class="modal-profile-pic"
                                             onerror="this.onerror=null; this.src='{{ asset('images/default-image.png') }}';">
                                     @else
-                                        <img src="{{ asset('images/default-image.png'
-                                        ) }}"
+                                        <img src="{{ asset('images/default-image.png') }}"
                                             alt="Profile picture"
                                             class="modal-profile-pic">
                                     @endif
@@ -261,15 +260,16 @@
 
                                         <!-- Cleaner Phone Number -->
                                         <div class="mb-4">
-                                            <label for="cleaner_phoneNo{{ $cleaner->id }}" class="form-label">Phone Number</label>
-                                            <input type="text" name="cleaner_phoneNo" id="cleaner_phoneNo{{ $cleaner->id }}" class="form-control" value="{{ $cleaner->cleaner_phoneNo }}" required>
+                                            <label for="phone_no{{ $cleaner->id }}" class="form-label">Phone Number</label>
+                                            <input type="text" name="phone_no" id="phone_no{{ $cleaner->id }}" class="form-control" value="{{ $cleaner->cleaner_phoneNo }}" required>
                                         </div>
 
                                         <!-- Cleaner Username -->
                                         <div class="mb-4">
-                                            <label for="cleaner_username{{ $cleaner->id }}" class="form-label">Username</label>
-                                            <input type="text" name="cleaner_username" id="cleaner_username{{ $cleaner->id }}" class="form-control" value="{{ $cleaner->cleaner_username }}" required>
+                                            <label for="username{{ $cleaner->id }}" class="form-label">Username</label>
+                                            <input type="text" name="username" id="username{{ $cleaner->id }}" class="form-control" value="{{ $cleaner->cleaner_username }}" required>
                                         </div>
+
 
                                         <!-- Status -->
                                         <div class="mb-4">
@@ -283,14 +283,17 @@
                                         <!-- Building -->
                                         <div class="mb-4">
                                             <label for="building{{ $cleaner->id }}" class="form-label">Building</label>
-                                            <input type="text" name="building" id="building{{ $cleaner->id }}" class="form-control" value="{{ $cleaner->building }}">
+                                            <select name="building" id="building{{ $cleaner->id }}" class="form-select" required>
+                                                <option value="Building A" {{ $cleaner->building == 'Building A' ? 'selected' : '' }}>Building A</option>
+                                                <option value="Building B" {{ $cleaner->building == 'Building B' ? 'selected' : '' }}>Building B</option>
+                                                <option value="Building C" {{ $cleaner->building == 'Building C' ? 'selected' : '' }}>Building C</option>
+                                            </select>
                                         </div>
 
                                         <!-- Profile Picture -->
                                         <div class="mb-4">
                                             <label for="profile_pic{{ $cleaner->id }}" class="form-label">Profile Picture</label>
                                             <input type="file" name="profile_pic" id="profile_pic{{ $cleaner->id }}" class="form-control" accept="image/*">
-                                            
                                         </div>
 
                                         <!-- RESET PASSWORD BUTTON - triggers static modal -->
@@ -309,6 +312,7 @@
                             </div>
                         </div>
                     </div>
+
 
                     <!-- Delete Confirmation Modal -->
                     <div class="modal fade" id="deleteModal{{ $cleaner->id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ $cleaner->id }}" aria-hidden="true">

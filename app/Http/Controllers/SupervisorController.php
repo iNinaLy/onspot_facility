@@ -477,7 +477,7 @@ class SupervisorController extends Controller
             $supervisor->update(['profile_pic' => $path]);
         }
 
-        return redirect()->route('admin.supervisors.index')->with('success', 'Supervisor updated successfully!');
+        return redirect()->route('admin.supervisors.index')->with('success', 'Supervisor information has been updated.');
     }
 
     public function resetSupervisorPassword(Request $request, $id)

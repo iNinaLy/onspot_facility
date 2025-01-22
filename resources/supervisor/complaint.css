@@ -434,16 +434,17 @@
 
   
   .btn-success {
-    --bs-btn-color: #f6f6f6;
-    --bs-btn-bg: #c66674da;
-    --bs-btn-border-color: #e5eeea;
+    --bs-btn-color: #366974;
+    --bs-btn-bg: #bfd9ddda;
+    --bs-btn-border-color: #bfd9ddda;
     --bs-btn-font-size: 0.9rem;
     --bs-btn-border-radius: 16px;
     --bs-border-color: #ffffff;
     --bs-btn-hover-color: #e6e6e6;
-    --bs-btn-hover-border-color: #a73c3c;
-    --bs-btn-hover-bg: #be4b5c;
+    --bs-btn-hover-border-color: #799ca3;
+    --bs-btn-hover-bg: #446b73;
     --bs-btn-focus-shadow-rgb: 60, 153, 110;
+    --bs-btn-transition: background-color 0.3s ease;
     
   }
 
@@ -518,7 +519,7 @@
   .modal-header h4 {
     margin: 0;
     font-size: 1.25rem;
-    color: #2E5675;
+    color: #282d30;
   }
 
   .close {

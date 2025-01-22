@@ -111,7 +111,7 @@ class OfficerController extends Controller
         }
 
         // Redirect back to the officers index with a success message
-        return redirect()->route('admin.officers')->with('success', 'Officer updated successfully!');
+        return redirect()->route('admin.officers')->with('success', 'Officer details has been updated.');
     }
     
   // Delete an officer

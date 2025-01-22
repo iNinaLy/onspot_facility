@@ -44,15 +44,27 @@
         }
         .complaint-by {
             display: flex;
-            align-items: center;
+            align-items:flex-end;
             margin-top: 15px;
+           
         }
         .complaint-by img {
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
-            margin-right: 10px;
+            object-fit: cover;
+            align-items: center;
+            justify-content: center;
+            margin: 0 0.8rem;
+            border: 2px rgba(67, 109, 141, 0.7);
+            font-size: 0.8rem;
+            text-align: center;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s var(--transition-ease);
+
         }
+
+        
         .assign-section, .assigned-cleaners-section {
             margin-top: 30px;
         }
@@ -87,86 +99,245 @@
             padding: 5px 10px;
             border-radius: 12px;
         }
+
+        .assignbtn{
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 5px 10px;
+            border-radius: 12px;
+        
+        }
      
-        /* Modal Styles */
-        .modal {
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 1000; /* Sit on top */
-            padding-top: 100px; /* Location of the box */
+        /* Overall Container */
+        .assign-container {
+            max-width: 700px;
+            font-family: 'Inter', sans-serif;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Card Sections */
+        .card-section {
+            background: #fdfdfd00;
+            border-radius: 16px;
+            border: none;
+            padding: 2rem;
+            position: relative;
+            
+        }
+        .hidden { display: none; }
+
+        /* Fade Up Animation for the "Review" card */
+        @keyframes fadeUp {
+            0%   { opacity: 0; transform: translateY(15px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up {
+            animation: fadeUp 0.4s ease forwards;
+        }
+
+        /* Titles & Form Controls */
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #444;
+        }
+        .form-group {
+            margin-bottom: 1.3rem;
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 1.2rem;
+            margin-top: 1rem;
+            color: #555;
+            font-size: 0.9rem;
+        }
+        select.form-control {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 0.5rem;
+            font-family: inherit;
+            font-size: 0.95rem;
+            background:rgb(255, 255, 255);
+            outline: none;
+        }
+
+        /* Buttons */
+        .btn {
+            border: none;
+            border-radius: 24px;
+            padding: 0.6rem 1.4rem;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.3s, transform 0.3s;
+        }
+        .btn:hover {
+            transform: scale(1.02);
+        }
+        .btn-primary {
+            background-color: #a0d8ef;
+            color: #fff;
+        }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-success {
+            background-color: #bfe3b4; 
+            color: #333;
+        }
+        .btn-secondary {
+            background-color: #f3d1dc; 
+            color: #444;
+        }
+
+        /* Selected Cleaners (Review) */
+        .selected-cleaners {
+            background: #fcfcfc;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 1rem;
+            min-height: 60px;
+        }
+        .cleaner-badge {
+            display: inline-flex;
+            align-items: center;
+            background: #e6fbf8;
+            border-radius: 2rem;
+            margin: 0.25rem;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.85rem;
+        }
+        .remove-cleaner {
+            cursor: pointer;
+            color: #999;
+            margin-left: 0.5rem;
+            font-weight: bold;
+        }
+
+        /* ========== MODAL ========== */
+        .modal-overlay {
+            
+            display: flex;
+            position: fixed;         
+            top: 0; 
             left: 0;
-            top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            width: 100%; 
+            height: 100%;
+            background: rgba(242, 242, 247, 0.07); 
+            backdrop-filter: blur(6px);            
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;       
+            pointer-events: none; 
+            transition: opacity 0.3s;
         }
+
+        .modal-overlay.active {
+            opacity: 1;             
+            pointer-events: auto;   
+        }
+
         .modal-content {
-            background-color: #fefefe;
-            margin: auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
+            background: #fffaf7; 
+            border-radius: 16px;
+            width: 90%;
             max-width: 500px;
-            border-radius: 8px;
-            max-height: 80vh;
-            overflow-y: auto; /* Scrollable if content is long */
+            padding: 2rem;
+            position: relative;
+            transform: scale(0.95) translateY(15px);
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
         }
-        .modal-header, .modal-footer {
+        .modal-overlay.active .modal-content {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+
+        .modal-header, .modal-body, .modal-footer {
+            margin-bottom: 1rem;
+        }
+        .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         .modal-header h4 {
             margin: 0;
+            font-weight: 600;
         }
-        .close {
-            color: #aaa;
-            font-size: 28px;
-            font-weight: bold;
+        .modal-close {
             cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #999;
         }
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
+        .modal-close:hover {
+            color: #333;
         }
+
+        /* Cleaner List in Modal */
         .cleaner-list {
-            list-style: none;
-            padding: 0;
-            max-height: 300px; /* Additional scroll limit for cleaner list */
-            overflow-y: auto;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 12px;
+            background: #fafafa;
+            border: 1px solid #faf5f5;
         }
         .cleaner-item {
-            margin-bottom: 10px;
-        }
-        .cleaner-item label {
             display: flex;
             align-items: center;
+            margin-bottom: 0.6rem;
+            margin-top: 1rem;
         }
-        .cleaner-item img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin-left: 10px;
-            margin-right: 10px;
+        
+        .cleaner-item input[type="checkbox"] {
+            display: none;
         }
-        .selected-cleaner-name {
-            margin-right: 5px;
+        .fancy-checkbox {
+            position: relative;
+            display: inline-block;
+            width: 22px; 
+            height: 22px;
+            background: #fff;
+            border: 2px solid rgb(68, 103, 117);
+            border-radius: 6px;
+            margin-right: 0.7rem;
+            margin-top: 1rem;
+            cursor: pointer;
+            transition: background 0.2s, border 0.2s;
         }
-        /* Image Zoom Modal */
-        .image-zoom-modal {
-            display: none; 
-            position: fixed;
-            z-index: 9999;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.8);
-            overflow: auto;
-            align-items: center;
-            justify-content: center;
+        .fancy-checkbox.checked {
+            background:rgb(39, 66, 80);
+            border-color:rgb(26, 50, 62);
+        }
+        .fancy-checkbox::after {
+            content: '';
+            position: absolute;
+            left: 5px; 
+            top: 2px;
+            width: 6px; 
+            height: 12px;
+            border: solid #fff;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg) scale(0);
+            transition: transform 0.2s ease;
+        }
+        .fancy-checkbox.checked::after {
+            transform: rotate(45deg) scale(1);
+        }
+
+        /* Additional instructions in modal */
+        .modal-instructions {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.5rem;
         }
         .image-zoom-modal img {
             margin: auto;
@@ -276,141 +447,140 @@
 
             <!-- Complaint By Section -->
             <div class="complaint-by">
-                <img src="{{ asset('img/profile_pic') }}" alt="User Profile">
+                Complaint by: 
+            @if($complaint->user->profile_pic)
+                                <img src="data:image/jpeg;base64,{{ base64_encode($complaint->user->profile_pic) }}"
+                                
+                                     alt="{{ $complaint->user->name }}" 
+                                     class="complaint-by img"
+                                     onerror="this.onerror=null; this.src='{{ asset('images/default-image.png') }}';">
+                            @else
+                                <img src="{{ asset('images/default-image.png') }}"
+                                     alt="Profile Image"
+                                     class="complaint-by img">
+                            @endif
                 <span>{{ $complaint->user->name ?? 'Unknown User' }}</span>
             </div>
         </div>
     </div>
 
     <!-- Assign or Assigned Cleaners Section -->
-    @if (Auth::user()->role == 'supervisor')
-        @if($complaint->comp_status == 'pending')
-            <!-- Check if any cleaner is available -->
-            @if($availableCleaners->isEmpty())
-                <div class="alert alert-warning mt-4">
-                    Oops! No cleaners are currently available. Please try again later.
-                </div>
-            @else
-                <!-- Assign Cleaners Form -->
-                <form id="assign-cleaners-form" action="{{ route('supervisor.complaints.assign-cleaner', $complaint->id) }}" method="POST">
-                    @csrf
-                    <div class="assign-form mb-3">
-                        <label for="no_of_cleaners" class="form-label">Number of Cleaners:</label>
-                        <select name="no_of_cleaners" id="no_of_cleaners" class="form-select">
-                            @for ($i = 1; $i <= min($availableCleaners->count(), 3); $i++)
-                                <option value="{{ $i }}" {{ old('no_of_cleaners') == $i ? 'selected' : '' }}>
-                                    {{ $i }}
-                                </option>
-                            @endfor
-                        </select>
-                    </div>
+    <div class="assign-container">
+        <form id="assignForm" method="POST" action="{{ route('supervisor.complaints.assign-cleaner', $complaint->id) }}">
+            @csrf
 
-                    <button type="button" id="selectCleanersBtn" class="btn btn-primary">
-                        Select Cleaners
-                    </button>
-                    <p id="selectionFeedback" style="margin-top: 10px; color: red;"></p>
-                    <div id="selectedCleaners" class="mt-3"></div>
-
-                    <!-- Assign button is hidden/disabled until correct number of cleaners is selected -->
-                    <button type="submit" class="btn btn-success mt-2 d-none" id="assignBtn" disabled>Assign</button>
-                </form>
+            <!-- Flash / Error Messages -->
+            @if(session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
             @endif
-            <!-- Loader / Spinner -->
-            <div id="loader" class="loader"></div>
-        @else
-            <!-- If Complaint is Ongoing or Completed -->
-            <div class="assigned-cleaners-section">
-                <h3>Assigned Cleaners</h3>
-                @if($complaint->cleaners->isEmpty())
-                    <div class="alert alert-info">
-                        No cleaners have been assigned to this complaint yet.
-                    </div>
-                @else
-                    <ul class="assigned-cleaners-list">
-                        @foreach($complaint->cleaners as $cleaner)
-                            <li>
-                                <div class="assigned-cleaners-details">
-                                    <strong>{{ $cleaner->cleaner_name }}</strong>
-                                    <span>Phone: {{ $cleaner->cleaner_phoneNo }}</span>
-                                    <span>Assigned by: {{ $complaint->supervisor->name ?? 'Unknown Officer' }}</span>
-                                    <span>Assigned Date: {{ \Carbon\Carbon::parse($cleaner->pivot->assigned_date)->format('d M Y') }}</span>
-                                </div>
-                            </li>
+            @if($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
                         @endforeach
                     </ul>
-                @endif
-            </div>
-        @endif
-    @endif
+                </div>
+            @endif
 
-    <!-- Modal for Selecting Cleaners -->
-    <div id="cleanerModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4>Select Cleaners</h4>
-                <span class="close">&times;</span>
+        @if(Auth::user()->role == 'supervisor')
+            @if($complaint->comp_status == 'pending')
+                @if($availableCleaners->isEmpty())
+                    <div class="alert alert-warning mt-4">
+                        Oops! No cleaners are currently available. Please try again later.
+                    </div>
+                @else
+                    <div class="card-section">
+                        <h2 class="card-title">Assign Cleaner</h2>
+                        <label for="no_of_cleaners">Select number of cleaners</label>
+                        <div class="form-group">
+                            
+                            <select name="no_of_cleaners" id="no_of_cleaners" class="form-control">
+                                @for ($i = 1; $i <= min($availableCleaners->count(),5); $i++)
+                                    <option value="{{ $i }}">{{ $i }}</option>
+                                @endfor
+                            </select>
+                        </div>
+                        <button type="button" id="openModalBtn" class="btn btn-primary">Select Cleaners</button>
+
+                    </div>
+
+                    <div class="card-section hidden" id="reviewSection">
+                        <h2 class="card-title">Review & Confirm</h2>
+                        <label>Selected Cleaner(s):</label>
+                        <div class="selected-cleaners" id="selectedCleaners"></div>
+
+                        <button type="submit" class="btn btn-success" style="margin-top: 2rem;" id="assignBtn" disabled>
+                            Assign Cleaners
+                        </button>
+                    </div>
+                @endif
+            @else
+               
+                <div class="alert alert-info">
+                    This complaint have been assigned to cleaners.
+                </div>
+            @endif
+        @endif
+    </form>
+</div>
+
+<!-- ========== MODAL FOR SELECTING CLEANERS ========== -->
+@if(Auth::user()->role == 'supervisor' && $complaint->comp_status == 'pending' && !$availableCleaners->isEmpty())
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4>Select Cleaners</h4>
+            <span class="modal-close" id="closeModalBtn">&times;</span>
+        </div>
+        <p class="modal-instructions">
+                Please choose <span id="neededCount" style="font-weight:600;"></span> cleaner(s).
+            </p>
+        <div class="modal-body">
+           
+            <div class="cleaner-list" id="cleanerList">
+                @foreach($availableCleaners as $cleaner)
+                    <div class="cleaner-item">
+                        <div class="fancy-checkbox" data-id="{{ $cleaner->user_id }}"></div>
+                        
+                        <input type="checkbox"
+                               class="modal-cleaner-checkbox"
+                               id="cleaner-{{ $cleaner->user_id }}"
+                               value="{{ $cleaner->user_id }}">
+
+                        <label style="cursor:pointer; margin-bottom:0; margin-left:6px;" 
+                               for="cleaner-{{ $cleaner->user_id }}">
+                            {{ $cleaner->cleaner_name }}
+                        </label>
+                    </div>
+                @endforeach
             </div>
-            <div class="modal-body">
-                <p>Please select <span id="maxCleanersDisplay"></span> cleaner(s).</p>
-                <ul class="cleaner-list">
-                    @foreach($availableCleaners as $cleaner)
-                        <li class="cleaner-item">
-                            <label>
-                                <input type="checkbox" name="cleaners[]" value="{{ $cleaner->user_id }}" class="cleaner-checkbox">
-                                <span class="check-box"></span>
-                                @if($cleaner->profile_pic)
-                                    <img src="{{ asset($cleaner->profile_pic) }}" alt="Cleaner Photo">
-                                @else
-                                    <img src="{{ asset('img/default_cleaner.png') }}" alt="Cleaner Photo">
-                                @endif
-                                <span class="cleaner-name">{{ $cleaner->cleaner_name }}</span>
-                            </label>
-                        </li>
-                    @endforeach
-                </ul>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveBtn" disabled>Save Selection</button>
-            </div>
+        </div>
+        <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:0.5rem;">
+            <button type="button" class="btn btn-secondary" id="cancelModalBtn">
+                Cancel
+            </button>
+            <button type="button" class="btn btn-primary" id="saveModalBtn" disabled>
+                Save
+            </button>
         </div>
     </div>
 </div>
+@endif
 @endsection
 
 @push('scripts')
-{{-- Include any additional JS files via Vite or other bundlers if needed --}}
+
 @vite([
     'resources/supervisor/app.js',
     'resources/supervisor/dashboard.js',
     'resources/supervisor/complaint.js',
 ])
 
-{{-- Custom Script for Modal and Image Zoom --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    /**
-     * ELEMENT REFERENCES
-     */
-    const modal = document.getElementById('cleanerModal');
-    const selectCleanersBtn = document.getElementById('selectCleanersBtn');
-    const closeModalElements = document.querySelectorAll('.close, #cancelBtn');
-    const saveBtn = document.getElementById('saveBtn');
-    const assignBtn = document.getElementById('assignBtn');
-    const selectedCleanersDiv = document.getElementById('selectedCleaners');
-    const cleanerCheckboxes = document.querySelectorAll('.cleaner-checkbox');
-    const noOfCleanersSelect = document.getElementById('no_of_cleaners');
-    const selectionFeedback = document.getElementById('selectionFeedback');
-    const maxCleanersDisplay = document.getElementById('maxCleanersDisplay');
+
     const loader = document.getElementById('loader');
-
-    // Parse initial max cleaners
-    let maxCleaners = noOfCleanersSelect ? parseInt(noOfCleanersSelect.value) : 1;
-    if (maxCleanersDisplay) maxCleanersDisplay.textContent = maxCleaners;
-
-    /**
-     * LOADER / SPINNER UTILS
-     */
     function showLoader() {
         if (loader) loader.style.display = 'block';
     }
@@ -418,181 +588,248 @@ document.addEventListener('DOMContentLoaded', function () {
         if (loader) loader.style.display = 'none';
     }
 
-    /**
-     * IMAGE ZOOM LOGIC
-     */
-    window.openImageModal = function (src) {
-        const modalZoom = document.getElementById('imageZoomModal');
-        const zoomedImage = document.getElementById('zoomedImage');
+    
+    (function initImageZoom() {
+        const modalZoom    = document.getElementById('imageZoomModal');
+        const zoomedImage  = document.getElementById('zoomedImage');
         const zoomCloseBtn = document.getElementById('zoomCloseBtn');
-        if (!modalZoom || !zoomedImage || !zoomCloseBtn) return;
+        const complaintImg = document.querySelector('.complaint-image');
 
-        zoomedImage.src = src;
-        modalZoom.style.display = 'flex';
+        if (!modalZoom || !zoomedImage || !zoomCloseBtn || !complaintImg) return;
 
+        // When user clicks the complaint image, show zoom
+        complaintImg.addEventListener('click', () => {
+            zoomedImage.src = complaintImg.src;
+            modalZoom.style.display = 'flex';
+        });
+
+        // Close zoom if user clicks close "X"
         zoomCloseBtn.onclick = function() {
             modalZoom.style.display = 'none';
         };
-        // Close if user clicks outside the zoomed image area
-        modalZoom.onclick = function(e) {
+
+        // Also close if user clicks outside the zoomed image area
+        modalZoom.addEventListener('click', (e) => {
             if (e.target === modalZoom) {
                 modalZoom.style.display = 'none';
             }
-        };
-    };
+        });
+    })();
 
-    /**
-     * CLEANER SELECTION FEEDBACK
-     */
-    function updateCleanerFeedback() {
-        const selectedCount = [...cleanerCheckboxes].filter(cb => cb.checked).length;
-        if (selectedCount < maxCleaners) {
-            selectionFeedback.textContent = `Select ${maxCleaners - selectedCount} more cleaner(s).`;
-            saveBtn.disabled = true;
-        } else if (selectedCount > maxCleaners) {
-            selectionFeedback.textContent = `Please deselect ${selectedCount - maxCleaners} cleaner(s).`;
-            saveBtn.disabled = true;
+    
+
+    // A) Element references
+    const noOfCleanersSelect  = document.getElementById('no_of_cleaners');
+    const openModalBtn        = document.getElementById('openModalBtn');
+    const modalOverlay        = document.getElementById('modalOverlay');
+    const closeModalBtn       = document.getElementById('closeModalBtn');
+    const cancelModalBtn      = document.getElementById('cancelModalBtn');
+    const saveModalBtn        = document.getElementById('saveModalBtn');
+    const neededCount         = document.getElementById('neededCount');
+
+    const modalCheckboxes     = document.querySelectorAll('.modal-cleaner-checkbox');
+    const fancyCheckboxes     = document.querySelectorAll('.fancy-checkbox');
+
+    const reviewSection       = document.getElementById('reviewSection');
+    const selectedCleanersDiv = document.getElementById('selectedCleaners');
+    const assignBtn           = document.getElementById('assignBtn');
+    const assignForm          = document.getElementById('assignForm');
+
+    // B) State
+    let maxCleaners = noOfCleanersSelect ? parseInt(noOfCleanersSelect.value) : 1;
+    let selectedCleaners = new Set();
+
+    // C) Helper Functions
+    function openModal() {
+        if (modalOverlay) {
+            modalOverlay.classList.add('active');
+        }
+    }
+    function closeModal() {
+        if (modalOverlay) {
+            modalOverlay.classList.remove('active');
+        }
+    }
+    function updateNeededCountLabel() {
+        if (neededCount) {
+            neededCount.textContent = maxCleaners;
+        }
+    }
+    function resetSelection() {
+        selectedCleaners.clear();
+        modalCheckboxes.forEach(cb => { cb.checked = false; });
+        fancyCheckboxes.forEach(fc => fc.classList.remove('checked'));
+        if (reviewSection) {
+            reviewSection.classList.add('hidden');
+            reviewSection.classList.remove('fade-up');
+        }
+        renderSelectedCleaners();
+    }
+    function revealReviewSection() {
+        if (reviewSection && selectedCleaners.size === maxCleaners) {
+            reviewSection.classList.remove('hidden');
+            reviewSection.classList.add('fade-up');
+        }
+    }
+    function validateReview() {
+        if (assignBtn) {
+            assignBtn.disabled = (selectedCleaners.size !== maxCleaners);
+        }
+    }
+    function checkModalCount() {
+        if (!saveModalBtn) return;
+        const count = [...modalCheckboxes].filter(cb => cb.checked).length;
+        saveModalBtn.disabled = (count !== maxCleaners);
+    }
+    function toggleFancyCheckbox(fc, checked) {
+        if (checked) {
+            fc.classList.add('checked');
         } else {
-            selectionFeedback.textContent = '';
-            saveBtn.disabled = false;
+            fc.classList.remove('checked');
         }
     }
+    function renderSelectedCleaners() {
+        if (!selectedCleanersDiv) return;
+        selectedCleanersDiv.innerHTML = '';
+        selectedCleaners.forEach(id => {
+            const cb = document.getElementById(`cleaner-${id}`);
+            if (!cb) return;
 
-    function updateCheckboxStates() {
-        // Disable or enable checkboxes if we have reached the max limit
-        const selectedCount = [...cleanerCheckboxes].filter(cb => cb.checked).length;
-        cleanerCheckboxes.forEach(checkbox => {
-            // If we've reached maxCleaners, disable unchecked ones
-            checkbox.disabled = selectedCount >= maxCleaners && !checkbox.checked;
+            // Find the label text
+            const labelEl = cb.closest('.cleaner-item')?.querySelector(`label[for="${cb.id}"]`);
+            const label = labelEl ? labelEl.textContent.trim() : 'Unknown Cleaner';
+
+            // Create a badge
+            const badge = document.createElement('div');
+            badge.classList.add('cleaner-badge');
+            badge.innerHTML = `
+                <span>${label}</span>
+                <span class="remove-cleaner" data-id="${id}">&times;</span>
+            `;
+            selectedCleanersDiv.appendChild(badge);
         });
+        validateReview();
     }
 
-    /**
-     * ON CHANGE: NUMBER OF CLEANERS
-     */
+ 
     if (noOfCleanersSelect) {
-        noOfCleanersSelect.addEventListener('change', function () {
-            maxCleaners = parseInt(this.value);
-            maxCleanersDisplay.textContent = maxCleaners;
-            selectionFeedback.textContent = `Select ${maxCleaners} cleaner(s).`;
-            saveBtn.disabled = true;
-            assignBtn.classList.add('d-none');
-            assignBtn.disabled = true;
+        noOfCleanersSelect.addEventListener('change', () => {
+            maxCleaners = parseInt(noOfCleanersSelect.value);
+            updateNeededCountLabel();
+            resetSelection();
+        });
+    }
 
-            // Reset checkboxes
-            cleanerCheckboxes.forEach(cb => {
-                cb.checked = false;
-                cb.disabled = false;
+    // 2) Open Modal
+    if (openModalBtn) {
+        openModalBtn.addEventListener('click', function()    {
+            updateNeededCountLabel();
+            // Sync modal with current selections
+            modalCheckboxes.forEach(cb => {
+                const isChecked = selectedCleaners.has(cb.value);
+                cb.checked = isChecked;
+                toggleFancyCheckbox(
+                    document.querySelector(`.fancy-checkbox[data-id="${cb.value}"]`),
+                    isChecked
+                );
             });
-            selectedCleanersDiv.innerHTML = '';
+            checkModalCount();
+            openModal();
         });
     }
 
-    /**
-     * CHECKBOX EVENT LISTENERS
-     */
-    cleanerCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-            updateCleanerFeedback();
-            updateCheckboxStates();
-        });
-    });
-
-    /**
-     * MODAL OPEN / CLOSE
-     */
-    if (selectCleanersBtn) {
-        selectCleanersBtn.addEventListener('click', function () {
-            if (modal) {
-                modal.style.display = 'block';
-                updateCleanerFeedback();
-                updateCheckboxStates();
+    // 3) Close / Cancel Modal
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', closeModal);
+    }
+    if (cancelModalBtn) {
+        cancelModalBtn.addEventListener('click', closeModal);
+    }
+    if (modalOverlay) {
+        // Close if user clicks on the overlay (outside modal content)
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                closeModal();
             }
         });
     }
 
-    closeModalElements.forEach(el => {
-        el.addEventListener('click', () => {
-            if (modal) {
-                modal.style.display = 'none';
+    // 4) Fancy Checkbox clicks
+    fancyCheckboxes.forEach(fc => {
+        fc.addEventListener('click', () => {
+            const id = fc.dataset.id;
+            const cb = document.getElementById(`cleaner-${id}`);
+            if (!cb) return;
+            const newState = !cb.checked;
+            // If we are checking but already at max => disallow
+            if (newState) {
+                const count = [...modalCheckboxes].filter(c => c.checked).length;
+                if (count >= maxCleaners) return;
             }
+            cb.checked = newState;
+            toggleFancyCheckbox(fc, newState);
+            checkModalCount();
         });
     });
 
-    // Close modal if user clicks outside content
-    window.addEventListener('click', function(event) {
-        if (event.target === modal) {
-            modal.style.display = 'none';
-        }
-    });
-
-    /**
-     * SAVE SELECTION
-     */
-    if (saveBtn) {
-        saveBtn.addEventListener('click', function () {
-            const selectedCheckboxes = [...cleanerCheckboxes].filter(cb => cb.checked);
-            if (selectedCheckboxes.length !== maxCleaners) {
-                alert(`Please select exactly ${maxCleaners} cleaner(s).`);
-                return;
-            }
-            // Clear old selections
-            selectedCleanersDiv.innerHTML = '';
-
-            // Create hidden inputs for each selected cleaner
-            selectedCheckboxes.forEach(checkbox => {
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = 'cleaners[]';
-                hiddenInput.value = checkbox.value;
-                selectedCleanersDiv.appendChild(hiddenInput);
-
-                // Display the selected cleaner name
-                const cleanerName = checkbox.parentElement.querySelector('.cleaner-name').textContent.trim();
-                const cleanerLabel = document.createElement('span');
-                cleanerLabel.classList.add('selected-cleaner-name', 'badge', 'badge-info', 'mr-2');
-                cleanerLabel.textContent = cleanerName;
-                selectedCleanersDiv.appendChild(cleanerLabel);
+    // 5) "Save" in Modal
+    if (saveModalBtn) {
+        saveModalBtn.addEventListener('click', () => {
+            // Clear set
+            selectedCleaners.clear();
+            // Add all currently checked
+            modalCheckboxes.forEach(cb => {
+                if (cb.checked) {
+                    selectedCleaners.add(cb.value);
+                }
             });
-
-            // Reveal the Assign button
-            assignBtn.classList.remove('d-none');
-            assignBtn.disabled = false;
-            modal.style.display = 'none';
+            renderSelectedCleaners();
+            revealReviewSection();
+            closeModal();
         });
     }
 
-  
-    const assignForm = document.getElementById('assign-cleaners-form');
+    // 6) Removing a cleaner from the review
+    if (selectedCleanersDiv) {
+        selectedCleanersDiv.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-cleaner')) {
+                const id = e.target.dataset.id;
+                selectedCleaners.delete(id);
+                // Uncheck the box
+                const cb = document.getElementById(`cleaner-${id}`);
+                if (cb) {
+                    cb.checked = false;
+                    toggleFancyCheckbox(
+                        document.querySelector(`.fancy-checkbox[data-id="${id}"]`),
+                        false
+                    );
+                }
+                renderSelectedCleaners();
+            }
+        });
+    }
+
+    // 7) On final "Assign" submission
     if (assignForm) {
-        assignForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            showLoader();
-            const formData = new FormData(assignForm);
-            fetch(assignForm.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                hideLoader();
-                if (data.success) {
-                    // handle success
-                    location.reload();
-                } else {
-                    alert(data.message || 'An error occurred.');
-                }
-            })
-            .catch(() => {
-                hideLoader();
-                alert('An error occurred. Please try again.');
+        assignForm.addEventListener('submit', () => {
+            showLoader();  // if you want the spinner
+            // Remove old hidden inputs
+            document.querySelectorAll('input[name="cleaners[]"]').forEach(el => el.remove());
+            // Add new hidden inputs
+            selectedCleaners.forEach(id => {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'cleaners[]';
+                hidden.value = id;
+                assignForm.appendChild(hidden);
             });
         });
     }
 
+    // E) Initialize
+    updateNeededCountLabel();
+    resetSelection();
 });
 </script>
+
 @endpush

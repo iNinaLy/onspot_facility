@@ -36,7 +36,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/cleaners/create', [CleanerController::class, 'createCleaner'])->name('cleaners.create');
     Route::post('/cleaners', [CleanerController::class, 'storeCleaner'])->name('cleaners.store');
     Route::get('/cleaners/{cleaner}', [CleanerController::class, 'showCleaner'])->name('cleaners.show');
-    Route::get('/cleaners/{cleaner}/edit', [CleanerController::class, 'editCleaner'])->name('cleaners.edit');
     Route::put('/cleaners/{cleaner}', [CleanerController::class, 'updateCleaner'])->name('cleaners.update');
     Route::delete('/cleaners/{cleaner}', [CleanerController::class, 'destroyCleaner'])->name('cleaners.destroy');
     Route::patch('/cleaners/{id}/update-status', [CleanerController::class, 'updateStatus'])->name('cleaners.updateStatus');
