@@ -31,10 +31,6 @@ class Cleaner extends Authenticatable implements HasMedia
         'building',
     ];
 
-    protected $attributes = [
-        'role' => 'cleaner',
-    ];
-
     const STATUS_AVAILABLE = 'available';
     const STATUS_UNAVAILABLE = 'unavailable';
 

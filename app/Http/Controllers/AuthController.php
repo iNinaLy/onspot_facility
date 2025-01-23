@@ -50,6 +50,8 @@ class AuthController extends Controller
         if ($user->role === 'cleaner') {
             try {
                 \Log::info('Attempting to create cleaner record for user: ' . $user->id);
+                \Log::info('Cleaner data: ', $request->only(['username', 'name', 'phone_no', 'building']));
+
                 \App\Models\Cleaner::create([
                     'user_id' => $user->id,
                     'cleaner_username' => $user->username,
@@ -57,7 +59,7 @@ class AuthController extends Controller
                     'cleaner_phoneNo' => $user->phone_no,
                     'status' => 'available',
                     'cleaner_password' => bcrypt($request->password), 
-                    'building' => $request->input('building', 'default_building'), // Default if missing
+                    'building' => $request->input('building', 'building A'), // Default if missing
                 ]);
                 \Log::info('Cleaner record created successfully for user: ' . $user->id);
             } catch (\Exception $e) {
@@ -77,7 +79,7 @@ class AuthController extends Controller
             }
     
         // Generate a token for the newly registered user
-        $token = $user->createToken('YourAppName')->plainTextToken;
+        $token = $user->createToken('OnSpot Facility')->plainTextToken;
     
         // Save FCM token if provided
         if ($request->filled(['device_token', 'device_id', 'device_type'])) {
@@ -131,7 +133,7 @@ class AuthController extends Controller
             }
         
             $user = Auth::user();
-            $token = $user->createToken('YourAppName')->plainTextToken;
+            $token = $user->createToken('OnSpot Facility')->plainTextToken;
         
             // Save FCM token if provided
             if ($request->filled(['device_token', 'device_id', 'device_type'])) {
@@ -236,31 +238,73 @@ class AuthController extends Controller
 
     public function verifyResetCode(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'code' => 'required|numeric|digits:6',
-            'password' => 'required|confirmed|min:8',
-        ]);
+        \Log::info('Verify reset code request received.', $request->all());
     
-        $resetRecord = DB::table('password_reset_tokens')
-            ->where('email', $request->email)
-            ->where('code', $request->code)
-            ->where('created_at', '>', now()->subMinutes(15)) // Expire code after 15 minutes
-            ->first();
+        try {
+            $request->validate([
+                'email' => 'required|email',
+                'code' => 'required|numeric|digits:6',
+            ]);
     
-        if (!$resetRecord) {
-            return response()->json(['message' => 'Invalid or expired reset code.'], 400);
+            \Log::info('Validation passed.');
+    
+            $resetRecord = DB::table('password_reset_tokens')
+                ->where('email', $request->email)
+                ->where('code', $request->code)
+                ->where('created_at', '>', now()->subMinutes(15)) // Code expires after 15 minutes
+                ->first();
+    
+            if (!$resetRecord) {
+                \Log::warning('Kata laluan tidak sah.', $request->all());
+                return response()->json(['message' => 'Kata laluan tidak sah.'], 400);
+            }
+    
+            \Log::info('Reset code verified successfully for email: ' . $request->email);
+            return response()->json(['message' => 'Reset code verified successfully.']);
+        } catch (\Exception $e) {
+            \Log::error('Error during reset code verification: ' . $e->getMessage());
+            return response()->json(['message' => 'An error occurred during reset code verification.'], 500);
         }
+    }
+
+    public function resetPassword(Request $request)
+    {
+        \Log::info('Password reset request received.', $request->all());
     
-        // Update the password
-        DB::table('users')->where('email', $request->email)->update([
-            'password' => Hash::make($request->password),
-        ]);
+        try {
+            // Validate input
+            $request->validate([
+                'email' => 'required|email',
+                'password' => 'required|min:8|confirmed', // Ensure the password confirmation is required
+            ], [
+                'password.confirmed' => 'The password confirmation does not match.', // Custom error message
+            ]);
     
-        // Delete the reset token
-        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+            \Log::info('Validation passed.');
     
-        return response()->json(['message' => 'Password has been reset successfully.']);
+            // Check if user exists
+            $user = DB::table('users')->where('email', $request->email)->first();
+            if (!$user) {
+                \Log::warning('Email not found for password reset.', $request->all());
+                return response()->json(['message' => 'Email not found.'], 404);
+            }
+    
+            // Update the password
+            DB::table('users')->where('email', $request->email)->update([
+                'password' => Hash::make($request->password),
+            ]);
+    
+            \Log::info('Password reset successfully for email: ' . $request->email);
+    
+            // Return success response
+            return response()->json(['message' => 'Password has been reset successfully.']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error during password reset: ' . $e->getMessage());
+            return response()->json(['message' => $e->errors()], 422); // Validation error with 422 response
+        } catch (\Exception $e) {
+            \Log::error('Error during password reset: ' . $e->getMessage());
+            return response()->json(['message' => 'An error occurred during password reset.'], 500);
+        }
     }    
 
 }

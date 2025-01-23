@@ -50,7 +50,8 @@ Route::post('/flutterlogin', [AuthController::class, 'login']);
 Route::post('/flutterregister', [AuthController::class, 'register']); 
 //Forgot Password Route
 Route::post('/forgot-password', [AuthController::class, 'sendResetCode']);
-Route::post('/reset-password', [AuthController::class, 'verifyResetCode']);
+Route::post('/verify-reset-code', [AuthController::class, 'verifyResetCode']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']); 
 
 //Sanctum-protected routes
 Route::middleware('auth:sanctum')->group(function () {
