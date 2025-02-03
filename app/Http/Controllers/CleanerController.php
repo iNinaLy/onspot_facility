@@ -71,4 +71,4 @@ class CleanerController extends Controller
         // Redirect back with success message
         return redirect()->route('admin.cleaners')->with('success', 'Cleaner status updated successfully.');
     }
-}
+}     
