@@ -38,6 +38,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/cleaners/{cleaner}', [CleanerController::class, 'showCleaner'])->name('cleaners.show');
     Route::put('/cleaners/{cleaner}', [CleanerController::class, 'updateCleaner'])->name('cleaners.update');
     Route::delete('/cleaners/{cleaner}', [CleanerController::class, 'destroyCleaner'])->name('cleaners.destroy');
+    Route::post('/cleaners/{id}/inline-update', [CleanerController::class, 'inlineUpdate'])->name('cleaners.inlineUpdate');
     Route::patch('/cleaners/{id}/update-status', [CleanerController::class, 'updateStatus'])->name('cleaners.updateStatus');
     Route::patch('/cleaners/{id}/reset-password', [CleanerController::class, 'resetPassword'])->name('cleaners.resetPassword');
 

@@ -18,7 +18,6 @@ class Cleaner extends Authenticatable implements HasMedia
     public $incrementing = true;   
     protected $keyType = 'int';   
     
-
     protected $fillable = [
         'user_id',
         'cleaner_name',
@@ -30,14 +29,10 @@ class Cleaner extends Authenticatable implements HasMedia
         'building',
     ];
 
-
-
     const STATUS_AVAILABLE = 'available';
     const STATUS_UNAVAILABLE = 'unavailable';
 
-    /**
-     * Relationship with the User model.
-     */
+ 
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
@@ -51,17 +46,11 @@ class Cleaner extends Authenticatable implements HasMedia
     }
 
 
-    /**
-     * Mutator to hash the cleaner's password.
-     */
     public function setCleanerPasswordAttribute($value)
     {
         $this->attributes['cleaner_password'] = Hash::make($value);
     }
 
-    /**
-     * Scope to retrieve available cleaners.
-     */
     public function scopeAvailable($query)
     {
         return $query->where('status', self::STATUS_AVAILABLE);
@@ -72,9 +61,7 @@ class Cleaner extends Authenticatable implements HasMedia
     {
         return $this->hasMany(Complaint::class, 'cleaner_id')->where('comp_status', 'ongoing');
     }
-    /**
-     * Scope to retrieve cleaners with ongoing complaints.
-     */
+
     public function scopeWithOngoingComplaints($query)
     {
         return $query->where('status', self::STATUS_UNAVAILABLE)
@@ -86,17 +73,12 @@ class Cleaner extends Authenticatable implements HasMedia
                      }]);
     }
 
-    /**
-     * Accessor to get ongoing complaints.
-     */
+
     public function getOngoingComplaintsAttribute()
     {
         return $this->complaints()->where('comp_status', Complaint::STATUS_ONGOING)->get();
     }
 
-    /**
-     * Register media collections for the cleaner's profile picture.
-     */
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('profile_pictures')
@@ -104,17 +86,11 @@ class Cleaner extends Authenticatable implements HasMedia
              ->useDisk('public');
     }
 
-    /**
-     * Accessor to get the profile picture URL.
-     */
     public function getProfilePictureUrlAttribute(): string
     {
         return $this->getFirstMediaUrl('profile_pictures') ?: asset('default-cleaner.png');
     }
 
-    /**
-     * Relationship with NotificationToken model.
-     */
     public function notificationTokens()
     {
         return $this->hasMany(NotificationToken::class, 'user_id');

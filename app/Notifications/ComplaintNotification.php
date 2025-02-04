@@ -17,59 +17,62 @@ class ComplaintNotification extends Notification
     public function __construct($complaint, $officer, $cleaner = null, $supervisor = null)
     {
         $this->complaint = $complaint;
-        $this->officer = $officer;
-        $this->cleaner = $cleaner;
+        $this->officer   = $officer;
+        $this->cleaner   = $cleaner;
         $this->supervisor = $supervisor;
     }
 
     public function via($notifiable)
     {
         return [
-            'database', // This will store notification data in notifications table
-            FcmChannel::class, // This will send FCM notification
+            'database',      // This will store notification data in the notifications table
+            FcmChannel::class, // This will send FCM notifications
         ];
     }
 
-    // Store notification in notifications table
+    // Store notification in the notifications table
     public function toDatabase($notifiable)
     {
         if ($this->cleaner) {
             return [
                 'complaint_id' => $this->complaint->id,
-                'message' => 'You have been assigned a new complaint.',
+                'message'      => 'You have been assigned a new complaint.',
             ];
         }
 
         if ($this->officer) {
             return [
                 'complaint_id' => $this->complaint->id,
-                'message' => 'Your complaint has been updated.',
+                'message'      => 'Your complaint has been updated.',
             ];
         }
 
+        // Default notification data when neither cleaner nor officer is explicitly provided
         return [
             'complaint_id' => $this->complaint->id,
             'officer_name' => $this->officer->name,
-            'message' => 'A new complaint has been submitted by Officer ' . $this->officer->name,
+            'message'      => 'A new complaint has been submitted by Officer ' . $this->officer->name,
         ];
     }
 
-    // Use device tokens to send FCM notification
+    // Use device tokens to send FCM notifications
     public function toFcm($notifiable): ?FcmMessage
     {
         $tokens = $notifiable->notificationTokens()->pluck('device_token');
 
         if ($tokens->isEmpty()) {
-            return null; // No tokens to send notification
+            return null; // No tokens available, so no FCM notification is sent.
         }
 
         if ($this->cleaner) {
             // Notification for cleaner
-            return (new FcmMessage(notification: new FcmNotification(
-                title: 'New Complaint Assigned',
-                body: 'You have been assigned a new complaint.',
-                image: null,
-            )))
+            return (new FcmMessage(
+                notification: new FcmNotification(
+                    title: 'New Complaint Assigned',
+                    body: 'You have been assigned a new complaint.',
+                    image: null
+                )
+            ))
                 ->data([
                     'complaint_id' => $this->complaint->id,
                     'cleaner_name' => $this->cleaner->name,
@@ -86,11 +89,13 @@ class ComplaintNotification extends Notification
 
         if ($this->officer) {
             // Notification for officer
-            return (new FcmMessage(notification: new FcmNotification(
-                title: 'Complaint Updates',
-                
-                image: null,
-            )))
+            return (new FcmMessage(
+                notification: new FcmNotification(
+                    title: 'Complaint Updates',
+                    body: 'Your complaint has been updated.',
+                    image: null
+                )
+            ))
                 ->data([
                     'complaint_id' => $this->complaint->id,
                     'officer_name' => $this->officer->name,
@@ -105,12 +110,14 @@ class ComplaintNotification extends Notification
                 ]);
         }
 
-        // Default notification
-        return (new FcmMessage(notification: new FcmNotification(
-            title: 'New Complaint Submitted',
-            body: 'A new complaint has been submitted by Officer ' . $this->officer->name,
-            image: null,
-        )))
+        // Default notification if neither cleaner nor officer is provided
+        return (new FcmMessage(
+            notification: new FcmNotification(
+                title: 'New Complaint Submitted',
+                body: 'A new complaint has been submitted by Officer ' . $this->officer->name,
+                image: null
+            )
+        ))
             ->data([
                 'complaint_id' => $this->complaint->id,
                 'officer_name' => $this->officer->name,

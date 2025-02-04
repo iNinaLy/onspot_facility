@@ -44,27 +44,21 @@
         }
         .complaint-by {
             display: flex;
-            align-items:flex-end;
+            align-items: flex-end;
             margin-top: 15px;
-           
         }
         .complaint-by img {
             width: 30px;
             height: 30px;
             border-radius: 50%;
             object-fit: cover;
-            align-items: center;
-            justify-content: center;
             margin: 0 0.8rem;
             border: 2px rgba(67, 109, 141, 0.7);
             font-size: 0.8rem;
             text-align: center;
             box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s var(--transition-ease);
-
         }
-
-        
         .assign-section, .assigned-cleaners-section {
             margin-top: 30px;
         }
@@ -99,15 +93,12 @@
             padding: 5px 10px;
             border-radius: 12px;
         }
-
-        .assignbtn{
+        .assignbtn {
             background-color: #f8d7da;
             color: #721c24;
             padding: 5px 10px;
             border-radius: 12px;
-        
         }
-     
         /* Overall Container */
         .assign-container {
             max-width: 700px;
@@ -117,7 +108,6 @@
             flex-direction: column;
             gap: 2rem;
         }
-
         /* Card Sections */
         .card-section {
             background: #fdfdfd00;
@@ -125,10 +115,8 @@
             border: none;
             padding: 2rem;
             position: relative;
-            
         }
         .hidden { display: none; }
-
         /* Fade Up Animation for the "Review" card */
         @keyframes fadeUp {
             0%   { opacity: 0; transform: translateY(15px); }
@@ -137,13 +125,12 @@
         .fade-up {
             animation: fadeUp 0.4s ease forwards;
         }
-
         /* Titles & Form Controls */
         .card-title {
-            font-size: 1rem;
+            font-size: 1.2rem;
             font-weight: 600;
             margin-bottom: 1rem;
-            color: #444;
+            color: #2e5675;
         }
         .form-group {
             margin-bottom: 1.3rem;
@@ -151,7 +138,7 @@
         label {
             display: block;
             font-weight: 500;
-            margin-bottom: 1.2rem;
+            margin-bottom: 0.5rem;
             margin-top: 1rem;
             color: #555;
             font-size: 0.9rem;
@@ -163,10 +150,9 @@
             padding: 0.5rem;
             font-family: inherit;
             font-size: 0.95rem;
-            background:rgb(255, 255, 255);
+            background: rgb(255, 255, 255);
             outline: none;
         }
-
         /* Buttons */
         .btn {
             border: none;
@@ -188,14 +174,22 @@
             cursor: not-allowed;
         }
         .btn-success {
-            background-color: #bfe3b4; 
-            color: #333;
+            --bs-btn-color: #fffdfd;
+            --bs-btn-bg: #2e5675c7;
+            --bs-btn-border-color: #edededda;
+            --bs-btn-font-size: 0.9rem;
+            --bs-btn-border-radius: 16px;
+            --bs-border-color: #ffffff;
+            --bs-btn-hover-color: #fffdfd;
+            --bs-btn-hover-border-color: #2e5675;
+            --bs-btn-hover-bg: #2E5675;
+            --bs-btn-focus-shadow-rgb: 60, 153, 110;
+            --bs-btn-transition: background-color 0.5s ease;
         }
         .btn-secondary {
             background-color: #f3d1dc; 
             color: #444;
         }
-
         /* Selected Cleaners (Review) */
         .selected-cleaners {
             background: #fcfcfc;
@@ -207,7 +201,7 @@
         .cleaner-badge {
             display: inline-flex;
             align-items: center;
-            background: #e6fbf8;
+            background: rgb(231, 232, 232);
             border-radius: 2rem;
             margin: 0.25rem;
             padding: 0.3rem 0.8rem;
@@ -215,14 +209,12 @@
         }
         .remove-cleaner {
             cursor: pointer;
-            color: #999;
+            color: rgb(215, 68, 70);
             margin-left: 0.5rem;
             font-weight: bold;
         }
-
         /* ========== MODAL ========== */
         .modal-overlay {
-            
             display: flex;
             position: fixed;         
             top: 0; 
@@ -238,12 +230,10 @@
             pointer-events: none; 
             transition: opacity 0.3s;
         }
-
         .modal-overlay.active {
             opacity: 1;             
             pointer-events: auto;   
         }
-
         .modal-content {
             background: #fffaf7; 
             border-radius: 16px;
@@ -251,6 +241,7 @@
             max-width: 500px;
             padding: 2rem;
             position: relative;
+            margin-top: -0.1rem;
             transform: scale(0.95) translateY(15px);
             opacity: 0;
             transition: transform 0.3s, opacity 0.3s;
@@ -259,7 +250,6 @@
             transform: scale(1) translateY(0);
             opacity: 1;
         }
-
         .modal-header, .modal-body, .modal-footer {
             margin-bottom: 1rem;
         }
@@ -281,22 +271,7 @@
         .modal-close:hover {
             color: #333;
         }
-
         /* Cleaner List in Modal */
-        .cleaner-list {
-            margin-top: 0.5rem;
-            padding: 0.5rem;
-            border-radius: 12px;
-            background: #fafafa;
-            border: 1px solid #faf5f5;
-        }
-        .cleaner-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0.6rem;
-            margin-top: 1rem;
-        }
-        
         .cleaner-item input[type="checkbox"] {
             display: none;
         }
@@ -308,14 +283,16 @@
             background: #fff;
             border: 2px solid rgb(68, 103, 117);
             border-radius: 6px;
-            margin-right: 0.7rem;
+            margin-right: 1rem;
+            margin-left: 2rem;
             margin-top: 1rem;
+            margin-bottom: 1rem;
             cursor: pointer;
             transition: background 0.2s, border 0.2s;
         }
         .fancy-checkbox.checked {
-            background:rgb(39, 66, 80);
-            border-color:rgb(26, 50, 62);
+            background: rgb(39, 66, 80);
+            border-color: rgb(26, 50, 62);
         }
         .fancy-checkbox::after {
             content: '';
@@ -332,7 +309,6 @@
         .fancy-checkbox.checked::after {
             transform: rotate(45deg) scale(1);
         }
-
         /* Additional instructions in modal */
         .modal-instructions {
             font-size: 0.9rem;
@@ -448,17 +424,16 @@
             <!-- Complaint By Section -->
             <div class="complaint-by">
                 Complaint by: 
-            @if($complaint->user->profile_pic)
-                                <img src="data:image/jpeg;base64,{{ base64_encode($complaint->user->profile_pic) }}"
-                                
-                                     alt="{{ $complaint->user->name }}" 
-                                     class="complaint-by img"
-                                     onerror="this.onerror=null; this.src='{{ asset('images/default-image.png') }}';">
-                            @else
-                                <img src="{{ asset('images/default-image.png') }}"
-                                     alt="Profile Image"
-                                     class="complaint-by img">
-                            @endif
+                @if($complaint->user->profile_pic)
+                    <img src="data:image/jpeg;base64,{{ base64_encode($complaint->user->profile_pic) }}"
+                         alt="{{ $complaint->user->name }}" 
+                         class="complaint-by img"
+                         onerror="this.onerror=null; this.src='{{ asset('images/default-image.png') }}';">
+                @else
+                    <img src="{{ asset('images/default-image.png') }}"
+                         alt="Profile Image"
+                         class="complaint-by img">
+                @endif
                 <span>{{ $complaint->user->name ?? 'Unknown User' }}</span>
             </div>
         </div>
@@ -483,94 +458,96 @@
                 </div>
             @endif
 
-        @if(Auth::user()->role == 'supervisor')
-            @if($complaint->comp_status == 'pending')
-                @if($availableCleaners->isEmpty())
-                    <div class="alert alert-warning mt-4">
-                        Oops! No cleaners are currently available. Please try again later.
-                    </div>
-                @else
-                    <div class="card-section">
-                        <h2 class="card-title">Assign Cleaner</h2>
-                        <label for="no_of_cleaners">Select number of cleaners</label>
-                        <div class="form-group">
-                            
-                            <select name="no_of_cleaners" id="no_of_cleaners" class="form-control">
-                                @for ($i = 1; $i <= min($availableCleaners->count(),5); $i++)
-                                    <option value="{{ $i }}">{{ $i }}</option>
-                                @endfor
-                            </select>
+            @if(Auth::user()->role == 'supervisor')
+                @if($complaint->comp_status == 'pending')
+                    @if($availableCleaners->isEmpty())
+                        <div class="alert alert-warning mt-4">
+                            Oops! No cleaners are currently available. Please try again later.
                         </div>
-                        <button type="button" id="openModalBtn" class="btn btn-primary">Select Cleaners</button>
+                    @else
+                        <div class="card-section">
+                            <h2 class="card-title">Assign Cleaner</h2>
+                            <!-- Display the total number of available cleaners here -->
+                            <p style="font-size: 0.9rem; font-weight: 350; margin-top:0.3rem; margin-bottom: 0.5rem; color:rgb(84, 95, 110);">
+                               <strong>{{ $availableCleaners->count() }}</strong> cleaner(s) available.
+                            </p>
+         
+                            <label for="no_of_cleaners">Select number of cleaners</label>
+                            <div class="form-group">
+                                <select name="no_of_cleaners" id="no_of_cleaners" class="form-control">
+                                    @for ($i = 1; $i <= $availableCleaners->count(); $i++)
+                                        <option value="{{ $i }}">{{ $i }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            
+                            <button type="button" id="openModalBtn" class="btn btn-primary">Select Cleaners</button>
+                        </div>
 
-                    </div>
+                        <div class="card-section hidden" id="reviewSection">
+                            <h2 class="card-title">Review & Confirm</h2>
+                            <label>Selected Cleaner(s):</label>
+                            <div class="selected-cleaners" id="selectedCleaners"></div>
 
-                    <div class="card-section hidden" id="reviewSection">
-                        <h2 class="card-title">Review & Confirm</h2>
-                        <label>Selected Cleaner(s):</label>
-                        <div class="selected-cleaners" id="selectedCleaners"></div>
-
-                        <button type="submit" class="btn btn-success" style="margin-top: 2rem;" id="assignBtn" disabled>
-                            Assign Cleaners
-                        </button>
+                            <button type="submit" class="btn btn-success" style="margin-top: 2rem;" id="assignBtn" disabled>
+                                Assign Cleaners
+                            </button>
+                        </div>
+                    @endif
+                @else
+                    <div class="alert alert-info">
+                        This complaint has already been assigned to cleaners.
                     </div>
                 @endif
-            @else
-               
-                <div class="alert alert-info">
-                    This complaint have been assigned to cleaners.
+            @endif
+
+            <!-- ========== MODAL FOR SELECTING CLEANERS ========== -->
+            @if(Auth::user()->role == 'supervisor' && $complaint->comp_status == 'pending' && !$availableCleaners->isEmpty())
+                <div class="modal-overlay" id="modalOverlay">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4>Select Cleaners</h4>
+                            <span class="modal-close" id="closeModalBtn">&times;</span>
+                        </div>
+                        <p class="modal-instructions" style="color: red;">
+                            Please choose <span id="neededCount" style="font-weight:600;"></span> cleaner(s). 
+                        </p>
+                        <div class="modal-body">
+                            <div class="cleaner-list" id="cleanerList">
+                                @foreach($availableCleaners as $cleaner)
+                                    <div class="cleaner-item">
+                                        <div class="fancy-checkbox" data-id="{{ $cleaner->id }}"></div>
+                                        
+                                        <input type="checkbox"
+                                               class="modal-cleaner-checkbox"
+                                               id="cleaner-{{ $cleaner->id }}"
+                                               value="{{ $cleaner->id }}">
+
+                                        <label style="cursor:pointer; margin-bottom:0; margin-left:6px;" 
+                                               for="cleaner-{{ $cleaner->id }}">
+                                            {{ $cleaner->cleaner_name }}
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:0.5rem;">
+                            <button type="button" class="btn btn-secondary" id="cancelModalBtn">
+                                Cancel
+                            </button>
+                            <button type="button" class="btn btn-primary" id="saveModalBtn" disabled>
+                                Save
+                            </button>
+                        </div>
+                    </div>
                 </div>
             @endif
-        @endif
-    </form>
-</div>
-
-<!-- ========== MODAL FOR SELECTING CLEANERS ========== -->
-@if(Auth::user()->role == 'supervisor' && $complaint->comp_status == 'pending' && !$availableCleaners->isEmpty())
-<div class="modal-overlay" id="modalOverlay">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h4>Select Cleaners</h4>
-            <span class="modal-close" id="closeModalBtn">&times;</span>
-        </div>
-        <p class="modal-instructions">
-                Please choose <span id="neededCount" style="font-weight:600;"></span> cleaner(s).
-            </p>
-        <div class="modal-body">
-           
-            <div class="cleaner-list" id="cleanerList">
-                @foreach($availableCleaners as $cleaner)
-                    <div class="cleaner-item">
-                        <div class="fancy-checkbox" data-id="{{ $cleaner->user_id }}"></div>
-                        
-                        <input type="checkbox"
-                               class="modal-cleaner-checkbox"
-                               id="cleaner-{{ $cleaner->user_id }}"
-                               value="{{ $cleaner->user_id }}">
-
-                        <label style="cursor:pointer; margin-bottom:0; margin-left:6px;" 
-                               for="cleaner-{{ $cleaner->user_id }}">
-                            {{ $cleaner->cleaner_name }}
-                        </label>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-        <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:0.5rem;">
-            <button type="button" class="btn btn-secondary" id="cancelModalBtn">
-                Cancel
-            </button>
-            <button type="button" class="btn btn-primary" id="saveModalBtn" disabled>
-                Save
-            </button>
-        </div>
+        </form>
     </div>
 </div>
-@endif
 @endsection
 
 @push('scripts')
-
 @vite([
     'resources/supervisor/app.js',
     'resources/supervisor/dashboard.js',
@@ -588,7 +565,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (loader) loader.style.display = 'none';
     }
 
-    
     (function initImageZoom() {
         const modalZoom    = document.getElementById('imageZoomModal');
         const zoomedImage  = document.getElementById('zoomedImage');
@@ -616,9 +592,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     })();
 
-    
-
-    // A) Element references
+    // Element references
     const noOfCleanersSelect  = document.getElementById('no_of_cleaners');
     const openModalBtn        = document.getElementById('openModalBtn');
     const modalOverlay        = document.getElementById('modalOverlay');
@@ -635,11 +609,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const assignBtn           = document.getElementById('assignBtn');
     const assignForm          = document.getElementById('assignForm');
 
-    // B) State
+    // State
     let maxCleaners = noOfCleanersSelect ? parseInt(noOfCleanersSelect.value) : 1;
     let selectedCleaners = new Set();
 
-    // C) Helper Functions
+    // Helper Functions
     function openModal() {
         if (modalOverlay) {
             modalOverlay.classList.add('active');
@@ -694,12 +668,8 @@ document.addEventListener('DOMContentLoaded', function () {
         selectedCleaners.forEach(id => {
             const cb = document.getElementById(`cleaner-${id}`);
             if (!cb) return;
-
-            // Find the label text
-            const labelEl = cb.closest('.cleaner-item')?.querySelector(`label[for="${cb.id}"]`);
+            const labelEl = cb.closest('.cleaner-item')?.querySelector(`label[for="cleaner-${id}"]`);
             const label = labelEl ? labelEl.textContent.trim() : 'Unknown Cleaner';
-
-            // Create a badge
             const badge = document.createElement('div');
             badge.classList.add('cleaner-badge');
             badge.innerHTML = `
@@ -711,7 +681,6 @@ document.addEventListener('DOMContentLoaded', function () {
         validateReview();
     }
 
- 
     if (noOfCleanersSelect) {
         noOfCleanersSelect.addEventListener('change', () => {
             maxCleaners = parseInt(noOfCleanersSelect.value);
@@ -720,9 +689,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 2) Open Modal
     if (openModalBtn) {
-        openModalBtn.addEventListener('click', function()    {
+        openModalBtn.addEventListener('click', function() {
             updateNeededCountLabel();
             // Sync modal with current selections
             modalCheckboxes.forEach(cb => {
@@ -738,7 +706,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 3) Close / Cancel Modal
     if (closeModalBtn) {
         closeModalBtn.addEventListener('click', closeModal);
     }
@@ -746,7 +713,6 @@ document.addEventListener('DOMContentLoaded', function () {
         cancelModalBtn.addEventListener('click', closeModal);
     }
     if (modalOverlay) {
-        // Close if user clicks on the overlay (outside modal content)
         modalOverlay.addEventListener('click', (e) => {
             if (e.target === modalOverlay) {
                 closeModal();
@@ -754,14 +720,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 4) Fancy Checkbox clicks
     fancyCheckboxes.forEach(fc => {
         fc.addEventListener('click', () => {
             const id = fc.dataset.id;
             const cb = document.getElementById(`cleaner-${id}`);
             if (!cb) return;
             const newState = !cb.checked;
-            // If we are checking but already at max => disallow
             if (newState) {
                 const count = [...modalCheckboxes].filter(c => c.checked).length;
                 if (count >= maxCleaners) return;
@@ -772,12 +736,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // 5) "Save" in Modal
     if (saveModalBtn) {
         saveModalBtn.addEventListener('click', () => {
-            // Clear set
             selectedCleaners.clear();
-            // Add all currently checked
             modalCheckboxes.forEach(cb => {
                 if (cb.checked) {
                     selectedCleaners.add(cb.value);
@@ -789,13 +750,11 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 6) Removing a cleaner from the review
     if (selectedCleanersDiv) {
         selectedCleanersDiv.addEventListener('click', (e) => {
             if (e.target.classList.contains('remove-cleaner')) {
                 const id = e.target.dataset.id;
                 selectedCleaners.delete(id);
-                // Uncheck the box
                 const cb = document.getElementById(`cleaner-${id}`);
                 if (cb) {
                     cb.checked = false;
@@ -809,13 +768,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 7) On final "Assign" submission
     if (assignForm) {
         assignForm.addEventListener('submit', () => {
-            showLoader();  // if you want the spinner
-            // Remove old hidden inputs
+            showLoader();
             document.querySelectorAll('input[name="cleaners[]"]').forEach(el => el.remove());
-            // Add new hidden inputs
             selectedCleaners.forEach(id => {
                 const hidden = document.createElement('input');
                 hidden.type = 'hidden';
@@ -826,7 +782,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // E) Initialize
     updateNeededCountLabel();
     resetSelection();
 });

@@ -248,30 +248,31 @@ class ComplaintController extends Controller
             'supervisor_id' => Auth::id(),
             'request_data'  => $request->all(),
         ]);
-    
+
         try {
             $validated = $request->validate([
                 'no_of_cleaners' => 'required|integer|min:1|max:3',
                 'cleaners'       => 'required|array|size:' . $request->no_of_cleaners,
-                'cleaners.*'     => 'exists:cleaners,user_id',
+                'cleaners.*'     => 'exists:cleaners,id',
             ]);
-    
+
             Log::info('Validation passed', ['validated_data' => $validated]);
-    
+
             $complaint = Complaint::findOrFail($id);
             Log::info('Complaint fetched', ['complaint' => $complaint]);
-    
+
             if ($complaint->comp_status !== Complaint::STATUS_PENDING) {
                 Log::warning('Attempt to assign cleaners to a non-pending complaint', ['complaint_id' => $id]);
                 return redirect()->route('supervisor.complaints.show', $id)
                     ->withErrors('Cleaners have already been assigned or the complaint is not pending.');
             }
-    
+
+            // Assign cleaners (this method is assumed to update the complaint accordingly)
             $complaint->assignCleaners($validated['cleaners'], Auth::id(), $validated['no_of_cleaners']);
-    
-            // Notify assigned cleaners
+
+            // Notify assigned cleaners (using the updated ComplaintNotification that no longer uses Firebase)
             foreach ($validated['cleaners'] as $cleanerId) {
-                $cleaner = Cleaner::find($cleanerId); 
+                $cleaner = Cleaner::find($cleanerId);
                 if ($cleaner) {
                     $cleaner->notify(new ComplaintNotification(
                         $complaint,
@@ -281,9 +282,9 @@ class ComplaintController extends Controller
                     Log::info('Notification sent to cleaner', ['cleaner_id' => $cleanerId]);
                 }
             }
-    
+
             // Notify the officer who submitted the complaint
-            $officer = $complaint->officer; // Assuming `officer` relationship is defined in the `Complaint` model
+            $officer = $complaint->officer; // Ensure that the `officer` relationship is defined in the Complaint model
             if ($officer) {
                 $officer->notify(new ComplaintNotification(
                     $complaint,
@@ -291,9 +292,9 @@ class ComplaintController extends Controller
                 ));
                 Log::info('Notification sent to officer', ['officer_id' => $officer->id]);
             }
-    
+
             Log::info('Assign Cleaner process completed successfully', ['complaint_id' => $id]);
-    
+
             return redirect()->route('supervisor.complaints.show', $id)
                 ->with('success', 'Cleaners assigned successfully.');
         } catch (\Exception $e) {
@@ -303,17 +304,17 @@ class ComplaintController extends Controller
                 'error'         => $e->getMessage(),
                 'trace'         => $e->getTraceAsString(),
             ]);
-    
+
             if (app()->environment('local')) {
                 return redirect()->route('supervisor.complaints.show', $id)
                     ->withErrors($e->getMessage());
             }
-    
+
             return redirect()->route('supervisor.complaints.show', $id)
                 ->withErrors('An error occurred while assigning cleaners. Please try again.');
         }
     }
-
+    
     /**
      * Display the specified complaint details.
      *
