@@ -5,59 +5,54 @@ namespace App\Http\Controllers;
 use App\Models\Complaint;
 use App\Models\Cleaner;
 use App\Models\User;
+use App\Models\ComplaintCleaner;
 use App\Service\SupabaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Storage; // Ensure Storage facade is imported
+use Illuminate\Support\Facades\Storage;
 use App\Notifications\ComplaintNotification;
-
 
 class ComplaintController extends Controller
 {
+    protected $supabaseService;
 
-    protected $supabase;
-
-    // Constructor to initialize SupabaseService
-    public function __construct(SupabaseService $supabase)
+    public function __construct(SupabaseService $supabaseService)
     {
-        $this->supabase = $supabase;
+        $this->supabaseService = $supabaseService;
     }
 
+    /**
+     * Display a paginated listing of complaints (from MySQL).
+     */
     public function index(Request $request)
     {
-        // Get any search or status filter from the query string
         $search = $request->input('search');
         $status = $request->input('status');
 
-        // Base query: eager load relationships if needed (officer, assignedBy, etc.)
         $query = Complaint::with(['officer', 'assignedBy']);
 
-        // If a search term is present, filter by comp_desc or comp_location
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('comp_desc', 'like', "%{$search}%")
-                ->orWhere('comp_location', 'like', "%{$search}%");
+                  ->orWhere('comp_location', 'like', "%{$search}%");
             });
         }
 
-        // If a status is specified, filter by that comp_status
         if ($status) {
             $query->where('comp_status', $status);
         }
 
-        // Order by date descending and paginate 10 per page
         $complaints = $query->orderBy('comp_date', 'desc')->paginate(10);
 
-        // Metrics: total, pending, ongoing, completed
+        // Metrics
         $totalComplaints     = Complaint::count();
         $pendingComplaints   = Complaint::where('comp_status', 'pending')->count();
         $ongoingComplaints   = Complaint::where('comp_status', 'ongoing')->count();
         $completedComplaints = Complaint::where('comp_status', 'completed')->count();
 
-        // Return the Blade view, passing the paginated complaints & metrics
         return view('admin.complaints.index', compact(
             'complaints',
             'totalComplaints',
@@ -67,8 +62,9 @@ class ComplaintController extends Controller
         ));
     }
 
-        
-
+    /**
+     * Perform bulk actions on complaints (delete or mark as completed) and sync with Supabase.
+     */
     public function bulkAction(Request $request)
     {
         $action = $request->input('action');
@@ -83,12 +79,25 @@ class ComplaintController extends Controller
             case 'delete':
                 $complaints = Complaint::whereIn('id', $complaintIds)->get();
                 foreach ($complaints as $complaint) {
-                    // If complaint has an image, delete from storage
+                    // Delete image from storage if exists
                     if ($complaint->comp_image) {
                         Storage::delete('public/' . $complaint->comp_image);
                     }
-                    // Delete complaint
+                    // Remove pivot rows from MySQL (if any)
+                    $complaint->cleaners()->detach();
+                    // Delete complaint from MySQL
                     $complaint->delete();
+
+                    // Sync deletion with Supabase
+                    try {
+                        $this->supabaseService->delete('complaint', $complaint->id);
+                        $this->supabaseService->deleteComplaintCleanerByComplaintId($complaint->id);
+                    } catch (\Exception $e) {
+                        Log::error('Failed to delete complaint from Supabase', [
+                            'complaint_id' => $complaint->id,
+                            'error'        => $e->getMessage()
+                        ]);
+                    }
                 }
 
                 $message = (count($complaintIds) > 1)
@@ -99,13 +108,23 @@ class ComplaintController extends Controller
             case 'mark_completed':
                 $complaints = Complaint::whereIn('id', $complaintIds)->get();
                 foreach ($complaints as $complaint) {
-                    // 1) Set complaint to "completed"
+                    // Update status in MySQL
                     $complaint->comp_status = 'completed';
                     $complaint->save();
 
-                    // 2) If complaint is "completed" or "pending", 
-                    //    set assigned cleaners to "available"
-                    //    (Currently we only do "completed", but let's keep the check)
+                    // Sync status update with Supabase
+                    try {
+                        $this->supabaseService->update('complaint', $complaint->id, [
+                            'comp_status' => 'completed'
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Failed to update complaint status in Supabase', [
+                            'complaint_id' => $complaint->id,
+                            'error'        => $e->getMessage()
+                        ]);
+                    }
+
+                    // Set assigned cleaners to available (if any)
                     if (in_array($complaint->comp_status, ['completed', 'pending'])) {
                         foreach ($complaint->cleaners as $cleaner) {
                             $cleaner->status = 'available';
@@ -126,11 +145,7 @@ class ComplaintController extends Controller
     }
 
     /**
-     * Handle inline status updates.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id  Complaint ID
-     * @return \Illuminate\Http\JsonResponse
+     * Handle inline status update for a complaint and sync with Supabase.
      */
     public function inlineUpdate(Request $request, $id)
     {
@@ -140,17 +155,47 @@ class ComplaintController extends Controller
             'comp_status' => 'required|in:pending,ongoing,completed'
         ]);
 
-        // 1) Update complaint status
-        $complaint->comp_status = $request->comp_status;
-        $complaint->save();
+        $newStatus = $request->comp_status;
+        $complaint->comp_status = $newStatus;
 
-        // 2) If new status is "completed" or "pending", 
-        //    mark assigned cleaners as "available"
-        if (in_array($complaint->comp_status, ['completed', 'pending'])) {
+        if ($newStatus === 'pending') {
+            // Remove all assigned cleaners from MySQL pivot
+            $complaint->cleaners()->detach();
+
+            // Clear assignment details in MySQL
+            $complaint->assigned_by   = null;
+            $complaint->assigned_date = null;
+
+            // Sync removal of pivot rows in Supabase
+            try {
+                $this->supabaseService->deleteComplaintCleanerByComplaintId($complaint->id);
+            } catch (\Exception $e) {
+                Log::error('Failed to delete complaint_cleaner pivot rows from Supabase', [
+                    'complaint_id' => $complaint->id,
+                    'error'        => $e->getMessage()
+                ]);
+            }
+        } elseif ($newStatus === 'completed') {
             foreach ($complaint->cleaners as $cleaner) {
                 $cleaner->status = 'available';
                 $cleaner->save();
             }
+        }
+
+        $complaint->save();
+
+        // Sync complaint update to Supabase
+        try {
+            $this->supabaseService->update('complaint', $complaint->id, [
+                'comp_status'   => $newStatus,
+                'assigned_by'   => $complaint->assigned_by,
+                'assigned_date' => $complaint->assigned_date,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to sync inline update to Supabase', [
+                'complaint_id' => $complaint->id,
+                'error'        => $e->getMessage()
+            ]);
         }
 
         return response()->json([
@@ -159,13 +204,8 @@ class ComplaintController extends Controller
         ]);
     }
 
-
-
     /**
      * Show the form for editing the specified complaint.
-     *
-     * @param  int  $id  Complaint ID
-     * @return \Illuminate\View\View
      */
     public function editComplaint($id)
     {
@@ -176,28 +216,28 @@ class ComplaintController extends Controller
     }
 
     /**
-     * Update the specified complaint in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id  Complaint ID
-     * @return \Illuminate\Http\RedirectResponse
+     * Update a complaint in MySQL and sync with Supabase.
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'comp_status'    => 'required|string|in:pending,ongoing,completed',
-            'comp_location'  => 'required|string|max:255',
-            'comp_desc'      => 'required|string',
-            'no_of_cleaners' => 'required|integer|min:1',
-            'comp_image'     => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        $validated = $request->validate([
+            'comp_status'   => 'required|string|in:pending,ongoing,completed',
+            'comp_location' => 'required|string|max:255',
+            'comp_desc'     => 'required|string',
+            'no_of_cleaners'=> 'required|integer|min:1',
+            'comp_image'    => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
+        // Fetch the complaint from MySQL
         $complaint = Complaint::findOrFail($id);
-        $complaint->comp_status = $request->comp_status;
-        $complaint->comp_location = $request->comp_location;
-        $complaint->comp_desc = $request->comp_desc;
-        $complaint->no_of_cleaners = $request->no_of_cleaners;
 
+        // Update fields
+        $complaint->comp_status    = $validated['comp_status'];
+        $complaint->comp_location  = $validated['comp_location'];
+        $complaint->comp_desc      = $validated['comp_desc'];
+        $complaint->no_of_cleaners = $validated['no_of_cleaners'];
+
+        // Handle image upload if provided
         if ($request->hasFile('comp_image')) {
             if ($complaint->comp_image) {
                 Storage::delete($complaint->comp_image);
@@ -206,17 +246,39 @@ class ComplaintController extends Controller
             $complaint->comp_image = $path;
         }
 
+        // If status is set to "pending", remove any assigned cleaners
+        if ($validated['comp_status'] === 'pending') {
+            $complaint->cleaners()->detach();
+            $complaint->assigned_by   = null;
+            $complaint->assigned_date = null;
+        }
+
         $complaint->save();
 
-        return redirect()->route('admin.complaints.index')->with('success', 'Complaint updated successfully.');
+        // Sync updated complaint data with Supabase
+        try {
+            $this->supabaseService->update('complaint', $complaint->id, [
+                'comp_status'    => $complaint->comp_status,
+                'comp_location'  => $complaint->comp_location,
+                'comp_desc'      => $complaint->comp_desc,
+                'no_of_cleaners' => $complaint->no_of_cleaners,
+                'comp_image'     => $complaint->comp_image,
+                'assigned_by'    => $complaint->assigned_by,
+                'assigned_date'  => $complaint->assigned_date,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to sync complaint update to Supabase', [
+                'complaint_id' => $complaint->id,
+                'error'        => $e->getMessage()
+            ]);
+        }
+
+        return redirect()->route('admin.complaints.index')
+            ->with('success', 'Complaint updated successfully.');
     }
 
     /**
-     * Remove the specified complaint from storage.
-     *
-     * @param  Request $request
-     * @param  int|null  $id  Complaint ID
-     * @return \Illuminate\Http\RedirectResponse
+     * Delete a complaint (or multiple complaints) in MySQL and sync with Supabase.
      */
     public function destroy(Request $request, $id = null)
     {
@@ -224,7 +286,6 @@ class ComplaintController extends Controller
             $complaintIds = [$id];
         } else {
             $complaintIds = $request->input('selected_complaints');
-
             if (!$complaintIds || !is_array($complaintIds)) {
                 return redirect()->route('admin.complaints')->with('error', 'No complaints selected for deletion.');
             }
@@ -235,90 +296,128 @@ class ComplaintController extends Controller
             if ($complaint->comp_image) {
                 Storage::delete('public/' . $complaint->comp_image);
             }
+            // Remove any related pivot rows in MySQL first
+            $complaint->cleaners()->detach();
             $complaint->delete();
+
+            // Sync deletion with Supabase
+            try {
+                $this->supabaseService->delete('complaint', $complaint->id);
+                $this->supabaseService->deleteComplaintCleanerByComplaintId($complaint->id);
+            } catch (\Exception $e) {
+                Log::error('Failed to sync complaint deletion to Supabase', [
+                    'complaint_id' => $complaint->id,
+                    'error'        => $e->getMessage()
+                ]);
+            }
         }
 
         return redirect()->route('admin.complaints')->with('success', 'Complaint(s) deleted successfully.');
     }
 
+    /**
+     * Assign cleaners to a complaint (creates pivot rows) and sync both MySQL and Supabase.
+     */
     public function assignCleaner(Request $request, $id)
     {
-        Log::info('AssignCleaner process started', [
-            'complaint_id'  => $id,
-            'supervisor_id' => Auth::id(),
-            'request_data'  => $request->all(),
+        Log::info('Starting the task assignment process', [
+            'complaint_id' => $id,
+            'request_data' => $request->all(),
         ]);
-    
-        try {
-            $validated = $request->validate([
-                'no_of_cleaners' => 'required|integer|min:1|max:3',
-                'cleaners'       => 'required|array|size:' . $request->no_of_cleaners,
-                'cleaners.*'     => 'exists:cleaners,user_id',
-            ]);
-    
-            Log::info('Validation passed', ['validated_data' => $validated]);
-    
-            $complaint = Complaint::findOrFail($id);
-            Log::info('Complaint fetched', ['complaint' => $complaint]);
-    
-            if ($complaint->comp_status !== Complaint::STATUS_PENDING) {
-                Log::warning('Attempt to assign cleaners to a non-pending complaint', ['complaint_id' => $id]);
-                return redirect()->route('supervisor.complaints.show', $id)
-                    ->withErrors('Cleaners have already been assigned or the complaint is not pending.');
-            }
-    
-            $complaint->assignCleaners($validated['cleaners'], Auth::id(), $validated['no_of_cleaners']);
-    
-            // Notify assigned cleaners
-            foreach ($validated['cleaners'] as $cleanerId) {
-                $cleaner = Cleaner::find($cleanerId); 
-                if ($cleaner) {
-                    $cleaner->notify(new ComplaintNotification(
-                        $complaint,
-                        $complaint->officer,
-                        $cleaner
-                    ));
-                    Log::info('Notification sent to cleaner', ['cleaner_id' => $cleanerId]);
-                }
-            }
-    
-            // Notify the officer who submitted the complaint
-            $officer = $complaint->officer; // Assuming `officer` relationship is defined in the `Complaint` model
-            if ($officer) {
-                $officer->notify(new ComplaintNotification(
-                    $complaint,
-                    $officer
-                ));
-                Log::info('Notification sent to officer', ['officer_id' => $officer->id]);
-            }
-    
-            Log::info('Assign Cleaner process completed successfully', ['complaint_id' => $id]);
-    
+
+        // Fetch the complaint from MySQL if it's unassigned.
+        $complaint = Complaint::where('id', $id)
+            ->whereNull('assigned_by')
+            ->first();
+
+        if (!$complaint) {
+            Log::warning('Complaint not found or already assigned', ['complaint_id' => $id]);
             return redirect()->route('supervisor.complaints.show', $id)
-                ->with('success', 'Cleaners assigned successfully.');
-        } catch (\Exception $e) {
-            Log::error('Error assigning cleaners', [
-                'complaint_id'  => $id,
-                'supervisor_id' => Auth::id(),
-                'error'         => $e->getMessage(),
-                'trace'         => $e->getTraceAsString(),
-            ]);
-    
-            if (app()->environment('local')) {
-                return redirect()->route('supervisor.complaints.show', $id)
-                    ->withErrors($e->getMessage());
-            }
-    
-            return redirect()->route('supervisor.complaints.show', $id)
-                ->withErrors('An error occurred while assigning cleaners. Please try again.');
+                ->withErrors('Complaint not found or already assigned');
         }
+
+        $validated = $request->validate([
+            'no_of_cleaners' => 'required|integer|min:1',
+            'assigned_by'    => 'required|integer',
+            'cleaners'       => 'required|array|min:1',
+            'cleaners.*'     => 'exists:cleaners,id',
+        ]);
+
+        $assignedDate = now();
+
+        try {
+            foreach ($validated['cleaners'] as $cleanerId) {
+                // Create the pivot record in MySQL.
+                ComplaintCleaner::create([
+                    'complaint_id'   => $complaint->id,
+                    'cleaner_id'     => $cleanerId,
+                    'no_of_cleaners' => $validated['no_of_cleaners'],
+                    'assigned_by'    => $validated['assigned_by'],
+                    'assigned_date'  => $assignedDate,
+                ]);
+
+                // Update the cleaner's status in MySQL.
+                Cleaner::where('id', $cleanerId)->update(['status' => 'unavailable']);
+            }
+
+            // Update the complaint record in MySQL.
+            $complaint->update([
+                'comp_status'    => 'ongoing',
+                'assigned_by'    => $validated['assigned_by'],
+                'assigned_date'  => $assignedDate,
+                'no_of_cleaners' => $validated['no_of_cleaners'],
+            ]);
+
+            Log::info('Complaint & pivot updated in MySQL', [
+                'complaint_id' => $complaint->id,
+                'comp_status'  => $complaint->comp_status,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error assigning task to cleaners in MySQL', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return redirect()->route('supervisor.complaints.show', $id)
+                ->withErrors('Failed to assign task to cleaners');
+        }
+
+        // Sync data with Supabase.
+        try {
+            $this->supabaseService->update('complaint', $complaint->id, [
+                'comp_status' => $complaint->comp_status,
+            ]);
+
+            foreach ($validated['cleaners'] as $cleanerId) {
+                $data = [
+                    'complaint_id'   => $complaint->id,
+                    'cleaner_id'     => $cleanerId,
+                    'no_of_cleaners' => $validated['no_of_cleaners'],
+                    'assigned_by'    => $validated['assigned_by'],
+                    'assigned_date'  => $assignedDate->toIso8601String(),
+                ];
+                $this->supabaseService->storeComplaintCleaner($data);
+            }
+
+            Log::info('Data synced to Supabase', [
+                'complaint_id' => $complaint->id,
+                'cleaners'     => $validated['cleaners'],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to sync data with Supabase', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()->route('supervisor.complaints.show', $id)
+                ->withErrors('Task assigned locally but failed to sync with Supabase.');
+        }
+
+        return redirect()->route('supervisor.complaints.show', $id)
+            ->with('success', 'Task assigned successfully.');
     }
 
     /**
-     * Display the specified complaint details.
-     *
-     * @param  int  $id  Complaint ID
-     * @return \Illuminate\View\View
+     * Display the details of a complaint.
      */
     public function show($id)
     {
@@ -329,9 +428,7 @@ class ComplaintController extends Controller
     }
 
     /**
-     * Show recent complaint on the dashboard (Web)
-     *
-     * @return \Illuminate\View\View
+     * Show the most recent complaint on the dashboard.
      */
     public function showDashboard()
     {
@@ -342,10 +439,7 @@ class ComplaintController extends Controller
     // API Functions
 
     /**
-     * Store a new complaint (API)
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * Store a new complaint via API and sync with Supabase.
      */
     public function apistore(Request $request)
     { 
@@ -368,25 +462,21 @@ class ComplaintController extends Controller
             Log::info('Media uploaded:', ['media' => $media]);
         }
 
-
-        //$supervisors = User::role('supervisor')->get();
-        //Notification::send($supervisors, new ComplaintNotification($complaint, Auth::user(), false));
-
         try {
-            $response = $this->supabase->store('complaint', [
+            $response = $this->supabaseService->store('complaint', [
                 'officer_id'    => $complaint->officer_id,
                 'comp_date'     => $complaint->comp_date,
                 'comp_time'     => $complaint->comp_time,
                 'comp_desc'     => $complaint->comp_desc,
                 'comp_location' => $complaint->comp_location,
                 'comp_status'   => $complaint->comp_status,
-                'comp_image'    => $complaint->comp_image ?? null, // Media URL if available
+                'comp_image'    => $complaint->comp_image ?? null, 
             ]);
 
             return response()->json([
-                'message'    => 'Complaint submitted successfully!',
-                'complaint'  => $complaint,
-                'supabase'   => $response,
+                'message'   => 'Complaint submitted successfully!',
+                'complaint' => $complaint,
+                'supabase'  => $response,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to store complaint in Supabase', ['error' => $e->getMessage()]);
@@ -396,17 +486,10 @@ class ComplaintController extends Controller
                 'error'   => $e->getMessage(),
             ], 500);
         }
-
-        return response()->json([
-            'message'   => 'Complaint submitted successfully!',
-            'complaint' => $complaint,
-        ]);
     }
 
     /**
-     * Get officer complaints (API)
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * Get complaints of the currently authenticated officer.
      */
     public function getOfficerComplaints()
     {
@@ -425,10 +508,7 @@ class ComplaintController extends Controller
     }
 
     /**
-     * Get details of a specific complaint (API)
-     *
-     * @param  int  $id  Complaint ID
-     * @return \Illuminate\Http\JsonResponse
+     * Get detailed information of a specific complaint.
      */
     public function getComplaintDetails($id)
     {
@@ -462,9 +542,7 @@ class ComplaintController extends Controller
     }
 
     /**
-     * Get pending complaints (API)
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * Get all pending complaints.
      */
     public function getPendingComplaints()
     {
@@ -472,12 +550,8 @@ class ComplaintController extends Controller
         return response()->json($pendingComplaints);
     }
 
-
     /**
-     * Notify relevant users about a complaint
-     *
-     * @param  \App\Models\Complaint  $complaint
-     * @return void
+     * Notify relevant users (supervisors, cleaners, and the officer) about a complaint.
      */
     public function notifyRelevantUsers(Complaint $complaint)
     {
@@ -497,37 +571,27 @@ class ComplaintController extends Controller
     }
 
     /**
-     * Display a listing of the complaints for the supervisor site.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\View\View
+     * Display a listing of complaints for the supervisor site (only pending complaints).
      */
     public function supervisorIndex(Request $request)
     {
-        // Always include only 'pending' complaints
         $query = Complaint::where('comp_status', 'pending');
 
-        // Check if a date filter is provided
         if ($request->filled('date')) {
             $query->whereDate('comp_date', $request->date);
         }
 
-        // Order by date and paginate
         $complaints = $query->orderBy('comp_date', 'desc')->paginate(10);
 
         return view('supervisor.complaints.index', compact('complaints'));
     }
 
-
     /**
-     * Show the form for editing the specified resource.
+     * Show the form for editing a complaint on the supervisor site.
      */
     public function edit($id)
     {
         $complaint = Complaint::findOrFail($id);
         return view('supervisor.complaints.edit', compact('complaint'));
     }
-
-    
 }
-

@@ -141,12 +141,12 @@
                             @if($cleaner->profile_pic)
                                 <img src="data:image/jpeg;base64,{{ base64_encode($cleaner->profile_pic) }}"
                                      alt="{{ $cleaner->cleaner_name }}" 
-                                     class="modal-profile-pic"
+                                     class="profile-pic"
                                      onerror="this.onerror=null; this.src='{{ asset('images/default-image.png') }}';">
                             @else
                                 <img src="{{ asset('images/default-image.png') }}"
                                      alt="Default Image"
-                                     class="modal-no-image-placeholder">
+                                     class="profile-pic">
                             @endif
                         </td>
                         <td>

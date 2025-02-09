@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    'firebase' => [
+    'credentials' => storage_path('app/onspot-40f9a-firebase-adminsdk-ka4vw-d3017e3bc2.json'),
+    ],
+
+
+        'supabase' => [
+            'url' => env('https://ghfcpddpywmathkhmkff.supabase.co'),
+            'key' => env('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdoZmNwZGRweXdtYXRoa2hta2ZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQzMTk5NTcsImV4cCI6MjA0OTg5NTk1N30.pD09VuhLHIjww0hIbCbltJL9IvFyxZZp0ipfcswUIy0'),
+        ],
+    
+
+
 ];

@@ -46,14 +46,10 @@
 
     <!-- Search + Status Filter Form -->
     <form method="GET" action="{{ route('admin.complaints') }}" class="mb-4">
-        <div class="row g-3">
-            <div class="col-md-6">
-                <input type="text" name="search" class="form-control"
-                       placeholder="Search complaints..." 
-                       value="{{ request('search') }}">
-            </div>
-            <div class="col-md-4">
-                <select name="status" class="form-select">
+        <div class="row g-3" style="display: flex; flex-wrap: wrap; justify-content: flex-end;">
+           
+            <div class="col-md-4"  >
+                <select name="status" class="form-select" style=" border-radius: 20px;">
                     <option value="">All Statuses</option>
                     <option value="pending"   {{ request('status') == 'pending'   ? 'selected' : '' }}>Pending</option>
                     <option value="ongoing"   {{ request('status') == 'ongoing'   ? 'selected' : '' }}>Ongoing</option>
@@ -61,7 +57,7 @@
                 </select>
             </div>
             <div class="col-md-2 d-grid">
-                <button class="btn btn-primary" type="submit" style="border-radius: 10px;">Filter</button>
+                <button class="btn btn-primary" type="submit" style="border-radius: 17px;">Filter</button>
             </div>
         </div>
     </form>

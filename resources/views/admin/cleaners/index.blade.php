@@ -1,4 +1,3 @@
-
 @extends('layouts.admin')
 
 @section('title', 'Manage Cleaners')
@@ -112,7 +111,6 @@
 
     <!-- Metrics Cards -->
     <div class="row mb-5">
-        <!-- Metrics Cards Markup -->
         <div class="col-md-4 col-sm-6 mb-4">
             <div class="metrics-card text-center p-4">
                 <h5 class="card-title">Total Cleaners</h5>
@@ -159,7 +157,7 @@
                 No cleaners found.
             </div>
         @else
-            <table class="table table-hover text-center" >
+            <table class="table table-hover text-center">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -224,8 +222,7 @@
                         </td>
                     </tr>
 
-
-                   <!-- Edit Modal -->
+                    <!-- Edit Modal -->
                     <div class="modal fade" id="editModal{{ $cleaner->id }}" tabindex="-1"
                         aria-labelledby="editModalLabel{{ $cleaner->id }}" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered modal-md">
@@ -270,7 +267,6 @@
                                             <input type="text" name="username" id="username{{ $cleaner->id }}" class="form-control" value="{{ $cleaner->cleaner_username }}" required>
                                         </div>
 
-
                                         <!-- Status -->
                                         <div class="mb-4">
                                             <label for="status{{ $cleaner->id }}" class="form-label">Status</label>
@@ -313,7 +309,6 @@
                         </div>
                     </div>
 
-
                     <!-- Delete Confirmation Modal -->
                     <div class="modal fade" id="deleteModal{{ $cleaner->id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ $cleaner->id }}" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
@@ -342,7 +337,7 @@
             </table>
 
             <!-- Pagination with Page Size Selector -->
-            <div class="d-flex justify-content-between align-items-center" style="display: flex !important;flex-direction: row-reverse;">
+            <div class="d-flex justify-content-between align-items-center" style="display: flex !important; flex-direction: row-reverse;">
                 <!-- Page Size Selector -->
                 <form method="GET" action="{{ route('admin.cleaners') }}" class="mb-3">
                     <div class="input-group">
@@ -356,10 +351,9 @@
                 </form>
 
                 <!-- Updated Pagination Links using Bootstrap 5 styling -->
-                <div class="mt-6" >
+                <div class="mt-6">
                     {{ $cleaners->appends(request()->query())->links('pagination::bootstrap-5') }}
                 </div>
-            </div>
             </div>
         @endif
     </div>
@@ -374,7 +368,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <!-- Updated route to use placeholder id "0" -->
+                <!-- Using the reset password route with a placeholder id (0) -->
                 <form action="{{ route('admin.supervisors.resetPassword', ['id' => 0]) }}" method="POST">
                     @csrf
                     @method('PATCH')
@@ -447,6 +441,7 @@
                 toastr.error("{{ session('error') }}");
             @endif
         });
+
 
         document.addEventListener("DOMContentLoaded", function () {
             // Toggle Password Visibility

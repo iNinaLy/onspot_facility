@@ -602,13 +602,11 @@
                                                         <li>
                                                             {{ $cleaner->cleaner_name }}
                                                             @if($cleaner->cleaner_phoneNo)
-                                                                - 
                                                                 <a href="tel:{{ $cleaner->cleaner_phoneNo }}" class="phone-link" aria-label="Call {{ $cleaner->cleaner_name }}">
-                                                                    <i class="fas fa-phone-alt" aria-hidden="true"></i>
-                                                                    {{ $cleaner->cleaner_phoneNo }}
+                                                                    <i class="fas fa-phone-alt" aria-hidden="true"></i> {{ $cleaner->cleaner_phoneNo }}
                                                                 </a>
                                                             @else
-                                                                - N/A
+                                                                N/A
                                                             @endif
                                                         </li>
                                                     @endforeach

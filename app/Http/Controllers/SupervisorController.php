@@ -11,9 +11,22 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Service\SupabaseService;
 
 class SupervisorController extends Controller
 {
+    protected $supabaseService;
+
+    /**
+     * Inject the SupabaseService to allow fetching (and synchronizing) complaint data.
+     *
+     * @param SupabaseService $supabaseService
+     */
+    public function __construct(SupabaseService $supabaseService)
+    {
+        $this->supabaseService = $supabaseService;
+    }
+
     /**
      * Display the supervisor dashboard.
      */
@@ -21,30 +34,52 @@ class SupervisorController extends Controller
     {
         $supervisorId = Auth::id();
 
-        // Retrieve cleaner stats
+        // Retrieve cleaner stats from MySQL
         $totalCleaners = Cleaner::count();
         $availableCleaners = Cleaner::where('status', 'available')->count();
         $unavailableCleaners = Cleaner::where('status', 'unavailable')->count();
 
-        // Fetch the total number of supervisors from the users table where role is 'supervisor'
+        // Fetch the total number of supervisors (from the users table) where role is 'supervisor'
         $totalSupervisors = User::where('role', 'supervisor')->count();
 
-        // Notifications
+        // Notifications from MySQL/Eloquent
         $user = Auth::user();
         $unreadNotifications = $user->unreadNotifications;
         $notifications = $user->notifications->sortByDesc('created_at')->take(10);
         
-        // Fetch the most recent ongoing complaint assigned by the supervisor
+        // Fetch the most recent ongoing complaint (from MySQL)
         $recentOngoingComplaint = Complaint::with(['user', 'cleaners'])
             ->where('comp_status', 'ongoing')
             ->where('assigned_by', $supervisorId)
             ->orderBy('comp_date', 'desc')
             ->first();
 
-        // Fetch count of pending complaints
+        // Fetch count of pending complaints (from MySQL)
         $pendingComplaints = Complaint::where('comp_status', 'Pending')->count();
 
-        // Pass data to the view
+        // --- Supabase Data ---
+        // Attempt to fetch complaints from Supabase and filter for this supervisor.
+        try {
+            $supabaseComplaints = $this->supabaseService->getComplaints();
+            // Filter ongoing complaints assigned by this supervisor
+            $supabaseOngoing = array_filter($supabaseComplaints, function ($complaint) use ($supervisorId) {
+                return isset($complaint['comp_status']) &&
+                       strtolower($complaint['comp_status']) === 'ongoing' &&
+                       isset($complaint['assigned_by']) &&
+                       $complaint['assigned_by'] == $supervisorId;
+            });
+            // Filter pending complaints (global)
+            $supabasePending = array_filter($supabaseComplaints, function ($complaint) {
+                return isset($complaint['comp_status']) &&
+                       strtolower($complaint['comp_status']) === 'pending';
+            });
+            $totalSupabaseOngoing = count($supabaseOngoing);
+            $totalSupabasePending = count($supabasePending);
+        } catch (\Exception $e) {
+            $totalSupabaseOngoing = 'Error: ' . $e->getMessage();
+            $totalSupabasePending = 'Error: ' . $e->getMessage();
+        }
+
         return view('supervisor.dashboard', compact(
             'totalCleaners',
             'availableCleaners',
@@ -53,7 +88,9 @@ class SupervisorController extends Controller
             'recentOngoingComplaint',
             'unreadNotifications',
             'notifications',
-            'pendingComplaints' 
+            'pendingComplaints',
+            'totalSupabaseOngoing',
+            'totalSupabasePending'
         ));
     }
 
@@ -62,7 +99,6 @@ class SupervisorController extends Controller
         $user = $request->user();
         return view('supervisor.profile.edit', compact('user'));
     }
-
 
     public function updateProfile(ProfileUpdateRequest $request)
     {
@@ -74,7 +110,7 @@ class SupervisorController extends Controller
             $user->email_verified_at = null;
         }
 
-        // If password provided in the request, hash and update it
+        // If password is provided in the request, hash and update it
         if ($request->filled('password')) {
             $user->password = Hash::make($request->input('password'));
         }
@@ -83,7 +119,6 @@ class SupervisorController extends Controller
 
         return redirect()->route('supervisor.profile.edit')->with('success', 'Profile updated successfully.');
     }
-
 
     public function destroyProfile(Request $request)
     {
@@ -102,7 +137,6 @@ class SupervisorController extends Controller
 
         return redirect('/')->with('success', 'Account deleted successfully.');
     }
-
 
     /**
      * List all supervisors (API).
@@ -229,173 +263,261 @@ class SupervisorController extends Controller
         return response()->json(['success' => true, 'message' => 'Supervisor deleted successfully'], 200);
     }
 
-
- 
-    
+    /**
+     * Display the complaint history for the supervisor.
+     */
     public function history(Request $request)
     {
-        // Retrieve the current supervisor ID
         $supervisorId = Auth::id();
-    
-        // Check if filtering by complaints assigned by the current supervisor is requested
+
+        // Check if "assigned_by_me=true" appears in the query string.
         $filterByMe = $request->query('assigned_by_me', false);
-    
-        // Define date ranges
+
+        // Date boundaries
         $today       = Carbon::today();
         $startOfWeek = Carbon::now()->startOfWeek();
         $endOfWeek   = Carbon::now()->endOfWeek();
-    
-        // Number of items per "Load More" request
-        $perPage = 5;
-    
+        $perPage     = 6;
+
         /**
-         * Helper closure to conditionally apply the supervisor filter to a query.
+         * A closure that adds "where('assigned_by', $supervisorId)" 
+         * only if assigned_by_me is truthy.
          */
         $applySupervisorFilter = function($query) use ($filterByMe, $supervisorId) {
             if ($filterByMe) {
                 $query->where('assigned_by', $supervisorId);
             }
-            // Return the query for chaining
             return $query;
         };
-    
-        // ------------------------------------------------
-        // 1. Ongoing Complaints Assigned Today
-        // ------------------------------------------------
+
+        // =========================================================
+        // Ongoing Complaints (MySQL)
+        // =========================================================
+
+        // 1) Ongoing Today
         $ongoingToday = $applySupervisorFilter(
             Complaint::where('comp_status', 'ongoing')
                      ->whereDate('assigned_date', $today)
         )
-        ->with(['cleaners:id,cleaner_name,cleaner_phoneNo', 'officer:id,name', 'supervisor:id,name'])
+        ->with([
+            'cleaners:id,cleaner_name,cleaner_phoneNo',
+            'cleaners.media', 
+            'officer:id,name',
+            'supervisor:id,name'
+        ])
         ->orderBy('assigned_date', 'desc')
         ->get();
-    
-        // ------------------------------------------------
-        // 2. Ongoing Complaints Assigned This Week (Excl. Today)
-        // ------------------------------------------------
+
+        // 2) Ongoing This Week (excluding today)
         $ongoingThisWeek = $applySupervisorFilter(
             Complaint::where('comp_status', 'ongoing')
                      ->whereBetween('assigned_date', [$startOfWeek, $endOfWeek])
                      ->whereDate('assigned_date', '<>', $today)
         )
-        ->with(['cleaners:id,cleaner_name,cleaner_phoneNo', 'officer:id,name', 'supervisor:id,name'])
+        ->with([
+            'cleaners:id,cleaner_name,cleaner_phoneNo',
+            'cleaners.media',
+            'officer:id,name',
+            'supervisor:id,name'
+        ])
         ->orderBy('assigned_date', 'desc')
         ->get();
-    
-        // ------------------------------------------------
-        // 3. Older Ongoing Complaints (Before This Week)
-        // ------------------------------------------------
+
+        // 3) Ongoing Older
         $ongoingOlder = $applySupervisorFilter(
             Complaint::where('comp_status', 'ongoing')
                      ->whereDate('assigned_date', '<', $startOfWeek)
         )
-        ->with(['cleaners:id,cleaner_name,cleaner_phoneNo', 'officer:id,name', 'supervisor:id,name'])
+        ->with([
+            'cleaners:id,cleaner_name,cleaner_phoneNo',
+            'cleaners.media',
+            'officer:id,name',
+            'supervisor:id,name'
+        ])
         ->orderBy('assigned_date', 'desc')
         ->paginate($perPage);
-    
-        // ------------------------------------------------
-        // 4. Completed Complaints Assigned Today
-        // ------------------------------------------------
+
+        // =========================================================
+        // Completed Complaints (MySQL)
+        // =========================================================
+
+        // 1) Completed Today
         $completedToday = $applySupervisorFilter(
             Complaint::where('comp_status', 'completed')
                      ->whereDate('assigned_date', $today)
         )
-        ->with(['cleaners:id,cleaner_name,cleaner_phoneNo', 'officer:id,name', 'supervisor:id,name'])
+        ->with([
+            'cleaners:id,cleaner_name,cleaner_phoneNo',
+            'cleaners.media',
+            'officer:id,name',
+            'supervisor:id,name'
+        ])
         ->orderBy('assigned_date', 'desc')
         ->get();
-    
-        // ------------------------------------------------
-        // 5. Completed Complaints Assigned This Week (Excl. Today)
-        // ------------------------------------------------
+
+        // 2) Completed This Week (excluding today)
         $completedThisWeek = $applySupervisorFilter(
             Complaint::where('comp_status', 'completed')
                      ->whereBetween('assigned_date', [$startOfWeek, $endOfWeek])
                      ->whereDate('assigned_date', '<>', $today)
         )
-        ->with(['cleaners:id,cleaner_name,cleaner_phoneNo', 'officer:id,name', 'supervisor:id,name'])
+        ->with([
+            'cleaners:id,cleaner_name,cleaner_phoneNo',
+            'cleaners.media',
+            'officer:id,name',
+            'supervisor:id,name'
+        ])
         ->orderBy('assigned_date', 'desc')
         ->get();
-    
-        // ------------------------------------------------
-        // 6. Older Completed Complaints (Before This Week)
-        // ------------------------------------------------
+
+        // 3) Completed Older
         $completedOlder = $applySupervisorFilter(
             Complaint::where('comp_status', 'completed')
                      ->whereDate('assigned_date', '<', $startOfWeek)
         )
-        ->with(['cleaners:id,cleaner_name,cleaner_phoneNo', 'officer:id,name', 'supervisor:id,name'])
+        ->with([
+            'cleaners:id,cleaner_name,cleaner_phoneNo',
+            'cleaners.media',
+            'officer:id,name',
+            'supervisor:id,name'
+        ])
         ->orderBy('assigned_date', 'desc')
         ->paginate($perPage);
-    
-        // ------------------------------------------------
-        // Handle AJAX "Load More" Requests
-        // ------------------------------------------------
+
+        // --- Supabase Data for Complaint History ---
+        try {
+            $supabaseComplaints = $this->supabaseService->getComplaints();
+            // Filter for ongoing complaints assigned by this supervisor
+            $supabaseOngoing = array_filter($supabaseComplaints, function($complaint) use ($supervisorId) {
+                return isset($complaint['comp_status']) &&
+                       strtolower($complaint['comp_status']) === 'ongoing' &&
+                       isset($complaint['assigned_by']) &&
+                       $complaint['assigned_by'] == $supervisorId;
+            });
+            // Filter for completed complaints assigned by this supervisor
+            $supabaseCompleted = array_filter($supabaseComplaints, function($complaint) use ($supervisorId) {
+                return isset($complaint['comp_status']) &&
+                       strtolower($complaint['comp_status']) === 'completed' &&
+                       isset($complaint['assigned_by']) &&
+                       $complaint['assigned_by'] == $supervisorId;
+            });
+
+            // Group ongoing complaints by date categories
+            $supabaseOngoingToday = [];
+            $supabaseOngoingThisWeek = [];
+            $supabaseOngoingOlder = [];
+
+            foreach ($supabaseOngoing as $complaint) {
+                $assignedDate = Carbon::parse($complaint['assigned_date']);
+                if ($assignedDate->isToday()) {
+                    $supabaseOngoingToday[] = $complaint;
+                } elseif ($assignedDate->between($startOfWeek, $endOfWeek)) {
+                    $supabaseOngoingThisWeek[] = $complaint;
+                } else {
+                    $supabaseOngoingOlder[] = $complaint;
+                }
+            }
+
+            // Group completed complaints by date categories
+            $supabaseCompletedToday = [];
+            $supabaseCompletedThisWeek = [];
+            $supabaseCompletedOlder = [];
+
+            foreach ($supabaseCompleted as $complaint) {
+                $assignedDate = Carbon::parse($complaint['assigned_date']);
+                if ($assignedDate->isToday()) {
+                    $supabaseCompletedToday[] = $complaint;
+                } elseif ($assignedDate->between($startOfWeek, $endOfWeek)) {
+                    $supabaseCompletedThisWeek[] = $complaint;
+                } else {
+                    $supabaseCompletedOlder[] = $complaint;
+                }
+            }
+        } catch (\Exception $e) {
+            $supabaseOngoingToday = [];
+            $supabaseOngoingThisWeek = [];
+            $supabaseOngoingOlder = [];
+            $supabaseCompletedToday = [];
+            $supabaseCompletedThisWeek = [];
+            $supabaseCompletedOlder = [];
+        }
+
+        // =========================================================
+        // Handle AJAX "Load More" Requests (MySQL Only)
+        // =========================================================
+
         if ($request->ajax()) {
-            // The front-end should send ?status=ongoing|completed&filter=older|thisWeek|today&page=2&search=...
-            $status = $request->get('status'); // 'ongoing' or 'completed'
-            $filter = $request->get('filter'); // 'older', 'thisWeek', 'today'
+            // e.g.: ?status=ongoing&filter=older&page=2
+            $status = $request->get('status');   // 'ongoing' or 'completed'
+            $filter = $request->get('filter');     // 'today', 'thisWeek', 'older'
             $page   = $request->get('page', 2);
-            $search = $request->get('search'); // optional search param
-    
-            // 1) Build the base query depending on status
+            $search = $request->get('search');
+
+            // Base query
             if ($status === 'ongoing') {
                 $ajaxQuery = Complaint::where('comp_status', 'ongoing');
             } else {
                 $ajaxQuery = Complaint::where('comp_status', 'completed');
             }
-    
-            // 2) Apply date range filter
+
+            // Time filter
             if ($filter === 'older') {
-                // older -> assigned_date < startOfWeek
                 $ajaxQuery->whereDate('assigned_date', '<', $startOfWeek);
             } elseif ($filter === 'thisWeek') {
-                // assigned_date between startOfWeek and endOfWeek, excluding today
                 $ajaxQuery->whereBetween('assigned_date', [$startOfWeek, $endOfWeek])
                           ->whereDate('assigned_date', '<>', $today);
             } elseif ($filter === 'today') {
                 $ajaxQuery->whereDate('assigned_date', $today);
             }
-            // else, if no filter param, do nothing or handle default
-    
-            // 3) Apply supervisor filter if needed
+
+            // Apply the "Assigned by me" filter
             $applySupervisorFilter($ajaxQuery);
-    
-            // 4) Optional: Apply search if provided
-            // e.g., search by comp_desc or comp_location
+
+            // Search filter
             if ($search) {
                 $ajaxQuery->where(function($q) use ($search) {
                     $q->where('comp_desc', 'like', "%{$search}%")
                       ->orWhere('comp_location', 'like', "%{$search}%");
                 });
             }
-    
-            // 5) Paginate the results for the requested page
+
+            // Eager loading
             $complaints = $ajaxQuery
-                ->with(['cleaners:id,cleaner_name,cleaner_phoneNo', 'officer:id,name', 'supervisor:id,name'])
+                ->with([
+                    'cleaners:id,cleaner_name,cleaner_phoneNo',
+                    'cleaners.media',
+                    'officer:id,name',
+                    'supervisor:id,name'
+                ])
                 ->orderBy('assigned_date', 'desc')
                 ->paginate($perPage, ['*'], 'page', $page);
-    
-            // Return JSON so the front-end can append
+
             return response()->json([
-                'complaints' => $complaints->items(),   // array of complaint data
+                'complaints' => $complaints->items(),
                 'hasMore'    => $complaints->hasMorePages(),
             ]);
         }
-    
-        // If not AJAX, return the main Blade view
+
+        // Non-AJAX request: render the view with both MySQL and Supabase data
         return view('supervisor.history', [
-            'ongoingToday'     => $ongoingToday,
-            'ongoingThisWeek'  => $ongoingThisWeek,
-            'ongoingOlder'     => $ongoingOlder,
-            'completedToday'   => $completedToday,
-            'completedThisWeek'=> $completedThisWeek,
-            'completedOlder'   => $completedOlder,
-            'assignedByMe'     => $filterByMe,
+            'ongoingToday'            => $ongoingToday,
+            'ongoingThisWeek'         => $ongoingThisWeek,
+            'ongoingOlder'            => $ongoingOlder,
+            'completedToday'          => $completedToday,
+            'completedThisWeek'       => $completedThisWeek,
+            'completedOlder'          => $completedOlder,
+            'supabaseOngoingToday'    => $supabaseOngoingToday,
+            'supabaseOngoingThisWeek' => $supabaseOngoingThisWeek,
+            'supabaseOngoingOlder'    => $supabaseOngoingOlder,
+            'supabaseCompletedToday'  => $supabaseCompletedToday,
+            'supabaseCompletedThisWeek'=> $supabaseCompletedThisWeek,
+            'supabaseCompletedOlder'  => $supabaseCompletedOlder,
+            // Pass the flag so the Blade view can reflect if "Assigned by Me" is on or off
+            'assignedByMe'            => $filterByMe,
         ]);
     }
 
-
-    //Admin
+    // Admin-related functions for managing supervisors
 
     public function supervisors(Request $request)
     {
@@ -404,10 +526,10 @@ class SupervisorController extends Controller
         // Apply search filter if provided
         if ($request->has('search')) {
             $searchTerm = $request->input('search');
-            $query->where(function($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
                 $q->where('name', 'LIKE', "%{$searchTerm}%")
-                ->orWhere('email', 'LIKE', "%{$searchTerm}%")
-                ->orWhere('phone_no', 'LIKE', "%{$searchTerm}%");
+                  ->orWhere('email', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('phone_no', 'LIKE', "%{$searchTerm}%");
             });
         }
 
@@ -426,9 +548,9 @@ class SupervisorController extends Controller
     public function storeSupervisor(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'phone_no' => 'required|string|max:20',
+            'name'        => 'required|string|max:255',
+            'email'       => 'required|email|unique:users,email',
+            'phone_no'    => 'required|string|max:20',
             'profile_pic' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
@@ -439,10 +561,10 @@ class SupervisorController extends Controller
         }
 
         User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'phone_no' => $data['phone_no'],
-            'role' => 'supervisor',
+            'name'        => $data['name'],
+            'email'       => $data['email'],
+            'phone_no'    => $data['phone_no'],
+            'role'        => 'supervisor',
             'profile_pic' => $data['profile_pic'] ?? null,
         ]);
 
@@ -458,17 +580,17 @@ class SupervisorController extends Controller
     public function updateSupervisor(Request $request, $id)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $id,
-            'phone_no' => 'required|string|max:20',
+            'name'        => 'required|string|max:255',
+            'email'       => 'required|email|unique:users,email,' . $id,
+            'phone_no'    => 'required|string|max:20',
             'profile_pic' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $supervisor = User::where('id', $id)->where('role', 'supervisor')->firstOrFail();
 
         $supervisor->update([
-            'name' => $request->name,
-            'email' => $request->email,
+            'name'     => $request->name,
+            'email'    => $request->email,
             'phone_no' => $request->phone_no,
         ]);
 
@@ -502,9 +624,4 @@ class SupervisorController extends Controller
         return redirect()->route('admin.supervisors.index', $id)->with('status', 'Password has been reset successfully.');
     }
 
-
-    //Profile Settings
-
-    
-    
 }

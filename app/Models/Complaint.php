@@ -43,9 +43,7 @@ class Complaint extends Model implements HasMedia
     const STATUS_ONGOING = 'ongoing';
     const STATUS_COMPLETED = 'completed';
 
-    /**
-     * Retrieve available statuses.
-     */
+  
     public static function getStatuses()
     {
         return [
@@ -55,9 +53,7 @@ class Complaint extends Model implements HasMedia
         ];
     }
 
-    /**
-     * Register media collections for complaint images.
-     */
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('complaint_images')
@@ -80,55 +76,38 @@ class Complaint extends Model implements HasMedia
         return $this->getMedia('complaint_images')->map->getUrl()->toArray();
     }
 
-    /**
-     * Relationship with the Supervisor (User who assigned cleaners).
-     */
     public function supervisor()
     {
-        return $this->belongsTo(User::class, 'assigned_by')->where('role', 'supervisor');
+        return $this->belongsTo(User::class, 'assigned_by');
     }
-
-    /**
-     * Relationship with the Officer (User handling the complaint).
-     */
+    
     public function officer()
     {
         return $this->belongsTo(User::class, 'officer_id');
     }
 
-    /**
-     * Relationship with the User model.
-     * Note: This method seems redundant as 'officer()' already defines the relationship.
-     */
     public function user()
     {
         return $this->belongsTo(User::class, 'officer_id');
     }
 
-    /**
-     * Many-to-many relationship with the Cleaner model.
-     */
     public function cleaners()
     {
         return $this->belongsToMany(Cleaner::class, 'complaint_cleaner', 'complaint_id', 'cleaner_id')
-                    ->withPivot('no_of_cleaners', 'assigned_by', 'assigned_date')
+                    ->withPivot( 'assigned_by',
+                    'assigned_date',
+                    'no_of_cleaners',
+                    'created_at',
+                    'updated_at')
                     ->withTimestamps();
     }
 
-    /**
-     * Relationship indicating who assigned the complaint.
-     */
+
     public function assignedBy()
     {
         return $this->belongsTo(User::class, 'assigned_by');
     }
 
-    /**
-     * Update the status of the complaint.
-     *
-     * @param string $status
-     * @throws \Exception
-     */
     public function updateStatus(string $status)
     {
         if (in_array($status, self::getStatuses())) {
@@ -139,82 +118,48 @@ class Complaint extends Model implements HasMedia
         }
     }
 
-    /**
-     * Assign cleaners to the complaint and update relevant details.
-     *
-     * @param array $cleanerIds
-     * @param int $assignedBy
-     * @param int $noOfCleaners
-     * @throws \Exception
-     */
-    public function assignCleaners(array $cleanerIds, int $assignedBy, int $noOfCleaners)
+    public function assignCleaners(array $cleanerIds, int $supervisorId, int $noOfCleaners): void
     {
-        if ($this->comp_status !== self::STATUS_PENDING) {
-            throw new \Exception("Cleaners can only be assigned when the complaint status is 'pending'.");
+
+        DB::beginTransaction();
+
+        try {
+            $this->cleaners()->attach($cleanerIds, [
+                'assigned_by'      => $supervisorId,
+                'assigned_date'    => now(),
+                'no_of_cleaners'   => $noOfCleaners,
+                'is_notified'      => false, // or true based on your logic
+            ]);
+
+            Cleaner::whereIn('id', $cleanerIds)
+                   ->update(['status' => Cleaner::STATUS_UNAVAILABLE]);
+
+           
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e; 
         }
-
-        // Begin a database transaction to ensure data integrity
-        DB::transaction(function () use ($cleanerIds, $assignedBy, $noOfCleaners) {
-            // Attach cleaners with pivot data
-            $this->cleaners()->syncWithPivotValues($cleanerIds, [
-                'assigned_by'    => $assignedBy,
-                'assigned_date'  => now(),
-                'no_of_cleaners' => $noOfCleaners,
-            ]);
-
-            // Update the complaint's status and assignment details
-            $this->update([
-                'comp_status'    => self::STATUS_ONGOING,
-                'assigned_by'    => $assignedBy,
-                'assigned_date'  => now(),
-                'no_of_cleaners' => $noOfCleaners,
-            ]);
-
-            // Update each cleaner's status to 'unavailable'
-            Cleaner::whereIn('user_id', $cleanerIds)
-                ->update(['status' => Cleaner::STATUS_UNAVAILABLE]);
-        });
     }
 
-  
     public function scopeStatus($query, $status)
     {
         return $query->where('comp_status', $status);
     }
 
-    /**
-     * Scope a query to include complaints assigned today.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
     public function scopeAssignedToday($query)
     {
         return $query->whereDate('assigned_date', Carbon::today());
     }
 
-    /**
-     * Scope a query to include complaints assigned this week.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
     public function scopeAssignedThisWeek($query)
     {
         return $query->whereBetween('assigned_date', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
     }
 
-    /**
-     * Scope a query to include complaints assigned before this week.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
+
     public function scopeAssignedBeforeThisWeek($query)
     {
         return $query->whereDate('assigned_date', '<', Carbon::now()->startOfWeek());
     }
-
-
-    
 }
