@@ -521,7 +521,7 @@ class ComplaintController extends Controller
             $complaints = Complaint::whereNull('assigned_by')
             ->where('comp_status', 'pending')
             ->select(
-                'id', 
+
                 \DB::raw('DATE(comp_date) as comp_date'), // ✅ Ensure MySQL treats it as DATE
                 'comp_location', 
                 'comp_time', 
