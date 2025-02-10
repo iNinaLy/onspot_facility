@@ -8,6 +8,7 @@ use NotificationChannels\Fcm\FcmMessage;
 use NotificationChannels\Fcm\Resources\Notification as FcmNotification;
 use App\Service\SupabaseService;
 use Illuminate\Support\Facades\Log;
+use App\Models\NotificationToken;
 
 class ComplaintNotification extends Notification
 {
@@ -27,8 +28,8 @@ class ComplaintNotification extends Notification
     public function via($notifiable)
     {
         return [
-            'database',
-            FcmChannel::class,
+            'database',         // Stores notification data in your local MySQL notifications table.
+            FcmChannel::class,  // Sends the push notification via FCM.
         ];
     }
 
@@ -60,11 +61,10 @@ class ComplaintNotification extends Notification
         // Attempt to store the notification in Supabase.
         try {
             $supabase = app(SupabaseService::class);
-            // Here we assume that the notifications table in Supabase is named "notifications"
-            // and that it accepts similar columns.
+            // Assumes that your Supabase notifications table is named "notifications"
             $supabase->store('notifications', $data);
         } catch (\Exception $e) {
-            // Log the error and continue (local notification is still stored).
+            // Log the error and continue (the local notification is still stored).
             Log::error("Failed to store notification in Supabase: " . $e->getMessage());
         }
 
@@ -72,22 +72,29 @@ class ComplaintNotification extends Notification
     }
 
     /**
-     * Use device tokens fetched from Supabase to send FCM notifications.
+     * Use device tokens fetched from both MySQL and Supabase to send FCM notifications.
      */
     public function toFcm($notifiable): ?FcmMessage
     {
-        // Resolve SupabaseService from the container:
+        // Fetch local device tokens from MySQL using the NotificationToken model.
+        $localTokens = NotificationToken::where('user_id', $notifiable->id)
+            ->pluck('device_token');
+
+        // Resolve SupabaseService from the container.
         $supabase = app(SupabaseService::class);
+        // Fetch device tokens for the user from Supabase.
+        $supabaseTokens = $supabase->getDeviceTokensForUser($notifiable->id);
 
-        // Fetch device tokens for $notifiable->id from Supabase.
-        $tokens = $supabase->getDeviceTokensForUser($notifiable->id);
+        // Merge tokens from local MySQL and Supabase and remove duplicates.
+        $tokens = $localTokens->merge($supabaseTokens)->unique();
 
+        // If no tokens are found, skip sending the push notification.
         if ($tokens->isEmpty()) {
-            return null; // No tokens available, so no FCM notification is sent.
+            return null;
         }
 
+        // Build the FCM message based on the type of recipient.
         if ($this->cleaner) {
-            // Notification for cleaner.
             return (new FcmMessage(
                 notification: new FcmNotification(
                     title: 'New Complaint Assigned',
@@ -109,7 +116,6 @@ class ComplaintNotification extends Notification
         }
 
         if ($this->officer) {
-            // Notification for officer.
             return (new FcmMessage(
                 notification: new FcmNotification(
                     title: 'Complaint Updates',
@@ -130,7 +136,7 @@ class ComplaintNotification extends Notification
                 ]);
         }
 
-        // Default notification if neither cleaner nor officer is provided.
+        // Default FCM message if neither cleaner nor officer is provided.
         return (new FcmMessage(
             notification: new FcmNotification(
                 title: 'New Complaint Submitted',

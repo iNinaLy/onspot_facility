@@ -9,6 +9,7 @@ use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\OfficerController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NotificationTokenController;
 use App\Http\Controllers\ComplaintCleanerController;
 
 
@@ -85,6 +86,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     
 });
 
+Route::middleware('auth:api')->post('/update-token', [NotificationTokenController::class, 'updateToken']);
+
 // ===================
 // Supervisor Routes
 // ===================
@@ -107,6 +110,7 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
 
         // Mark all notifications as read
         Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('markAllAsRead');
+        
         
         // Delete a specific notification
         Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -10,21 +11,21 @@ class NotificationTokenController extends Controller
     {
         $request->validate([
             'device_token' => 'required|string',
-            'device_type' => 'required|string', // e.g., 'android' or 'ios'
+            'device_type'  => 'required|string', 
         ]);
 
-        // Retrieve the authenticated user
+        // Retrieve the authenticated user.
         $user = $request->user();
 
-        // Save or update the notification token
+        // Save or update the notification token.
         NotificationToken::updateOrCreate(
-            ['user_id' => $user->id], // Match the user ID
+            ['user_id' => $user->id], // Matching by user_id (add device_id here if needed).
             [
                 'device_token' => $request->device_token,
-                'device_type' => $request->device_type,
+                'device_type'  => $request->device_type,
             ]
         );
 
-        return response()->json(['message' => 'Device token updated successfully.'], 200);
+        return response()->json(['message' => 'Device token updated.'], 200);
     }
 }
