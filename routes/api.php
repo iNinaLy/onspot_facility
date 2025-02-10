@@ -30,10 +30,11 @@ Route::middleware('auth:sanctum')->get('/supabase-config', function () {
 //CLEANER ROUTES
 // Cleaner Task and Complaint Routes
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/tasks/latest/{cleaner_id}', [ComplaintCleanerController::class, 'getLatestTask']);
     Route::get('/complaints/{id}/details', [ComplaintCleanerController::class, 'getComplaintDetailsConditional']); // Get details of a specific complaint
     Route::post('/tasks/{complaint_id}/mark-unavailable', [ComplaintCleanerController::class, 'markCleanerUnavailable']);
-    Route::get('/tasks/unnotified/{cleaner_id}', [ComplaintCleanerController::class, 'unnotifiedTasks']);
-    Route::post('/tasks/notified', [ComplaintCleanerController::class, 'notifiedTasks']);
+    Route::get('/tasks/{cleaner_id}', [ComplaintCleanerController::class, 'unnotifiedTasks']);
+    Route::post('/tasks/acknowledge', [ComplaintCleanerController::class, 'acknowledgeTask']);
     Route::get('/tasks/history/{cleaner_id}', [ComplaintCleanerController::class, 'getHistoryTasks']);
 });
 
@@ -88,6 +89,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 //Supervisor View Complaints, Assign Task and History
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/complaints/latest', [ComplaintController::class, 'fetchLatestComplaint']);
     Route::get('/supervisor/complaints', [ComplaintController::class, 'getComplaints']);
     Route::get('/supervisor/assign-task/{id}', [ComplaintController::class, 'apigetComplaintDetails']);
     Route::post('supervisor/assign-task/{id}/assign', [ComplaintController::class, 'AssignTask']);

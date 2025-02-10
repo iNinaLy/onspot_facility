@@ -167,7 +167,6 @@ class AuthController extends Controller
         return response()->json(['message' => 'Successfully logged out.'], 200);
     }
     
-
     public function storeNotificationToken(Request $request)
     {
         \Log::info('Incoming Request', $request->all());
@@ -179,15 +178,15 @@ class AuthController extends Controller
         ]);
     
         try {
-            // Use updateOrCreate to handle duplicates
+            // ✅ Match by device_id & device_type (not device_token)
             $token = \App\Models\NotificationToken::updateOrCreate(
                 [
-                    'device_token' => $request->device_token, // Match by device_token
-                ],
-                [
-                    'user_id' => auth()->id(), // Update these fields if device_token exists
                     'device_id' => $request->device_id,
                     'device_type' => $request->device_type,
+                ],
+                [
+                    'device_token' => $request->device_token,
+                    'user_id' => auth()->id(),
                 ]
             );
     
@@ -198,8 +197,7 @@ class AuthController extends Controller
             \Log::error('Failed to save device token: ' . $e->getMessage());
             return response()->json(['message' => 'Failed to save device token.', 'error' => $e->getMessage()], 500);
         }
-    }
-    
+    }    
 
     public function sendResetCode(Request $request)
     {

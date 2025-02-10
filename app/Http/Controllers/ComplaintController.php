@@ -515,14 +515,49 @@ class ComplaintController extends Controller
     // fetch complaints that are unassigned and have a status of 'pending'
     public function getComplaints()
     {
-        // Retrieve all complaints where assigned_by is null and comp_status is pending
-        $complaints = Complaint::select('id', 'comp_date', 'comp_location', 'comp_time', 'comp_desc', 'officer_id', 'assigned_by', 'comp_status') 
-            ->whereNull('assigned_by')
-            ->where('comp_status', Complaint::STATUS_PENDING) // Filter by pending status
+        try {
+            \Log::info("Fetching all pending complaints...");
+    
+            $complaints = Complaint::whereNull('assigned_by')
+            ->where('comp_status', 'pending')
+            ->select(
+                'id', 
+                \DB::raw('DATE(comp_date) as comp_date'), // ✅ Ensure MySQL treats it as DATE
+                'comp_location', 
+                'comp_time', 
+                'comp_desc', 
+                'officer_id', 
+                'assigned_by', 
+                'comp_status'
+            )
+            ->orderByRaw('comp_date DESC') // ✅ Force MySQL to treat comp_date correctly
+            ->orderBy('comp_time', 'desc') // ✅ Sort by time if same date
             ->get();
-
-        return response()->json($complaints);
-    } 
+        
+        
+        \Log::info('Sorted Complaints:', $complaints->toArray());
+    
+            if ($complaints->isEmpty()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No pending complaints found.',
+                    'data' => []
+                ], 404);
+            }
+    
+            return response()->json([
+                'status' => 'success',
+                'data' => $complaints
+            ], 200);
+        } catch (\Exception $e) {
+            \Log::error("Error fetching complaints: " . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error fetching complaints: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
+    }       
 
 
     public function AssignTask(Request $request, $id)
@@ -724,61 +759,67 @@ class ComplaintController extends Controller
         
     public function getHistory(Request $request)
     {
-        // Get supervisor's ID from request (assuming it's passed with the token)
         $supervisorId = $request->user()->id;
-    
-        // Get the optional filters from the request and sanitize them
         $statusFilter = trim($request->query('comp_status', ''));
         $monthFilter = trim($request->query('month', ''));
     
-        // Fetch tasks assigned by this supervisor with optional filtering
-        $tasks = Complaint::where('assigned_by', $supervisorId)
+        // Fetch tasks assigned by this supervisor with assigned_date filtering
+        $tasks = Complaint::where('complaints.assigned_by', $supervisorId)
             ->when($statusFilter, function ($query) use ($statusFilter) {
-                if (!empty($statusFilter)) {
-                    $query->where('comp_status', $statusFilter);
-                }
+                $query->where('complaints.comp_status', $statusFilter);
             })
+            ->leftJoin('complaint_cleaner', 'complaints.id', '=', 'complaint_cleaner.complaint_id') // ✅ Join with complaint_cleaner
             ->when($monthFilter, function ($query) use ($monthFilter) {
-                if (!empty($monthFilter)) {
-                    $query->whereMonth('comp_date', $monthFilter); // Filter by month (expects numeric value)
-                }
+                $query->whereMonth('complaint_cleaner.assigned_date', $monthFilter); // ✅ Now filtering by assigned_date
             })
-            ->select('id', 'comp_desc', 'no_of_cleaners', 'comp_status', 'comp_date')
-            ->orderBy('comp_date', 'desc') // Order by date, latest first
+            ->select(
+                'complaints.id',
+                'complaints.comp_desc',
+                'complaints.no_of_cleaners',
+                'complaints.comp_status',
+                'complaints.comp_date',
+                'complaint_cleaner.assigned_date' // ✅ Retrieve assigned_date
+            )
+            ->orderBy('complaint_cleaner.assigned_date', 'desc') // ✅ Order by assigned_date instead of comp_date
             ->get();
     
-        // Return tasks in JSON format
         return response()->json($tasks);
-    }    
+    }      
     
-
     // fetch history details
     public function getHistoryDetails($id)
     {
-        // Retrieve the complaint details including location, description, etc.
-        $complaint = Complaint::select('id', 'comp_desc', 'comp_time', 'comp_date', 'comp_location', 'officer_id', 'comp_status', 'no_of_cleaners', 'assigned_date', 'comp_image')
-            ->where('id', $id)
-            ->first();
-
+        // Retrieve the complaint details
+        $complaint = Complaint::select(
+            'complaints.id', 'complaints.comp_desc', 'complaints.comp_time', 
+            'complaints.comp_date', 'complaints.comp_location', 'complaints.officer_id', 
+            'complaints.comp_status', 'complaints.no_of_cleaners', 'complaints.comp_image'
+        )
+        ->where('complaints.id', $id)
+        ->first();
+    
         if (!$complaint) {
             return response()->json(['message' => 'Complaint not found'], 404);
         }
-
+    
         // Retrieve the officer's name based on the officer_id
         $officer = User::select('name')->where('id', $complaint->officer_id)->first();
         $officerName = $officer ? $officer->name : 'Unknown Officer';
-
-        // Retrieve assigned cleaners for the task using `user_id` from the `cleaners` table
+    
+        // Retrieve assigned cleaners and their assigned_date
         $assignedCleaners = ComplaintCleaner::where('complaint_id', $complaint->id)
-            ->join('cleaners', 'complaint_cleaner.cleaner_id', '=', 'cleaners.user_id') // Use `user_id` for the join
-            ->select('cleaners.user_id as cleaner_id', 'cleaners.cleaner_name') // Select `user_id` as `cleaner_id`
+            ->join('cleaners', 'complaint_cleaner.cleaner_id', '=', 'cleaners.user_id') 
+            ->select('cleaners.user_id as cleaner_id', 'cleaners.cleaner_name', 'complaint_cleaner.assigned_date') // ✅ Fetch assigned_date
             ->get();
-
+    
         // Check if image exists and construct URL
         $compImageUrl = $complaint->comp_image && file_exists(storage_path('app/public/' . $complaint->comp_image))
             ? url('storage/' . $complaint->comp_image)
             : null;
-
+    
+        // Find the **earliest assigned_date** (assuming one complaint can have multiple cleaners)
+        $assignedDate = $assignedCleaners->min('assigned_date'); // ✅ Get the earliest assigned_date
+    
         // Prepare the response data
         $responseData = [
             'complaint_id' => $complaint->id,
@@ -787,34 +828,34 @@ class ComplaintController extends Controller
             'comp_date' => $complaint->comp_date,
             'comp_location' => $complaint->comp_location,
             'officer_name' => $officerName,
-            'comp_image_url' => $compImageUrl, // Return null if no image
+            'comp_image_url' => $compImageUrl,
             'assigned_cleaners' => $assignedCleaners,
             'comp_status' => $complaint->comp_status,
             'no_of_cleaners' => $complaint->no_of_cleaners,
-            'assigned_date' => $complaint->assigned_date,
+            'assigned_date' => $assignedDate, // ✅ Add the extracted assigned_date
         ];
-
+    
         return response()->json($responseData);
-    }
+    }    
 
 
     // Laravel Controller Method
-public function getUserNames(Request $request)
-{
-    $userIds = $request->input('user_ids');
+    public function getUserNames(Request $request)
+    {
+        $userIds = $request->input('user_ids');
 
-    if (!$userIds || !is_array($userIds)) {
-        return response()->json(['message' => 'Invalid user IDs'], 400);
+        if (!$userIds || !is_array($userIds)) {
+            return response()->json(['message' => 'Invalid user IDs'], 400);
+        }
+
+        // Fetch user names directly from MySQL `users` table
+        $users = DB::table('users')
+            ->whereIn('id', $userIds)
+            ->select('id', 'name')
+            ->get();
+
+        return response()->json($users);
     }
-
-    // Fetch user names directly from MySQL `users` table
-    $users = DB::table('users')
-        ->whereIn('id', $userIds)
-        ->select('id', 'name')
-        ->get();
-
-    return response()->json($users);
-}
 
     public function completeComplaint(Request $request, $id)
         {
@@ -845,6 +886,45 @@ public function getUserNames(Request $request)
                 'message' => 'Complaint marked as completed, and cleaners updated to available.',
                 'complaint' => $complaint,
             ]);
-        }        
+        }   
+        
+        
+    public function fetchLatestComplaint()
+    {
+        try {
+            \Log::info("Fetching latest pending complaint...");
+
+            // Fetch the latest complaint where `comp_status = 'pending'`
+            $latestComplaint = Complaint::where('comp_status', 'pending')
+                ->orderBy('created_at', 'desc') // Order by latest created complaint
+                ->first();
+
+            if (!$latestComplaint) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No pending complaints found.'
+                ], 404);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'complaint_id' => $latestComplaint->id,
+                    'comp_desc' => $latestComplaint->comp_desc,
+                    'comp_location' => $latestComplaint->comp_location,
+                    'comp_date' => $latestComplaint->comp_date,
+                    'comp_time' => $latestComplaint->comp_time,
+                    'comp_status' => $latestComplaint->comp_status,
+                    'created_at' => $latestComplaint->created_at,
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            \Log::error("Error fetching latest complaint: " . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error fetching latest complaint: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
     
 }    
