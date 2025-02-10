@@ -50,10 +50,13 @@ class CleanerController extends Controller
     {
         $search = $request->query('search');
         $status = $request->query('status');
-
-        // Build the query with search and status filters
+    
+        // Define items per page (default: 10)
+        $perPage = $request->query('per_page', 10);
+    
+        // Build the query with search and status filters for the main list
         $cleanersQuery = Cleaner::query();
-
+    
         if ($search) {
             $cleanersQuery->where(function ($query) use ($search) {
                 $query->where('cleaner_name', 'LIKE', "%{$search}%")
@@ -61,21 +64,41 @@ class CleanerController extends Controller
                       ->orWhere('cleaner_username', 'LIKE', "%{$search}%");
             });
         }
-
+    
         if ($status) {
+            // Ensure that the status is lowercase to match stored values
             $cleanersQuery->where('status', strtolower($status));
         }
-
-        // Paginate the results
-        $cleaners = $cleanersQuery->paginate(10);
-
+    
+        // Paginate the results for the main list
+        $cleaners = $cleanersQuery->paginate($perPage);
+    
         // Compute the counts for metrics
-        $totalCleaners    = Cleaner::count();
-        $availableCleaners   = Cleaner::where('status', 'available')->count();
+        $totalCleaners     = Cleaner::count();
+        $availableCleaners = Cleaner::where('status', 'available')->count();
         $unavailableCleaners = Cleaner::where('status', 'unavailable')->count();
-
-        // Pass the variables to the view
+    
+        // Get paginated list of available cleaners (with optional search)
+        $availableCleanersList = Cleaner::where('status', 'available')
+            ->when($search, function ($q) use ($search) {
+                $q->where('cleaner_name', 'like', "%{$search}%")
+                  ->orWhere('cleaner_username', 'like', "%{$search}%");
+            })
+            ->paginate($perPage)
+            ->withQueryString();
+    
+        // Get paginated list of unavailable cleaners (with optional search)
+        $unavailableCleanersList = Cleaner::where('status', 'unavailable')
+            ->when($search, function ($q) use ($search) {
+                $q->where('cleaner_name', 'like', "%{$search}%")
+                  ->orWhere('cleaner_username', 'like', "%{$search}%");
+            })
+            ->paginate($perPage)
+            ->withQueryString();
+    
         return view('admin.cleaners.index', compact(
+            'availableCleanersList',
+            'unavailableCleanersList',
             'cleaners',
             'search',
             'status',
@@ -84,6 +107,7 @@ class CleanerController extends Controller
             'unavailableCleaners'
         ));
     }
+    
 
     public function createCleaner()
     {

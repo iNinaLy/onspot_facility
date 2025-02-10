@@ -105,7 +105,7 @@
 @section('content')
 <div class="container my-5">
     <!-- Header -->
-    <div class="heading">
+    <div class="heading mb-4">
         <h1 class="header-title">Manage Cleaners</h1>
     </div>
 
@@ -131,231 +131,408 @@
         </div>
     </div>
 
-    <!-- Search and Filter Form -->
     <form method="GET" action="{{ route('admin.cleaners') }}" class="mb-4">
-        <div class="row g-3">
-            <div class="col-md-6">
-                <input type="text" name="search" class="form-control" placeholder="Search cleaners..." value="{{ request('search') }}">
-            </div>
-            <div class="col-md-4">
-                <select name="status" class="form-select">
-                    <option value="">All Statuses</option>
-                    <option value="available" {{ request('status') == 'available' ? 'selected' : '' }}>Available</option>
-                    <option value="unavailable" {{ request('status') == 'unavailable' ? 'selected' : '' }}>Unavailable</option>
-                </select>
-            </div>
-            <div class="col-md-2 d-grid">
-                <button class="btn btn-primary" type="submit" style="border-radius:16px">Filter</button>
-            </div>
+    <div class="row g-2" style="justify-content: flex-end;">
+        <!-- Narrower search input -->
+        <div class="col-md-4" >
+            <input type="text" name="search" class="form-control" style="border-radius:16px;" placeholder="Search cleaners..." value="{{ request('search') }}">
         </div>
-    </form>
+        <!-- Smaller search button using btn-sm -->
+        <div class="col-md-2" style="width: 7%;">
+            <button class="btn btn-primary btn-sm" type="submit" style="border-radius:16px;">Search</button>
+        </div>
+    </div>
+</form>
 
-    <!-- Cleaners Table -->
-    <div class="table-responsive">
-        @if($cleaners->isEmpty())
-            <div class="alert alert-info text-center">
-                No cleaners found.
-            </div>
-        @else
-            <table class="table table-hover text-center">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Profile</th>
-                        <th>Name</th>
-                        <th>Phone Number</th>
-                        <th>Username</th>
-                        <th>Status</th>
-                        <th>Building</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($cleaners as $cleaner)
-                    <tr>
-                        <td>{{ $cleaner->id }}</td>
-                        <td>
-                            @if($cleaner->profile_pic)
-                                <img src="data:image/jpeg;base64,{{ base64_encode($cleaner->profile_pic) }}"
-                                     alt="{{ $cleaner->cleaner_name }}" 
-                                     class="profile-pic"
-                                     onerror="this.onerror=null; this.src='{{ asset('images/default-image.png') }}';">
-                            @else
-                                <img src="{{ asset('images/default-image.png') }}"
-                                     alt="Default Image"
-                                     class="profile-pic">
-                            @endif
-                        </td>
-                        <td>{{ $cleaner->cleaner_name }}</td>
-                        <td>{{ $cleaner->cleaner_phoneNo }}</td>
-                        <td>{{ $cleaner->cleaner_username }}</td>
-                        <td>
-                            @if($cleaner->status == 'available')
-                                <span class="badge-available">{{ ucfirst($cleaner->status) }}</span>
-                            @else
-                                <span class="badge-unavailable">{{ ucfirst($cleaner->status) }}</span>
-                            @endif
-                        </td>
-                        <td>{{ $cleaner->building ?? 'N/A' }}</td>
-                        <td>
-                            <span data-bs-toggle="tooltip" title="Edit Cleaner">
-                                <button type="button" 
-                                    class="btn btn-pastel-edit btn-sm me-1"
-                                    style="border-radius:12px"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#editModal{{ $cleaner->id }}"
-                                    title="Edit Cleaner">
-                                    <i class="bi bi-pencil-square"></i>
-                                </button>
-                            </span>
 
-                            <span data-bs-toggle="tooltip" title="Delete Cleaner">
-                                <button type="button" 
-                                    class="btn btn-pastel-delete btn-sm" 
-                                    style="border-radius:12px"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#deleteModal{{ $cleaner->id }}"
-                                    title="Delete Cleaner">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </span>
-                        </td>
-                    </tr>
+    <!-- Tabs for Cleaner Status -->
+    <ul class="nav nav-tabs mb-4" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#available" role="tab">Available</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#unavailable" role="tab">Unavailable</a>
+        </li>
+    </ul>
 
-                    <!-- Edit Modal -->
-                    <div class="modal fade" id="editModal{{ $cleaner->id }}" tabindex="-1"
-                        aria-labelledby="editModalLabel{{ $cleaner->id }}" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered modal-md">
-                            <div class="modal-content">
-                                <form action="{{ route('admin.cleaners.update', $cleaner->id) }}" method="POST"
-                                    enctype="multipart/form-data">
-                                    @csrf
-                                    @method('PUT')
-
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="editModalLabel{{ $cleaner->id }}">Edit Details</h5>
-                                        <button type="button" class="btn-close" style="background-color:#fff" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                
+    <div class="tab-content">
+        <!-- Available Cleaners Tab -->
+        <div class="tab-pane fade show active" id="available" role="tabpanel">
+            @if($availableCleanersList->isEmpty())
+                <div class="alert alert-info text-center">No available cleaners found.</div>
+            @else
+                <div class="table-responsive">
+                    <table class="table table-hover text-center">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Profile</th>
+                                <th>Name</th>
+                                <th>Phone Number</th>
+                                <th>Username</th>
+                                <th>Status</th>
+                                <th>Building</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($availableCleanersList as $cleaner)
+                            <tr>
+                                <td>{{ $cleaner->id }}</td>
+                                <td>
                                     @if($cleaner->profile_pic)
                                         <img src="data:image/jpeg;base64,{{ base64_encode($cleaner->profile_pic) }}"
-                                            alt="{{ $cleaner->cleaner_name }}"
-                                            class="modal-profile-pic"
-                                            onerror="this.onerror=null; this.src='{{ asset('images/default-image.png') }}';">
+                                             alt="{{ $cleaner->cleaner_name }}" 
+                                             class="profile-pic"
+                                             onerror="this.onerror=null; this.src='{{ asset('images/default-image.png') }}';">
                                     @else
                                         <img src="{{ asset('images/default-image.png') }}"
-                                            alt="Profile picture"
-                                            class="modal-profile-pic">
+                                             alt="Default Image"
+                                             class="profile-pic">
                                     @endif
-                                    
-                                    <div class="modal-body">
-                                        <!-- Cleaner Name -->
-                                        <div class="mb-4">
-                                            <label for="cleaner_name{{ $cleaner->id }}" class="form-label">Name</label>
-                                            <input type="text" name="cleaner_name" id="cleaner_name{{ $cleaner->id }}" class="form-control" value="{{ $cleaner->cleaner_name }}" required>
-                                        </div>
+                                </td>
+                                <td>{{ $cleaner->cleaner_name }}</td>
+                                <td>{{ $cleaner->cleaner_phoneNo }}</td>
+                                <td>{{ $cleaner->cleaner_username }}</td>
+                                <td>
+                                    <span class="badge-available">{{ ucfirst($cleaner->status) }}</span>
+                                </td>
+                                <td>{{ $cleaner->building ?? 'N/A' }}</td>
+                                <td>
+                                    <span data-bs-toggle="tooltip" title="Edit Cleaner">
+                                        <button type="button" 
+                                            class="btn btn-pastel-edit btn-sm me-1"
+                                            style="border-radius:12px"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editModal{{ $cleaner->id }}"
+                                            title="Edit Cleaner">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                    </span>
 
-                                        <!-- Cleaner Phone Number -->
-                                        <div class="mb-4">
-                                            <label for="phone_no{{ $cleaner->id }}" class="form-label">Phone Number</label>
-                                            <input type="text" name="phone_no" id="phone_no{{ $cleaner->id }}" class="form-control" value="{{ $cleaner->cleaner_phoneNo }}" required>
-                                        </div>
+                                    <span data-bs-toggle="tooltip" title="Delete Cleaner">
+                                        <button type="button" 
+                                            class="btn btn-pastel-delete btn-sm" 
+                                            style="border-radius:12px"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteModal{{ $cleaner->id }}"
+                                            title="Delete Cleaner">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </span>
+                                </td>
+                            </tr>
 
-                                        <!-- Cleaner Username -->
-                                        <div class="mb-4">
-                                            <label for="username{{ $cleaner->id }}" class="form-label">Username</label>
-                                            <input type="text" name="username" id="username{{ $cleaner->id }}" class="form-control" value="{{ $cleaner->cleaner_username }}" required>
-                                        </div>
+                            <!-- Edit Modal -->
+                            <div class="modal fade" id="editModal{{ $cleaner->id }}" tabindex="-1"
+                                aria-labelledby="editModalLabel{{ $cleaner->id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-md">
+                                    <div class="modal-content">
+                                        <form action="{{ route('admin.cleaners.update', $cleaner->id) }}" method="POST"
+                                            enctype="multipart/form-data">
+                                            @csrf
+                                            @method('PUT')
 
-                                        <!-- Status -->
-                                        <div class="mb-4">
-                                            <label for="status{{ $cleaner->id }}" class="form-label">Status</label>
-                                            <select name="status" id="status{{ $cleaner->id }}" class="form-select" required>
-                                                <option value="available" {{ $cleaner->status == 'available' ? 'selected' : '' }}>Available</option>
-                                                <option value="unavailable" {{ $cleaner->status == 'unavailable' ? 'selected' : '' }}>Unavailable</option>
-                                            </select>
-                                        </div>
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="editModalLabel{{ $cleaner->id }}">Edit Details</h5>
+                                                <button type="button" class="btn-close" style="background-color:#fff" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                        
+                                            @if($cleaner->profile_pic)
+                                                <img src="data:image/jpeg;base64,{{ base64_encode($cleaner->profile_pic) }}"
+                                                    alt="{{ $cleaner->cleaner_name }}"
+                                                    class="modal-profile-pic"
+                                                    onerror="this.onerror=null; this.src='{{ asset('images/default-image.png') }}';">
+                                            @else
+                                                <img src="{{ asset('images/default-image.png') }}"
+                                                    alt="Profile picture"
+                                                    class="modal-profile-pic">
+                                            @endif
+                                            
+                                            <div class="modal-body">
+                                                <!-- Cleaner Name -->
+                                                <div class="mb-4">
+                                                    <label for="cleaner_name{{ $cleaner->id }}" class="form-label">Name</label>
+                                                    <input type="text" name="cleaner_name" id="cleaner_name{{ $cleaner->id }}" class="form-control" value="{{ $cleaner->cleaner_name }}" required>
+                                                </div>
 
-                                        <!-- Building -->
-                                        <div class="mb-4">
-                                            <label for="building{{ $cleaner->id }}" class="form-label">Building</label>
-                                            <select name="building" id="building{{ $cleaner->id }}" class="form-select" required>
-                                                <option value="Building A" {{ $cleaner->building == 'Building A' ? 'selected' : '' }}>Building A</option>
-                                                <option value="Building B" {{ $cleaner->building == 'Building B' ? 'selected' : '' }}>Building B</option>
-                                                <option value="Building C" {{ $cleaner->building == 'Building C' ? 'selected' : '' }}>Building C</option>
-                                            </select>
-                                        </div>
+                                                <!-- Cleaner Phone Number -->
+                                                <div class="mb-4">
+                                                    <label for="phone_no{{ $cleaner->id }}" class="form-label">Phone Number</label>
+                                                    <input type="text" name="phone_no" id="phone_no{{ $cleaner->id }}" class="form-control" value="{{ $cleaner->cleaner_phoneNo }}" required>
+                                                </div>
 
-                                        <!-- Profile Picture -->
-                                        <div class="mb-4">
-                                            <label for="profile_pic{{ $cleaner->id }}" class="form-label">Profile Picture</label>
-                                            <input type="file" name="profile_pic" id="profile_pic{{ $cleaner->id }}" class="form-control" accept="image/*">
-                                        </div>
+                                                <!-- Cleaner Username -->
+                                                <div class="mb-4">
+                                                    <label for="username{{ $cleaner->id }}" class="form-label">Username</label>
+                                                    <input type="text" name="username" id="username{{ $cleaner->id }}" class="form-control" value="{{ $cleaner->cleaner_username }}" required>
+                                                </div>
 
-                                        <!-- RESET PASSWORD BUTTON - triggers static modal -->
-                                        <div class="mb-4">
-                                            <button type="button" class="btn btn-danger" style="border-radius:16px; background-color:rgb(206, 77, 77); margin-top:3rem;" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
-                                                Reset Password
-                                            </button>
+                                                <!-- Status -->
+                                                <div class="mb-4">
+                                                    <label for="status{{ $cleaner->id }}" class="form-label">Status</label>
+                                                    <select name="status" id="status{{ $cleaner->id }}" class="form-select" required>
+                                                        <option value="available" {{ $cleaner->status == 'available' ? 'selected' : '' }}>Available</option>
+                                                        <option value="unavailable" {{ $cleaner->status == 'unavailable' ? 'selected' : '' }}>Unavailable</option>
+                                                    </select>
+                                                </div>
+
+                                                <!-- Building -->
+                                                <div class="mb-4">
+                                                    <label for="building{{ $cleaner->id }}" class="form-label">Building</label>
+                                                    <select name="building" id="building{{ $cleaner->id }}" class="form-select" required>
+                                                        <option value="Building A" {{ $cleaner->building == 'Building A' ? 'selected' : '' }}>Building A</option>
+                                                        <option value="Building B" {{ $cleaner->building == 'Building B' ? 'selected' : '' }}>Building B</option>
+                                                        <option value="Building C" {{ $cleaner->building == 'Building C' ? 'selected' : '' }}>Building C</option>
+                                                    </select>
+                                                </div>
+
+                                                <!-- Profile Picture -->
+                                                <div class="mb-4">
+                                                    <label for="profile_pic{{ $cleaner->id }}" class="form-label">Profile Picture</label>
+                                                    <input type="file" name="profile_pic" id="profile_pic{{ $cleaner->id }}" class="form-control" accept="image/*">
+                                                </div>
+
+                                                <!-- RESET PASSWORD BUTTON - triggers static modal -->
+                                                <div class="mb-4">
+                                                    <button type="button" class="btn btn-danger" style="border-radius:16px; background-color:rgb(206, 77, 77); margin-top:3rem;" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
+                                                        Reset Password
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn" style="background-color:#ececec; border-radius:16px;" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-primary" style="border-radius:16px;">Save Changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Delete Confirmation Modal -->
+                            <div class="modal fade" id="deleteModal{{ $cleaner->id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ $cleaner->id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="deleteModalLabel{{ $cleaner->id }}">Confirm Deletion</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Are you sure you want to delete this cleaner?
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn" style="background-color:#ececec; border-radius:16px;" data-bs-dismiss="modal">Cancel</button>
+                                            <form action="{{ route('admin.cleaners.destroy', $cleaner->id) }}" method="POST">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-pastel-delete" style="border-radius:16px;">Delete</button>
+                                            </form>
                                         </div>
                                     </div>
-
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn" style="background-color:#ececec; border-radius:16px;" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" class="btn btn-primary" style="border-radius:16px;">Save Changes</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Delete Confirmation Modal -->
-                    <div class="modal fade" id="deleteModal{{ $cleaner->id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ $cleaner->id }}" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="deleteModalLabel{{ $cleaner->id }}">Confirm Deletion</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    Are you sure you want to delete this cleaner?
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn" style="background-color:#ececec; border-radius:16px;" data-bs-dismiss="modal">Cancel</button>
-                                    <form action="{{ route('admin.cleaners.destroy', $cleaner->id) }}" method="POST">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-pastel-delete" style="border-radius:16px;">Delete</button>
-                                    </form>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <!-- End of Delete Confirmation Modal -->
-                    @endforeach
-                </tbody>
-            </table>
-
-            <!-- Pagination with Page Size Selector -->
-            <div class="d-flex justify-content-between align-items-center" style="display: flex !important; flex-direction: row-reverse;">
-                <!-- Page Size Selector -->
-                <form method="GET" action="{{ route('admin.cleaners') }}" class="mb-3">
-                    <div class="input-group">
-                        <label class="input-group-text" for="per_page">Show</label>
-                        <select name="per_page" id="per_page" class="form-select" onchange="this.form.submit()">
-                            <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
-                            <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
-                            <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
-                        </select>
-                    </div>
-                </form>
-
-                <!-- Updated Pagination Links using Bootstrap 5 styling -->
-                <div class="mt-6">
-                    {{ $cleaners->appends(request()->query())->links('pagination::bootstrap-5') }}
+                            <!-- End of Delete Confirmation Modal -->
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-        @endif
+
+                <!-- Pagination for Available Cleaners -->
+                <div class="d-flex justify-content-center mt-3">
+                    {{ $availableCleanersList->appends(request()->query())->links('pagination::bootstrap-5') }}
+                </div>
+            @endif
+        </div>
+
+        <!-- Unavailable Cleaners Tab -->
+        <div class="tab-pane fade" id="unavailable" role="tabpanel">
+            @if($unavailableCleanersList->isEmpty())
+                <div class="alert alert-info text-center">No unavailable cleaners found.</div>
+            @else
+                <div class="table-responsive">
+                    <table class="table table-hover text-center">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Profile</th>
+                                <th>Name</th>
+                                <th>Phone Number</th>
+                                <th>Username</th>
+                                <th>Status</th>
+                                <th>Building</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($unavailableCleanersList as $cleaner)
+                            <tr>
+                                <td>{{ $cleaner->id }}</td>
+                                <td>
+                                    @if($cleaner->profile_pic)
+                                        <img src="data:image/jpeg;base64,{{ base64_encode($cleaner->profile_pic) }}"
+                                             alt="{{ $cleaner->cleaner_name }}" 
+                                             class="profile-pic"
+                                             onerror="this.onerror=null; this.src='{{ asset('images/default-image.png') }}';">
+                                    @else
+                                        <img src="{{ asset('images/default-image.png') }}"
+                                             alt="Default Image"
+                                             class="profile-pic">
+                                    @endif
+                                </td>
+                                <td>{{ $cleaner->cleaner_name }}</td>
+                                <td>{{ $cleaner->cleaner_phoneNo }}</td>
+                                <td>{{ $cleaner->cleaner_username }}</td>
+                                <td>
+                                    <span class="badge-unavailable">{{ ucfirst($cleaner->status) }}</span>
+                                </td>
+                                <td>{{ $cleaner->building ?? 'N/A' }}</td>
+                                <td>
+                                    <span data-bs-toggle="tooltip" title="Edit Cleaner">
+                                        <button type="button" 
+                                            class="btn btn-pastel-edit btn-sm me-1"
+                                            style="border-radius:12px"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editModal{{ $cleaner->id }}"
+                                            title="Edit Cleaner">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                    </span>
+
+                                    <span data-bs-toggle="tooltip" title="Delete Cleaner">
+                                        <button type="button" 
+                                            class="btn btn-pastel-delete btn-sm" 
+                                            style="border-radius:12px"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteModal{{ $cleaner->id }}"
+                                            title="Delete Cleaner">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </span>
+                                </td>
+                            </tr>
+
+                            <!-- Edit Modal (Reuse same markup as above) -->
+                            <div class="modal fade" id="editModal{{ $cleaner->id }}" tabindex="-1"
+                                aria-labelledby="editModalLabel{{ $cleaner->id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-md">
+                                    <div class="modal-content">
+                                        <form action="{{ route('admin.cleaners.update', $cleaner->id) }}" method="POST"
+                                            enctype="multipart/form-data">
+                                            @csrf
+                                            @method('PUT')
+
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="editModalLabel{{ $cleaner->id }}">Edit Details</h5>
+                                                <button type="button" class="btn-close" style="background-color:#fff" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                        
+                                            @if($cleaner->profile_pic)
+                                                <img src="data:image/jpeg;base64,{{ base64_encode($cleaner->profile_pic) }}"
+                                                    alt="{{ $cleaner->cleaner_name }}"
+                                                    class="modal-profile-pic"
+                                                    onerror="this.onerror=null; this.src='{{ asset('images/default-image.png') }}';">
+                                            @else
+                                                <img src="{{ asset('images/default-image.png') }}"
+                                                    alt="Profile picture"
+                                                    class="modal-profile-pic">
+                                            @endif
+                                            
+                                            <div class="modal-body">
+                                                <!-- Cleaner Name -->
+                                                <div class="mb-4">
+                                                    <label for="cleaner_name{{ $cleaner->id }}" class="form-label">Name</label>
+                                                    <input type="text" name="cleaner_name" id="cleaner_name{{ $cleaner->id }}" class="form-control" value="{{ $cleaner->cleaner_name }}" required>
+                                                </div>
+
+                                                <!-- Cleaner Phone Number -->
+                                                <div class="mb-4">
+                                                    <label for="phone_no{{ $cleaner->id }}" class="form-label">Phone Number</label>
+                                                    <input type="text" name="phone_no" id="phone_no{{ $cleaner->id }}" class="form-control" value="{{ $cleaner->cleaner_phoneNo }}" required>
+                                                </div>
+
+                                                <!-- Cleaner Username -->
+                                                <div class="mb-4">
+                                                    <label for="username{{ $cleaner->id }}" class="form-label">Username</label>
+                                                    <input type="text" name="username" id="username{{ $cleaner->id }}" class="form-control" value="{{ $cleaner->cleaner_username }}" required>
+                                                </div>
+
+                                                <!-- Status -->
+                                                <div class="mb-4">
+                                                    <label for="status{{ $cleaner->id }}" class="form-label">Status</label>
+                                                    <select name="status" id="status{{ $cleaner->id }}" class="form-select" required>
+                                                        <option value="available" {{ $cleaner->status == 'available' ? 'selected' : '' }}>Available</option>
+                                                        <option value="unavailable" {{ $cleaner->status == 'unavailable' ? 'selected' : '' }}>Unavailable</option>
+                                                    </select>
+                                                </div>
+
+                                                <!-- Building -->
+                                                <div class="mb-4">
+                                                    <label for="building{{ $cleaner->id }}" class="form-label">Building</label>
+                                                    <select name="building" id="building{{ $cleaner->id }}" class="form-select" required>
+                                                        <option value="Building A" {{ $cleaner->building == 'Building A' ? 'selected' : '' }}>Building A</option>
+                                                        <option value="Building B" {{ $cleaner->building == 'Building B' ? 'selected' : '' }}>Building B</option>
+                                                        <option value="Building C" {{ $cleaner->building == 'Building C' ? 'selected' : '' }}>Building C</option>
+                                                    </select>
+                                                </div>
+
+                                                <!-- Profile Picture -->
+                                                <div class="mb-4">
+                                                    <label for="profile_pic{{ $cleaner->id }}" class="form-label">Profile Picture</label>
+                                                    <input type="file" name="profile_pic" id="profile_pic{{ $cleaner->id }}" class="form-control" accept="image/*">
+                                                </div>
+
+                                                <!-- RESET PASSWORD BUTTON - triggers static modal -->
+                                                <div class="mb-4">
+                                                    <button type="button" class="btn btn-danger" style="border-radius:16px; background-color:rgb(206, 77, 77); margin-top:3rem;" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
+                                                        Reset Password
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn" style="background-color:#ececec; border-radius:16px;" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-primary" style="border-radius:16px;">Save Changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Delete Confirmation Modal -->
+                            <div class="modal fade" id="deleteModal{{ $cleaner->id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ $cleaner->id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="deleteModalLabel{{ $cleaner->id }}">Confirm Deletion</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Are you sure you want to delete this cleaner?
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn" style="background-color:#ececec; border-radius:16px;" data-bs-dismiss="modal">Cancel</button>
+                                            <form action="{{ route('admin.cleaners.destroy', $cleaner->id) }}" method="POST">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-pastel-delete" style="border-radius:16px;">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End of Delete Confirmation Modal -->
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination for Unavailable Cleaners -->
+                <div class="d-flex justify-content-center mt-3">
+                    {{ $unavailableCleanersList->appends(request()->query())->links('pagination::bootstrap-5') }}
+                </div>
+            @endif
+        </div>
     </div>
 </div>
 
@@ -442,7 +619,6 @@
             @endif
         });
 
-
         document.addEventListener("DOMContentLoaded", function () {
             // Toggle Password Visibility
             document.querySelectorAll('.toggle-password').forEach(item => {
@@ -482,7 +658,7 @@
                 confirmPasswordInput.addEventListener('input', validatePassword);
             }
 
-            // Clear lingering effects on modal close
+            // Clear lingering modal effects on close
             var resetPasswordModal = document.getElementById('resetPasswordModal');
             if(resetPasswordModal) {
                 resetPasswordModal.addEventListener('hidden.bs.modal', function () {
