@@ -267,255 +267,297 @@ class SupervisorController extends Controller
      * Display the complaint history for the supervisor.
      */
     public function history(Request $request)
-    {
-        $supervisorId = Auth::id();
+{
+    // Get the current supervisor and building.
+    $supervisor    = Auth::user();
+    $supervisorId  = $supervisor->id;
+    $building      = $supervisor->building;
 
-        // Check if "assigned_by_me=true" appears in the query string.
-        $filterByMe = $request->query('assigned_by_me', false);
+    // Check if "assigned_by_me=true" appears in the query string.
+    $filterByMe = $request->query('assigned_by_me', false);
 
-        // Date boundaries
-        $today       = Carbon::today();
-        $startOfWeek = Carbon::now()->startOfWeek();
-        $endOfWeek   = Carbon::now()->endOfWeek();
-        $perPage     = 6;
+    // Date boundaries.
+    $today       = Carbon::today();
+    $startOfWeek = Carbon::now()->startOfWeek();
+    $endOfWeek   = Carbon::now()->endOfWeek();
+    $perPage     = 6;
 
-        /**
-         * A closure that adds "where('assigned_by', $supervisorId)" 
-         * only if assigned_by_me is truthy.
-         */
-        $applySupervisorFilter = function($query) use ($filterByMe, $supervisorId) {
-            if ($filterByMe) {
-                $query->where('assigned_by', $supervisorId);
-            }
-            return $query;
-        };
+    /**
+     * A closure that adds "where('assigned_by', $supervisorId)"
+     * only if assigned_by_me is truthy.
+     */
+    $applySupervisorFilter = function ($query) use ($filterByMe, $supervisorId) {
+        if ($filterByMe) {
+            $query->where('assigned_by', $supervisorId);
+        }
+        return $query;
+    };
 
-        // =========================================================
-        // Ongoing Complaints (MySQL)
-        // =========================================================
+    /**
+     * A closure to filter complaints by the supervisor’s building.
+     * Assumes the Complaint model defines a "supervisor" relationship.
+     */
+    $applyBuildingFilter = function ($query) use ($building) {
+        return $query->whereHas('supervisor', function ($q) use ($building) {
+            $q->where('building', $building);
+        });
+    };
 
-        // 1) Ongoing Today
-        $ongoingToday = $applySupervisorFilter(
+    // =========================================================
+    // Ongoing Complaints (MySQL)
+    // =========================================================
+
+    // 1) Ongoing Today.
+    $ongoingToday = $applySupervisorFilter(
+        $applyBuildingFilter(
             Complaint::where('comp_status', 'ongoing')
-                     ->whereDate('assigned_date', $today)
+                ->whereDate('assigned_date', $today)
         )
-        ->with([
-            'cleaners:id,cleaner_name,cleaner_phoneNo',
-            'cleaners.media', 
-            'officer:id,name',
-            'supervisor:id,name'
-        ])
-        ->orderBy('assigned_date', 'desc')
-        ->get();
+    )
+    ->with([
+        'cleaners:id,cleaner_name,cleaner_phoneNo',
+        'cleaners.media',
+        'officer:id,name',
+        'supervisor:id,name'
+    ])
+    ->orderBy('assigned_date', 'desc')
+    ->get();
 
-        // 2) Ongoing This Week (excluding today)
-        $ongoingThisWeek = $applySupervisorFilter(
+    // 2) Ongoing This Week (excluding today).
+    $ongoingThisWeek = $applySupervisorFilter(
+        $applyBuildingFilter(
             Complaint::where('comp_status', 'ongoing')
-                     ->whereBetween('assigned_date', [$startOfWeek, $endOfWeek])
-                     ->whereDate('assigned_date', '<>', $today)
+                ->whereBetween('assigned_date', [$startOfWeek, $endOfWeek])
+                ->whereDate('assigned_date', '<>', $today)
         )
-        ->with([
-            'cleaners:id,cleaner_name,cleaner_phoneNo',
-            'cleaners.media',
-            'officer:id,name',
-            'supervisor:id,name'
-        ])
-        ->orderBy('assigned_date', 'desc')
-        ->get();
+    )
+    ->with([
+        'cleaners:id,cleaner_name,cleaner_phoneNo',
+        'cleaners.media',
+        'officer:id,name',
+        'supervisor:id,name'
+    ])
+    ->orderBy('assigned_date', 'desc')
+    ->get();
 
-        // 3) Ongoing Older
-        $ongoingOlder = $applySupervisorFilter(
+    // 3) Ongoing Older.
+    $ongoingOlder = $applySupervisorFilter(
+        $applyBuildingFilter(
             Complaint::where('comp_status', 'ongoing')
-                     ->whereDate('assigned_date', '<', $startOfWeek)
+                ->whereDate('assigned_date', '<', $startOfWeek)
         )
-        ->with([
-            'cleaners:id,cleaner_name,cleaner_phoneNo',
-            'cleaners.media',
-            'officer:id,name',
-            'supervisor:id,name'
-        ])
-        ->orderBy('assigned_date', 'desc')
-        ->paginate($perPage);
+    )
+    ->with([
+        'cleaners:id,cleaner_name,cleaner_phoneNo',
+        'cleaners.media',
+        'officer:id,name',
+        'supervisor:id,name'
+    ])
+    ->orderBy('assigned_date', 'desc')
+    ->paginate($perPage);
 
-        // =========================================================
-        // Completed Complaints (MySQL)
-        // =========================================================
+    // =========================================================
+    // Completed Complaints (MySQL)
+    // =========================================================
 
-        // 1) Completed Today
-        $completedToday = $applySupervisorFilter(
+    // 1) Completed Today.
+    $completedToday = $applySupervisorFilter(
+        $applyBuildingFilter(
             Complaint::where('comp_status', 'completed')
-                     ->whereDate('assigned_date', $today)
+                ->whereDate('assigned_date', $today)
         )
-        ->with([
-            'cleaners:id,cleaner_name,cleaner_phoneNo',
-            'cleaners.media',
-            'officer:id,name',
-            'supervisor:id,name'
-        ])
-        ->orderBy('assigned_date', 'desc')
-        ->get();
+    )
+    ->with([
+        'cleaners:id,cleaner_name,cleaner_phoneNo',
+        'cleaners.media',
+        'officer:id,name',
+        'supervisor:id,name'
+    ])
+    ->orderBy('assigned_date', 'desc')
+    ->get();
 
-        // 2) Completed This Week (excluding today)
-        $completedThisWeek = $applySupervisorFilter(
+    // 2) Completed This Week (excluding today).
+    $completedThisWeek = $applySupervisorFilter(
+        $applyBuildingFilter(
             Complaint::where('comp_status', 'completed')
-                     ->whereBetween('assigned_date', [$startOfWeek, $endOfWeek])
-                     ->whereDate('assigned_date', '<>', $today)
+                ->whereBetween('assigned_date', [$startOfWeek, $endOfWeek])
+                ->whereDate('assigned_date', '<>', $today)
         )
-        ->with([
-            'cleaners:id,cleaner_name,cleaner_phoneNo',
-            'cleaners.media',
-            'officer:id,name',
-            'supervisor:id,name'
-        ])
-        ->orderBy('assigned_date', 'desc')
-        ->get();
+    )
+    ->with([
+        'cleaners:id,cleaner_name,cleaner_phoneNo',
+        'cleaners.media',
+        'officer:id,name',
+        'supervisor:id,name'
+    ])
+    ->orderBy('assigned_date', 'desc')
+    ->get();
 
-        // 3) Completed Older
-        $completedOlder = $applySupervisorFilter(
+    // 3) Completed Older.
+    $completedOlder = $applySupervisorFilter(
+        $applyBuildingFilter(
             Complaint::where('comp_status', 'completed')
-                     ->whereDate('assigned_date', '<', $startOfWeek)
+                ->whereDate('assigned_date', '<', $startOfWeek)
         )
-        ->with([
-            'cleaners:id,cleaner_name,cleaner_phoneNo',
-            'cleaners.media',
-            'officer:id,name',
-            'supervisor:id,name'
-        ])
-        ->orderBy('assigned_date', 'desc')
-        ->paginate($perPage);
+    )
+    ->with([
+        'cleaners:id,cleaner_name,cleaner_phoneNo',
+        'cleaners.media',
+        'officer:id,name',
+        'supervisor:id,name'
+    ])
+    ->orderBy('assigned_date', 'desc')
+    ->paginate($perPage);
 
-        // --- Supabase Data for Complaint History ---
-        try {
-            $supabaseComplaints = $this->supabaseService->getComplaints();
-            // Filter for ongoing complaints assigned by this supervisor
-            $supabaseOngoing = array_filter($supabaseComplaints, function($complaint) use ($supervisorId) {
-                return isset($complaint['comp_status']) &&
-                       strtolower($complaint['comp_status']) === 'ongoing' &&
-                       isset($complaint['assigned_by']) &&
-                       $complaint['assigned_by'] == $supervisorId;
+    // --- Supabase Data for Complaint History ---
+    try {
+        $supabaseComplaints = $this->supabaseService->getComplaints();
+
+        // Filter Supabase complaints to include only those from supervisors in the same building.
+        // (Assumes each Supabase complaint has a 'supervisor_building' key.)
+        $supabaseComplaints = array_filter($supabaseComplaints, function ($complaint) use ($building) {
+            return isset($complaint['supervisor_building']) && $complaint['supervisor_building'] === $building;
+        });
+
+        // If the "assigned_by_me" filter is active, narrow complaints to those assigned by the current supervisor.
+        if ($filterByMe) {
+            $supabaseComplaints = array_filter($supabaseComplaints, function ($complaint) use ($supervisorId) {
+                return isset($complaint['assigned_by']) && $complaint['assigned_by'] == $supervisorId;
             });
-            // Filter for completed complaints assigned by this supervisor
-            $supabaseCompleted = array_filter($supabaseComplaints, function($complaint) use ($supervisorId) {
-                return isset($complaint['comp_status']) &&
-                       strtolower($complaint['comp_status']) === 'completed' &&
-                       isset($complaint['assigned_by']) &&
-                       $complaint['assigned_by'] == $supervisorId;
-            });
-
-            // Group ongoing complaints by date categories
-            $supabaseOngoingToday = [];
-            $supabaseOngoingThisWeek = [];
-            $supabaseOngoingOlder = [];
-
-            foreach ($supabaseOngoing as $complaint) {
-                $assignedDate = Carbon::parse($complaint['assigned_date']);
-                if ($assignedDate->isToday()) {
-                    $supabaseOngoingToday[] = $complaint;
-                } elseif ($assignedDate->between($startOfWeek, $endOfWeek)) {
-                    $supabaseOngoingThisWeek[] = $complaint;
-                } else {
-                    $supabaseOngoingOlder[] = $complaint;
-                }
-            }
-
-            // Group completed complaints by date categories
-            $supabaseCompletedToday = [];
-            $supabaseCompletedThisWeek = [];
-            $supabaseCompletedOlder = [];
-
-            foreach ($supabaseCompleted as $complaint) {
-                $assignedDate = Carbon::parse($complaint['assigned_date']);
-                if ($assignedDate->isToday()) {
-                    $supabaseCompletedToday[] = $complaint;
-                } elseif ($assignedDate->between($startOfWeek, $endOfWeek)) {
-                    $supabaseCompletedThisWeek[] = $complaint;
-                } else {
-                    $supabaseCompletedOlder[] = $complaint;
-                }
-            }
-        } catch (\Exception $e) {
-            $supabaseOngoingToday = [];
-            $supabaseOngoingThisWeek = [];
-            $supabaseOngoingOlder = [];
-            $supabaseCompletedToday = [];
-            $supabaseCompletedThisWeek = [];
-            $supabaseCompletedOlder = [];
         }
 
-        // =========================================================
-        // Handle AJAX "Load More" Requests (MySQL Only)
-        // =========================================================
+        // Filter for ongoing complaints (regardless of who assigned them).
+        $supabaseOngoing = array_filter($supabaseComplaints, function ($complaint) {
+            return isset($complaint['comp_status']) &&
+                   strtolower($complaint['comp_status']) === 'ongoing';
+        });
 
-        if ($request->ajax()) {
-            // e.g.: ?status=ongoing&filter=older&page=2
-            $status = $request->get('status');   // 'ongoing' or 'completed'
-            $filter = $request->get('filter');     // 'today', 'thisWeek', 'older'
-            $page   = $request->get('page', 2);
-            $search = $request->get('search');
+        // Filter for completed complaints (regardless of who assigned them).
+        $supabaseCompleted = array_filter($supabaseComplaints, function ($complaint) {
+            return isset($complaint['comp_status']) &&
+                   strtolower($complaint['comp_status']) === 'completed';
+        });
 
-            // Base query
-            if ($status === 'ongoing') {
-                $ajaxQuery = Complaint::where('comp_status', 'ongoing');
+        // Group ongoing complaints by date categories.
+        $supabaseOngoingToday = [];
+        $supabaseOngoingThisWeek = [];
+        $supabaseOngoingOlder = [];
+
+        foreach ($supabaseOngoing as $complaint) {
+            $assignedDate = Carbon::parse($complaint['assigned_date']);
+            if ($assignedDate->isToday()) {
+                $supabaseOngoingToday[] = $complaint;
+            } elseif ($assignedDate->between($startOfWeek, $endOfWeek)) {
+                $supabaseOngoingThisWeek[] = $complaint;
             } else {
-                $ajaxQuery = Complaint::where('comp_status', 'completed');
+                $supabaseOngoingOlder[] = $complaint;
             }
-
-            // Time filter
-            if ($filter === 'older') {
-                $ajaxQuery->whereDate('assigned_date', '<', $startOfWeek);
-            } elseif ($filter === 'thisWeek') {
-                $ajaxQuery->whereBetween('assigned_date', [$startOfWeek, $endOfWeek])
-                          ->whereDate('assigned_date', '<>', $today);
-            } elseif ($filter === 'today') {
-                $ajaxQuery->whereDate('assigned_date', $today);
-            }
-
-            // Apply the "Assigned by me" filter
-            $applySupervisorFilter($ajaxQuery);
-
-            // Search filter
-            if ($search) {
-                $ajaxQuery->where(function($q) use ($search) {
-                    $q->where('comp_desc', 'like', "%{$search}%")
-                      ->orWhere('comp_location', 'like', "%{$search}%");
-                });
-            }
-
-            // Eager loading
-            $complaints = $ajaxQuery
-                ->with([
-                    'cleaners:id,cleaner_name,cleaner_phoneNo',
-                    'cleaners.media',
-                    'officer:id,name',
-                    'supervisor:id,name'
-                ])
-                ->orderBy('assigned_date', 'desc')
-                ->paginate($perPage, ['*'], 'page', $page);
-
-            return response()->json([
-                'complaints' => $complaints->items(),
-                'hasMore'    => $complaints->hasMorePages(),
-            ]);
         }
 
-        // Non-AJAX request: render the view with both MySQL and Supabase data
-        return view('supervisor.history', [
-            'ongoingToday'            => $ongoingToday,
-            'ongoingThisWeek'         => $ongoingThisWeek,
-            'ongoingOlder'            => $ongoingOlder,
-            'completedToday'          => $completedToday,
-            'completedThisWeek'       => $completedThisWeek,
-            'completedOlder'          => $completedOlder,
-            'supabaseOngoingToday'    => $supabaseOngoingToday,
-            'supabaseOngoingThisWeek' => $supabaseOngoingThisWeek,
-            'supabaseOngoingOlder'    => $supabaseOngoingOlder,
-            'supabaseCompletedToday'  => $supabaseCompletedToday,
-            'supabaseCompletedThisWeek'=> $supabaseCompletedThisWeek,
-            'supabaseCompletedOlder'  => $supabaseCompletedOlder,
-            // Pass the flag so the Blade view can reflect if "Assigned by Me" is on or off
-            'assignedByMe'            => $filterByMe,
+        // Group completed complaints by date categories.
+        $supabaseCompletedToday = [];
+        $supabaseCompletedThisWeek = [];
+        $supabaseCompletedOlder = [];
+
+        foreach ($supabaseCompleted as $complaint) {
+            $assignedDate = Carbon::parse($complaint['assigned_date']);
+            if ($assignedDate->isToday()) {
+                $supabaseCompletedToday[] = $complaint;
+            } elseif ($assignedDate->between($startOfWeek, $endOfWeek)) {
+                $supabaseCompletedThisWeek[] = $complaint;
+            } else {
+                $supabaseCompletedOlder[] = $complaint;
+            }
+        }
+    } catch (\Exception $e) {
+        $supabaseOngoingToday = [];
+        $supabaseOngoingThisWeek = [];
+        $supabaseOngoingOlder = [];
+        $supabaseCompletedToday = [];
+        $supabaseCompletedThisWeek = [];
+        $supabaseCompletedOlder = [];
+    }
+
+    // =========================================================
+    // Handle AJAX "Load More" Requests (MySQL Only)
+    // =========================================================
+
+    if ($request->ajax()) {
+        // e.g.: ?status=ongoing&filter=older&page=2
+        $status = $request->get('status');   // 'ongoing' or 'completed'
+        $filter = $request->get('filter');     // 'today', 'thisWeek', 'older'
+        $page   = $request->get('page', 2);
+        $search = $request->get('search');
+
+        // Base query.
+        if ($status === 'ongoing') {
+            $ajaxQuery = Complaint::where('comp_status', 'ongoing');
+        } else {
+            $ajaxQuery = Complaint::where('comp_status', 'completed');
+        }
+
+        // Time filter.
+        if ($filter === 'older') {
+            $ajaxQuery->whereDate('assigned_date', '<', $startOfWeek);
+        } elseif ($filter === 'thisWeek') {
+            $ajaxQuery->whereBetween('assigned_date', [$startOfWeek, $endOfWeek])
+                      ->whereDate('assigned_date', '<>', $today);
+        } elseif ($filter === 'today') {
+            $ajaxQuery->whereDate('assigned_date', $today);
+        }
+
+        // Always restrict to complaints from supervisors in the same building.
+        $ajaxQuery->whereHas('supervisor', function ($q) use ($building) {
+            $q->where('building', $building);
+        });
+
+        // Apply the "Assigned by me" filter if set.
+        $ajaxQuery = $applySupervisorFilter($ajaxQuery);
+
+        // Search filter.
+        if ($search) {
+            $ajaxQuery->where(function ($q) use ($search) {
+                $q->where('comp_desc', 'like', "%{$search}%")
+                  ->orWhere('comp_location', 'like', "%{$search}%");
+            });
+        }
+
+        // Eager loading.
+        $complaints = $ajaxQuery
+            ->with([
+                'cleaners:id,cleaner_name,cleaner_phoneNo',
+                'cleaners.media',
+                'officer:id,name',
+                'supervisor:id,name'
+            ])
+            ->orderBy('assigned_date', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'complaints' => $complaints->items(),
+            'hasMore'    => $complaints->hasMorePages(),
         ]);
     }
+
+    // Non-AJAX request: render the view with both MySQL and Supabase data.
+    return view('supervisor.history', [
+        'ongoingToday'              => $ongoingToday,
+        'ongoingThisWeek'           => $ongoingThisWeek,
+        'ongoingOlder'              => $ongoingOlder,
+        'completedToday'            => $completedToday,
+        'completedThisWeek'         => $completedThisWeek,
+        'completedOlder'            => $completedOlder,
+        'supabaseOngoingToday'      => $supabaseOngoingToday,
+        'supabaseOngoingThisWeek'   => $supabaseOngoingThisWeek,
+        'supabaseOngoingOlder'      => $supabaseOngoingOlder,
+        'supabaseCompletedToday'    => $supabaseCompletedToday,
+        'supabaseCompletedThisWeek' => $supabaseCompletedThisWeek,
+        'supabaseCompletedOlder'    => $supabaseCompletedOlder,
+        // Pass the flag so the Blade view can reflect if "Assigned by Me" is on or off.
+        'assignedByMe'              => $filterByMe,
+    ]);
+}
+
 
     // Admin-related functions for managing supervisors
 
