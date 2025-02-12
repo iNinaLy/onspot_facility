@@ -518,46 +518,62 @@ class ComplaintController extends Controller
         try {
             \Log::info("Fetching all pending complaints...");
     
+            // ✅ Step 1: Fetch complaints with officer_id
             $complaints = Complaint::whereNull('assigned_by')
-            ->where('comp_status', 'pending')
-            ->select(
-
-                \DB::raw('DATE(comp_date) as comp_date'), // ✅ Ensure MySQL treats it as DATE
-                'comp_location', 
-                'comp_time', 
-                'comp_desc', 
-                'officer_id', 
-                'assigned_by', 
-                'comp_status'
-            )
-            ->orderByRaw('comp_date DESC') // ✅ Force MySQL to treat comp_date correctly
-            ->orderBy('comp_time', 'desc') // ✅ Sort by time if same date
-            ->get();
-        
-        
-        \Log::info('Sorted Complaints:', $complaints->toArray());
+                ->where('comp_status', 'pending')
+                ->select(
+                    'id',
+                    \DB::raw('DATE(comp_date) as comp_date'),
+                    'comp_location', 
+                    'comp_time', 
+                    'comp_desc', 
+                    'officer_id', 
+                    'assigned_by', 
+                    'comp_status'
+                )
+                ->orderByRaw('comp_date DESC')
+                ->orderBy('comp_time', 'desc')
+                ->get();
     
             if ($complaints->isEmpty()) {
+                \Log::info('No pending complaints found.');
                 return response()->json([
-                    'status' => 'error',
-                    'message' => 'No pending complaints found.',
+                    'status' => 'success',
+                    'message' => 'No pending complaints available at the moment.',
                     'data' => []
-                ], 404);
+                ], 200);
             }
+    
+            // ✅ Step 2: Extract unique officer IDs
+            $officerIds = $complaints->pluck('officer_id')->unique()->filter()->toArray();
+    
+            // ✅ Step 3: Fetch officer names from users table
+            $officerNames = DB::table('users')
+                ->whereIn('id', $officerIds)
+                ->pluck('name', 'id');
+    
+            // ✅ Step 4: Merge officer names into complaints
+            $complaints->transform(function ($complaint) use ($officerNames) {
+                $complaint->officer_name = $officerNames[$complaint->officer_id] ?? 'Tidak Diketahui';
+                return $complaint;
+            });
+    
+            \Log::info('Sorted Complaints with Officer Names:', $complaints->toArray());
     
             return response()->json([
                 'status' => 'success',
+                'message' => count($complaints) . ' pending complaints found.',
                 'data' => $complaints
             ], 200);
         } catch (\Exception $e) {
             \Log::error("Error fetching complaints: " . $e->getMessage());
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error fetching complaints: ' . $e->getMessage(),
+                'message' => 'Error fetching complaints. Please try again later.',
                 'data' => []
             ], 500);
         }
-    }       
+    }    
 
 
     public function AssignTask(Request $request, $id)
@@ -889,42 +905,50 @@ class ComplaintController extends Controller
         }   
         
         
-    public function fetchLatestComplaint()
-    {
-        try {
-            \Log::info("Fetching latest pending complaint...");
-
-            // Fetch the latest complaint where `comp_status = 'pending'`
-            $latestComplaint = Complaint::where('comp_status', 'pending')
-                ->orderBy('created_at', 'desc') // Order by latest created complaint
-                ->first();
-
-            if (!$latestComplaint) {
+        public function fetchLatestComplaint()
+        {
+            try {
+                \Log::info("Fetching latest pending complaint...");
+        
+                // Fetch the latest complaint where `comp_status = 'pending'`
+                $latestComplaint = Complaint::where('comp_status', 'pending')
+                    ->orderBy('created_at', 'desc') // Order by latest created complaint
+                    ->first();
+        
+                if (!$latestComplaint) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'No pending complaints found.'
+                    ], 404);
+                }
+        
+                // ✅ Fetch officer name
+                $officerName = \DB::table('users')
+                    ->where('id', $latestComplaint->officer_id)
+                    ->value('name');
+        
+                return response()->json([
+                    'status' => 'success',
+                    'data' => [
+                        'complaint_id' => $latestComplaint->id,
+                        'comp_desc' => $latestComplaint->comp_desc,
+                        'comp_location' => $latestComplaint->comp_location,
+                        'comp_date' => $latestComplaint->comp_date,
+                        'comp_time' => $latestComplaint->comp_time,
+                        'comp_status' => $latestComplaint->comp_status,
+                        'officer_id' => $latestComplaint->officer_id, // ✅ Add officer_id
+                        'officer_name' => $officerName ?? 'Tidak Diketahui', // ✅ Fetch officer name
+                        'created_at' => $latestComplaint->created_at,
+                    ]
+                ], 200);
+            } catch (\Exception $e) {
+                \Log::error("Error fetching latest complaint: " . $e->getMessage());
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'No pending complaints found.'
-                ], 404);
+                    'message' => 'Error fetching latest complaint: ' . $e->getMessage(),
+                ], 500);
             }
-
-            return response()->json([
-                'status' => 'success',
-                'data' => [
-                    'complaint_id' => $latestComplaint->id,
-                    'comp_desc' => $latestComplaint->comp_desc,
-                    'comp_location' => $latestComplaint->comp_location,
-                    'comp_date' => $latestComplaint->comp_date,
-                    'comp_time' => $latestComplaint->comp_time,
-                    'comp_status' => $latestComplaint->comp_status,
-                    'created_at' => $latestComplaint->created_at,
-                ]
-            ], 200);
-        } catch (\Exception $e) {
-            \Log::error("Error fetching latest complaint: " . $e->getMessage());
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Error fetching latest complaint: ' . $e->getMessage(),
-            ], 500);
         }
-    }
+        
     
 }    

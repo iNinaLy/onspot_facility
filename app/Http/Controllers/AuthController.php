@@ -11,9 +11,18 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use App\Services\SupabaseService;
 
 class AuthController extends Controller
     {
+
+    protected $supabaseService;
+
+    public function __construct(SupabaseService $supabaseService)
+    {
+         $this->supabaseService = $supabaseService;
+    }
+
     public function register(Request $request)
     {
         \Log::info('Starting registration process');
@@ -166,11 +175,13 @@ class AuthController extends Controller
     
         return response()->json(['message' => 'Successfully logged out.'], 200);
     }
-    
+
+
     public function storeNotificationToken(Request $request)
     {
         \Log::info('Incoming Request', $request->all());
     
+        // ✅ Step 1: Validate Input Data
         $request->validate([
             'device_token' => 'required|string',
             'device_id' => 'required|string',
@@ -178,7 +189,7 @@ class AuthController extends Controller
         ]);
     
         try {
-            // ✅ Match by device_id & device_type (not device_token)
+            // ✅ Step 2: Save Token in MySQL and Get the ID & Timestamps
             $token = \App\Models\NotificationToken::updateOrCreate(
                 [
                     'device_id' => $request->device_id,
@@ -190,7 +201,18 @@ class AuthController extends Controller
                 ]
             );
     
-            \Log::info('Device token saved successfully', ['token' => $token]);
+            \Log::info('Device token saved successfully in MySQL', ['token' => $token]);
+    
+            // ✅ Step 3: Store Data in Supabase (Including Timestamps)
+            $this->supabaseService->store('notification_tokens', [
+                'id' => $token->id, // ✅ Ensure MySQL ID is used in Supabase
+                'user_id' => auth()->id(),
+                'device_id' => $request->device_id,
+                'device_token' => $request->device_token,
+                'device_type' => $request->device_type,
+                'created_at' => $token->created_at->toISOString(), // ✅ Send created_at
+                'updated_at' => $token->updated_at->toISOString(), // ✅ Send updated_at
+            ]);
     
             return response()->json(['message' => 'Device token saved successfully.'], 200);
         } catch (\Exception $e) {
@@ -198,6 +220,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Failed to save device token.', 'error' => $e->getMessage()], 500);
         }
     }    
+       
 
     public function sendResetCode(Request $request)
     {
