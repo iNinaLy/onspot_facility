@@ -772,7 +772,8 @@ class ComplaintController extends Controller
 
         return response()->json($complaintDetails, 200);
     }
-        
+       
+    
     public function getHistory(Request $request)
     {
         $supervisorId = $request->user()->id;
