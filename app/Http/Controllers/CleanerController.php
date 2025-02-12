@@ -11,40 +11,53 @@ use App\Models\User;
 class CleanerController extends Controller
 {
     public function index(Request $request)
-    {
-        // Example: however you fetch your data
-        $search = $request->input('search');
-        
-        // Summaries
-        $totalCleaners    = Cleaner::count();
-        $availableCount   = Cleaner::where('status', 'available')->count();
-        $unavailableCount = Cleaner::where('status', 'unavailable')->count();
-        
-        $availableCleaners = Cleaner::where('status', 'available')
-            ->when($search, fn($q) => $q->where('cleaner_name', 'like', "%{$search}%"))
-            ->with(['complaints' => function ($q) {
-                $q->where('comp_status', 'ongoing');
-            }])
-            ->paginate(10, ['*'], 'available_page');
-        
-        // Query unavailable cleaners
-        $unavailableCleaners = Cleaner::where('status', 'unavailable')
-            ->when($search, fn($q) => $q->where('cleaner_name', 'like', "%{$search}%"))
-            ->with(['complaints' => function ($q) {
-                $q->where('comp_status', 'ongoing');
-            }])
-            ->paginate(5, ['*'], 'unavailable_page');
-        
-        // Pass all these to the view
-        return view('supervisor.cleaners.index', [
-            'search'              => $search,
-            'totalCleaners'       => $totalCleaners,
-            'availableCount'      => $availableCount,
-            'unavailableCount'    => $unavailableCount,
-            'availableCleaners'   => $availableCleaners,
-            'unavailableCleaners' => $unavailableCleaners,
-        ]);
-    }
+{
+    $search = $request->input('search');
+    
+    // Get the authenticated supervisor
+    $supervisor = Auth::user();
+    
+    // Retrieve the supervisor's building
+    $building = $supervisor->building;
+    
+    // Summaries: only count cleaners in the supervisor's building
+    $totalCleaners    = Cleaner::where('building', $building)->count();
+    $availableCount   = Cleaner::where('building', $building)
+                                ->where('status', 'available')
+                                ->count();
+    $unavailableCount = Cleaner::where('building', $building)
+                                ->where('status', 'unavailable')
+                                ->count();
+    
+    // Query available cleaners in the supervisor's building
+    $availableCleaners = Cleaner::where('building', $building)
+        ->where('status', 'available')
+        ->when($search, fn($q) => $q->where('cleaner_name', 'like', "%{$search}%"))
+        ->with(['complaints' => function ($q) {
+            $q->where('comp_status', 'ongoing');
+        }])
+        ->paginate(10, ['*'], 'available_page');
+    
+    // Query unavailable cleaners in the supervisor's building
+    $unavailableCleaners = Cleaner::where('building', $building)
+        ->where('status', 'unavailable')
+        ->when($search, fn($q) => $q->where('cleaner_name', 'like', "%{$search}%"))
+        ->with(['complaints' => function ($q) {
+            $q->where('comp_status', 'ongoing');
+        }])
+        ->paginate(5, ['*'], 'unavailable_page');
+    
+    // Pass all these to the view
+    return view('supervisor.cleaners.index', [
+        'search'              => $search,
+        'totalCleaners'       => $totalCleaners,
+        'availableCount'      => $availableCount,
+        'unavailableCount'    => $unavailableCount,
+        'availableCleaners'   => $availableCleaners,
+        'unavailableCleaners' => $unavailableCleaners,
+    ]);
+}
+
     
     public function cleaners(Request $request)
     {

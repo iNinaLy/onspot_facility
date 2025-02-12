@@ -575,16 +575,31 @@ class ComplaintController extends Controller
      */
     public function supervisorIndex(Request $request)
     {
-        $query = Complaint::where('comp_status', 'pending');
+        // Get the authenticated supervisor
+        $supervisor = Auth::user();
+        
+        // Retrieve the supervisor's building
+        $building = $supervisor->building;
+        
+        // Start building the query for pending complaints
+        $query = Complaint::where('comp_status', 'pending')
+            // Filter complaints by officers who belong to the same building as the supervisor.
+            ->whereHas('officer', function ($q) use ($building) {
+                $q->where('building', $building);
+            });
 
+        // Optionally filter by date if provided
         if ($request->filled('date')) {
             $query->whereDate('comp_date', $request->date);
         }
 
+        // Order and paginate the results
         $complaints = $query->orderBy('comp_date', 'desc')->paginate(10);
 
+        // Return the view with the filtered complaints
         return view('supervisor.complaints.index', compact('complaints'));
     }
+
 
     /**
      * Show the form for editing a complaint on the supervisor site.
