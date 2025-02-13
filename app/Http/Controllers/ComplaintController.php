@@ -30,28 +30,44 @@ class ComplaintController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
-        $status = $request->input('status');
+        $status = $request->input('status'); // e.g. 'pending', 'ongoing', 'completed'
 
-        $query = Complaint::with(['officer', 'assignedBy']);
+        // Base query for filtering (using MySQL via Eloquent)
+        $baseQuery = Complaint::with(['officer', 'assignedBy']);
 
         if ($search) {
-            $query->where(function ($q) use ($search) {
+            $baseQuery->where(function ($q) use ($search) {
                 $q->where('comp_desc', 'like', "%{$search}%")
                   ->orWhere('comp_location', 'like', "%{$search}%");
             });
         }
 
+        // Apply status filter if provided
         if ($status) {
-            $query->where('comp_status', $status);
+            $baseQuery->where('comp_status', $status);
         }
 
-        $complaints = $query->orderBy('comp_date', 'desc')->paginate(10);
+        $complaints = $baseQuery->orderBy('comp_date', 'desc')->paginate(10);
 
-        // Metrics
-        $totalComplaints     = Complaint::count();
-        $pendingComplaints   = Complaint::where('comp_status', 'pending')->count();
-        $ongoingComplaints   = Complaint::where('comp_status', 'ongoing')->count();
-        $completedComplaints = Complaint::where('comp_status', 'completed')->count();
+        // For each complaint read from MySQL, ensure Supabase is updated/synced.
+        foreach ($complaints as $complaint) {
+            try {
+                // syncComplaint is a custom method that either inserts or updates
+                // the complaint record in Supabase.
+                $this->supabaseService->syncComplaint($complaint);
+            } catch (\Exception $e) {
+                Log::error("Failed to sync complaint with Supabase", [
+                    'complaint_id' => $complaint->id,
+                    'error'        => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Metrics calculated on the filtered dataset from MySQL:
+        $totalComplaints     = (clone $baseQuery)->count();
+        $pendingComplaints   = (clone $baseQuery)->where('comp_status', 'pending')->count();
+        $ongoingComplaints   = (clone $baseQuery)->where('comp_status', 'ongoing')->count();
+        $completedComplaints = (clone $baseQuery)->where('comp_status', 'completed')->count();
 
         return view('admin.complaints.index', compact(
             'complaints',
@@ -63,7 +79,8 @@ class ComplaintController extends Controller
     }
 
     /**
-     * Perform bulk actions on complaints (delete or mark as completed) and sync with Supabase.
+     * Perform bulk actions on complaints (delete or mark as completed)
+     * on both MySQL and Supabase.
      */
     public function bulkAction(Request $request)
     {
@@ -83,7 +100,7 @@ class ComplaintController extends Controller
                     if ($complaint->comp_image) {
                         Storage::delete('public/' . $complaint->comp_image);
                     }
-                    // Remove pivot rows from MySQL (if any)
+                    // Remove pivot rows (if any)
                     $complaint->cleaners()->detach();
                     // Delete complaint from MySQL
                     $complaint->delete();
@@ -231,7 +248,7 @@ class ComplaintController extends Controller
         // Fetch the complaint from MySQL
         $complaint = Complaint::findOrFail($id);
 
-        // Update fields
+        // Update fields in MySQL
         $complaint->comp_status    = $validated['comp_status'];
         $complaint->comp_location  = $validated['comp_location'];
         $complaint->comp_desc      = $validated['comp_desc'];
@@ -240,7 +257,7 @@ class ComplaintController extends Controller
         // Handle image upload if provided
         if ($request->hasFile('comp_image')) {
             if ($complaint->comp_image) {
-                Storage::delete($complaint->comp_image);
+                Storage::delete('public/' . $complaint->comp_image);
             }
             $path = $request->file('comp_image')->store('complaints');
             $complaint->comp_image = $path;
@@ -296,7 +313,7 @@ class ComplaintController extends Controller
             if ($complaint->comp_image) {
                 Storage::delete('public/' . $complaint->comp_image);
             }
-            // Remove any related pivot rows in MySQL first
+            // Remove any related pivot rows in MySQL
             $complaint->cleaners()->detach();
             $complaint->delete();
 
@@ -314,6 +331,7 @@ class ComplaintController extends Controller
 
         return redirect()->route('admin.complaints')->with('success', 'Complaint(s) deleted successfully.');
     }
+
 
     /**
      * Assign cleaners to a complaint (creates pivot rows) and sync both MySQL and Supabase.

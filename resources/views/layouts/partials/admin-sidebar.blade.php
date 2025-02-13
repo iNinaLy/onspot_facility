@@ -68,10 +68,12 @@
 
 
         .active-link {
-            background-color:rgb(101, 126, 145);
-            color: white;
-            font-weight: 400;
+            background-color: rgb(195 198 200 / 25%);
+            color: #2d3748;
+            font-weight: 550;
+            border-radius: 14px;
         }
+            
 
         .profile-container img {
             border-radius: 50%;

@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
+set_time_limit(300); // Sets the maximum execution time to 300 seconds
 
 // Determine if the application is in maintenance mode...
 if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {

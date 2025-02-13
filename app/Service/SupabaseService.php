@@ -209,4 +209,78 @@ class SupabaseService
 
         return $response->json();
     }
+
+    /**
+     * Sync a complaint record with Supabase. If the complaint exists, update it;
+     * otherwise, insert it as a new record.
+     *
+     * @param \App\Models\Complaint $complaint
+     * @return array|null
+     */
+    public function syncComplaint($complaint)
+    {
+        // Convert the complaint model to an array of data.
+        $data = [
+            'id'             => $complaint->id,
+            'comp_status'    => $complaint->comp_status,
+            'comp_location'  => $complaint->comp_location,
+            'comp_desc'      => $complaint->comp_desc,
+            'no_of_cleaners' => $complaint->no_of_cleaners,
+            'comp_image'     => $complaint->comp_image,
+            'assigned_by'    => $complaint->assigned_by,
+            'assigned_date'  => $complaint->assigned_date,
+            // add any other fields as necessary
+        ];
+
+        // Check if this complaint exists in Supabase.
+        $existing = $this->fetch('complaint', $complaint->id);
+
+        if ($existing) {
+            // Update the existing record.
+            return $this->update('complaint', $complaint->id, $data);
+        } else {
+            // Insert as a new record.
+            return $this->insert('complaint', $data);
+        }
+    }
+    
+    /**
+     * NEW: Fetch a record from a given table by id.
+     *
+     * @param string $table
+     * @param mixed $id
+     * @return array|null
+     * @throws \Exception
+     */
+    public function fetch($table, $id)
+    {
+        $url = rtrim($this->url, '/') . "/rest/v1/{$table}?id=eq.{$id}&select=*";
+        $response = Http::withHeaders([
+            'apikey'        => $this->secretKey,
+            'Authorization' => 'Bearer ' . $this->secretKey,
+            'Content-Type'  => 'application/json',
+        ])->get($url);
+
+        if ($response->failed()) {
+            throw new \Exception("Supabase fetch error: " . $response->body());
+        }
+
+        $data = $response->json();
+        return !empty($data) ? $data[0] : null;
+    }
+
+    /**
+     * NEW: Insert a record into a given table.
+     *
+     * This is simply an alias for the store() method.
+     *
+     * @param string $table
+     * @param array $data
+     * @return array
+     * @throws \Exception
+     */
+    public function insert($table, $data)
+    {
+        return $this->store($table, $data);
+    }
 }

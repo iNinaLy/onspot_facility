@@ -3,8 +3,8 @@
 @section('title', 'Manage Complaints')
 
 @push('styles')
-<link href="resources/admin/app.css" rel="stylesheet" />
-<link href="resources/admin/complaint.css" rel="stylesheet" />
+<link href="{{ asset('resources/admin/app.css') }}" rel="stylesheet" />
+<link href="{{ asset('resources/admin/complaint.css') }}" rel="stylesheet" />
 @endpush
 
 @section('content')
@@ -69,363 +69,367 @@
     <div class="tab-content">
         <!-- Pending Tab -->
         <div class="tab-pane fade show active" id="pending" role="tabpanel">
-            @if($complaints->where('comp_status', 'pending')->isEmpty())
+            @php
+                // Instead of filtering the current paginated $complaints,
+                // we query all pending complaints directly.
+                $pendingComplaintsList = \App\Models\Complaint::whereRaw("lower(comp_status) = 'pending'")
+                                            ->orderBy('comp_date', 'desc')
+                                            ->get();
+            @endphp
+
+            @if($pendingComplaintsList->isEmpty())
                 <div class="alert alert-info text-center">No pending complaints found.</div>
             @else
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th class="text-center">
-                                <input type="checkbox" class="select-all" data-bs-toggle="tooltip" title="Select All">
-                            </th>
-                            <th>ID</th>
-                            <th>Status</th>
-                            <th>Location</th>
-                            <th>Assigned Date</th>
-                            <th>Complaint By</th>
-                            <th>Assigned By</th>
-                            <th></th> <!-- Action column -->
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @foreach($complaints->where('comp_status', 'pending') as $complaint)
-                        <tr>
-                            <td class="text-center">
-                                <input type="checkbox" name="selected_complaints[]" value="{{ $complaint->id }}" 
-                                       class="select-box" data-bs-toggle="tooltip" title="Select Complaint">
-                            </td>
-                            <td>{{ $complaint->id }}</td>
-                            <td>
-                                <!-- Inline status update via AJAX -->
-                                <select class="status-select" data-complaint-id="{{ $complaint->id }}"
-                                        data-url="{{ route('admin.complaints.inlineUpdate', $complaint->id) }}"
-                                        data-bs-toggle="tooltip" title="Change Status">
-                                    <option value="pending"   {{ $complaint->comp_status == 'pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="ongoing"   {{ $complaint->comp_status == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
-                                    <option value="completed" {{ $complaint->comp_status == 'completed' ? 'selected' : '' }}>Completed</option>
-                                </select>
-                            </td>
-                            <td>{{ $complaint->comp_location }}</td>
-                            <td>
-                                @if($complaint->assigned_date)
-                                    <span class="assigned-date" data-bs-toggle="tooltip" title="Date assigned">
-                                        {{ $complaint->assigned_date->format('d M Y H:i') }}
-                                    </span>
-                                @else
-                                    N/A
-                                @endif
-                            </td>
-                            <td>{{ $complaint->officer->name ?? 'N/A' }}</td>
-                            <td>{{ $complaint->supervisor->name ?? 'N/A' }}</td>
-                            <td>
-                                <!-- View -->
-                                <button type="button" class="btn btn-pastel-view btn-sm me-1"
-                                        data-bs-toggle="modal" data-bs-target="#viewModal{{ $complaint->id }}"
-                                        style="border-radius:12px" data-bs-toggle="tooltip" title="View Details">
-                                    <i class="bi bi-eye"></i>
-                                </button>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th class="text-center">
+                                    <input type="checkbox" class="select-all" data-bs-toggle="tooltip" title="Select All">
+                                </th>
+                                <th>ID</th>
+                                <th>Status</th>
+                                <th>Location</th>
+                                <th>Assigned Date</th>
+                                <th>Complaint By</th>
+                                <th>Assigned By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($pendingComplaintsList as $complaint)
+                                <tr>
+                                    <td class="text-center">
+                                        <input type="checkbox" name="selected_complaints[]" value="{{ $complaint->id }}" 
+                                               class="select-box" data-bs-toggle="tooltip" title="Select Complaint">
+                                    </td>
+                                    <td>{{ $complaint->id }}</td>
+                                    <td>
+                                        <!-- Inline status update via AJAX -->
+                                        <select class="status-select" data-complaint-id="{{ $complaint->id }}"
+                                                data-url="{{ route('admin.complaints.inlineUpdate', $complaint->id) }}"
+                                                data-bs-toggle="tooltip" title="Change Status">
+                                            <option value="pending"   {{ strtolower($complaint->comp_status) == 'pending' ? 'selected' : '' }}>Pending</option>
+                                            <option value="ongoing"   {{ strtolower($complaint->comp_status) == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
+                                            <option value="completed" {{ strtolower($complaint->comp_status) == 'completed' ? 'selected' : '' }}>Completed</option>
+                                        </select>
+                                    </td>
+                                    <td>{{ $complaint->comp_location }}</td>
+                                    <td>
+                                        @if($complaint->assigned_date)
+                                            <span class="assigned-date" data-bs-toggle="tooltip" title="Date assigned">
+                                                {{ $complaint->assigned_date->format('d M Y H:i') }}
+                                            </span>
+                                        @else
+                                            N/A
+                                        @endif
+                                    </td>
+                                    <td>{{ $complaint->officer->name ?? 'N/A' }}</td>
+                                    <td>{{ $complaint->assignedBy->name ?? 'N/A' }}</td>
+                                    <td>
+                                        <!-- View -->
+                                        <button type="button" class="btn btn-pastel-view btn-sm me-1"
+                                                data-bs-toggle="modal" data-bs-target="#viewModal{{ $complaint->id }}"
+                                                style="border-radius:12px" data-bs-toggle="tooltip" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <!-- Edit -->
+                                        <button type="button" class="btn btn-pastel-edit btn-sm me-1" 
+                                                data-bs-toggle="modal" data-bs-target="#editModal{{ $complaint->id }}"
+                                                style="border-radius:12px" data-bs-toggle="tooltip" title="Edit Complaint">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        <!-- Delete -->
+                                        <button type="button" class="btn btn-pastel-delete btn-sm delete-button"
+                                                data-complaint-id="{{ $complaint->id }}"
+                                                style="border-radius:12px" data-bs-toggle="tooltip" title="Delete Complaint">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
 
-                                <!-- Edit -->
-                                <button type="button" class="btn btn-pastel-edit btn-sm me-1" 
-                                        data-bs-toggle="modal" data-bs-target="#editModal{{ $complaint->id }}"
-                                        style="border-radius:12px" data-bs-toggle="tooltip" title="Edit Complaint">
-                                    <i class="bi bi-pencil-square"></i>
-                                </button>
-
-                                <!-- Delete (individual) -->
-                                <button type="button" class="btn btn-pastel-delete btn-sm delete-button"
-                                        data-complaint-id="{{ $complaint->id }}"
-                                        style="border-radius:12px" data-bs-toggle="tooltip" title="Delete Complaint">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-
-                        <!-- View Modal -->
-                        <div class="modal fade" id="viewModal{{ $complaint->id }}" tabindex="-1" aria-labelledby="viewModalLabel{{ $complaint->id }}" aria-hidden="true">
-                            <div class="modal-dialog modal-lg modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header bg-gradient from-blue-500 to-teal-500 text-white">
-                                        <h5 class="modal-title" id="viewModalLabel{{ $complaint->id }}">Complaint Details</h5>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body bg-gray-50">
-                                        <div class="complaint-info">
-                                            <div class="status-container mb-4 text-center">
-                                                <span class="status-badge
-                                                    @if($complaint->comp_status === 'completed') status-completed
-                                                    @elseif($complaint->comp_status === 'ongoing') status-ongoing
-                                                    @elseif($complaint->comp_status === 'pending') status-pending
-                                                    @else status-unknown
-                                                    @endif
-                                                ">
-                                                    {{ ucfirst(str_replace('_', ' ', $complaint->comp_status)) }}
-                                                </span>
+                                <!-- View Modal -->
+                                <div class="modal fade" id="viewModal{{ $complaint->id }}" tabindex="-1" aria-labelledby="viewModalLabel{{ $complaint->id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-gradient from-blue-500 to-teal-500 text-white">
+                                                <h5 class="modal-title" id="viewModalLabel{{ $complaint->id }}">Complaint Details</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                             </div>
-                                            <div class="details-grid">
-                                                <div class="detail-label">ID:</div>
-                                                <div class="detail-value">{{ $complaint->id }}</div>
-
-                                                <div class="detail-label">Location:</div>
-                                                <div class="detail-value">{{ $complaint->comp_location }}</div>
-
-                                                <div class="detail-label">Assigned Date:</div>
-                                                <div class="detail-value">
-                                                    {{ $complaint->assigned_date ? $complaint->assigned_date->format('d M Y H:i') : 'N/A' }}
+                                            <div class="modal-body bg-gray-50">
+                                                <div class="complaint-info">
+                                                    <div class="status-container mb-4 text-center">
+                                                        <span class="status-badge
+                                                            @if(strtolower($complaint->comp_status) === 'completed')
+                                                                status-completed
+                                                            @elseif(strtolower($complaint->comp_status) === 'ongoing')
+                                                                status-ongoing
+                                                            @elseif(strtolower($complaint->comp_status) === 'pending')
+                                                                status-pending
+                                                            @else
+                                                                status-unknown
+                                                            @endif
+                                                        ">
+                                                            {{ ucfirst(str_replace('_', ' ', $complaint->comp_status)) }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="details-grid">
+                                                        <div class="detail-label">ID:</div>
+                                                        <div class="detail-value">{{ $complaint->id }}</div>
+                                                        <div class="detail-label">Location:</div>
+                                                        <div class="detail-value">{{ $complaint->comp_location }}</div>
+                                                        <div class="detail-label">Assigned Date:</div>
+                                                        <div class="detail-value">
+                                                            {{ $complaint->assigned_date ? $complaint->assigned_date->format('d M Y H:i') : 'N/A' }}
+                                                        </div>
+                                                        <div class="detail-label">Complaint By:</div>
+                                                        <div class="detail-value">{{ $complaint->officer->name ?? 'N/A' }}</div>
+                                                        <div class="detail-label">Assigned By:</div>
+                                                        <div class="detail-value">{{ $complaint->assignedBy->name ?? 'N/A' }}</div>
+                                                        <div class="detail-label">Description:</div>
+                                                        <div class="detail-value">{{ $complaint->comp_desc }}</div>
+                                                        @if($complaint->comp_image)
+                                                            <div class="detail-label">Image:</div>
+                                                            <div class="detail-value">
+                                                                <img src="{{ asset('storage/' . $complaint->comp_image) }}"
+                                                                     alt="Complaint Image" class="complaint-image">
+                                                            </div>
+                                                        @endif
+                                                    </div>
                                                 </div>
-
-                                                <div class="detail-label">Complaint By:</div>
-                                                <div class="detail-value">{{ $complaint->officer->name ?? 'N/A' }}</div>
-
-                                                <div class="detail-label">Assigned By:</div>
-                                                <div class="detail-value">{{ $complaint->assignedBy->name ?? 'N/A' }}</div>
-
-                                                <div class="detail-label">Description:</div>
-                                                <div class="detail-value">{{ $complaint->comp_desc }}</div>
-
-                                                @if($complaint->comp_image)
-                                                    <div class="detail-label">Image:</div>
-                                                    <div class="detail-value">
-                                                        <img src="{{ asset('storage/' . $complaint->comp_image) }}"
-                                                             alt="Complaint Image" class="complaint-image">
-                                                    </div>
-                                                @endif
+                                            </div>
+                                            <div class="modal-footer bg-gray-100">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="modal-footer bg-gray-100">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                                <!-- /View Modal -->
+
+                                <!-- Edit Modal -->
+                                <div class="modal fade" id="editModal{{ $complaint->id }}" tabindex="-1" aria-labelledby="editModalLabel{{ $complaint->id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <form method="POST" action="{{ route('admin.complaints.update', $complaint->id) }}" enctype="multipart/form-data">
+                                                @csrf
+                                                @method('PUT')
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="editModalLabel{{ $complaint->id }}">Edit Complaint - ID: {{ $complaint->id }}</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <!-- Form fields for editing -->
+                                                    <div class="mb-3">
+                                                        <label for="comp_status{{ $complaint->id }}" class="form-label">Status</label>
+                                                        <select name="comp_status" id="comp_status{{ $complaint->id }}" class="form-select" required>
+                                                            <option value="pending"   {{ strtolower($complaint->comp_status) == 'pending' ? 'selected' : '' }}>Pending</option>
+                                                            <option value="ongoing"   {{ strtolower($complaint->comp_status) == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
+                                                            <option value="completed" {{ strtolower($complaint->comp_status) == 'completed' ? 'selected' : '' }}>Completed</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="comp_date{{ $complaint->id }}" class="form-label">Complaint Date</label>
+                                                        <input type="date" name="comp_date" id="comp_date{{ $complaint->id }}" class="form-control" value="{{ $complaint->comp_date }}" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="comp_time{{ $complaint->id }}" class="form-label">Complaint Time</label>
+                                                        <input type="time" name="comp_time" id="comp_time{{ $complaint->id }}" class="form-control" value="{{ $complaint->comp_time }}" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="comp_location{{ $complaint->id }}" class="form-label">Location</label>
+                                                        <input type="text" name="comp_location" id="comp_location{{ $complaint->id }}" class="form-control" value="{{ $complaint->comp_location }}" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="comp_desc{{ $complaint->id }}" class="form-label">Description</label>
+                                                        <textarea name="comp_desc" id="comp_desc{{ $complaint->id }}" class="form-control" rows="3" required>{{ $complaint->comp_desc }}</textarea>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="no_of_cleaners{{ $complaint->id }}" class="form-label">Number of Cleaners</label>
+                                                        <input type="number" name="no_of_cleaners" id="no_of_cleaners{{ $complaint->id }}" class="form-control" value="{{ $complaint->no_of_cleaners }}" min="1" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="comp_image{{ $complaint->id }}" class="form-label">Complaint Image</label>
+                                                        <input class="form-control" type="file" id="comp_image{{ $complaint->id }}" name="comp_image" accept="image/*">
+                                                        @if($complaint->comp_image)
+                                                            <div class="mt-2">
+                                                                <img src="{{ asset('storage/' . $complaint->comp_image) }}" alt="Complaint Image" class="img-thumbnail rounded shadow-sm" width="150">
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                                </div>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                        <!-- /View Modal -->
-
-                        <!-- Edit Modal -->
-                        <div class="modal fade" id="editModal{{ $complaint->id }}" tabindex="-1" aria-labelledby="editModalLabel{{ $complaint->id }}" aria-hidden="true">
-                            <div class="modal-dialog modal-lg modal-dialog-centered">
-                                <div class="modal-content">
-                                    <form method="POST" action="{{ route('admin.complaints.update', $complaint->id) }}" enctype="multipart/form-data">
-                                        @csrf
-                                        @method('PUT')
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="editModalLabel{{ $complaint->id }}">
-                                                Edit Complaint - ID: {{ $complaint->id }}
-                                            </h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <div class="mb-3">
-                                                <label for="comp_status{{ $complaint->id }}" class="form-label">Status</label>
-                                                <select name="comp_status" id="comp_status{{ $complaint->id }}" class="form-select" required>
-                                                    <option value="pending"   {{ $complaint->comp_status == 'pending' ? 'selected' : '' }}>Pending</option>
-                                                    <option value="ongoing"   {{ $complaint->comp_status == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
-                                                    <option value="completed" {{ $complaint->comp_status == 'completed' ? 'selected' : '' }}>Completed</option>
-                                                </select>
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="comp_date{{ $complaint->id }}" class="form-label">Complaint Date</label>
-                                                <input type="date" name="comp_date" id="comp_date{{ $complaint->id }}" class="form-control" value="{{ $complaint->comp_date }}" required>
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="comp_time{{ $complaint->id }}" class="form-label">Complaint Time</label>
-                                                <input type="time" name="comp_time" id="comp_time{{ $complaint->id }}" class="form-control" value="{{ $complaint->comp_time }}" required>
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="comp_location{{ $complaint->id }}" class="form-label">Location</label>
-                                                <input type="text" name="comp_location" id="comp_location{{ $complaint->id }}" class="form-control" value="{{ $complaint->comp_location }}" required>
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="comp_desc{{ $complaint->id }}" class="form-label">Description</label>
-                                                <textarea name="comp_desc" id="comp_desc{{ $complaint->id }}" class="form-control" rows="3" required>{{ $complaint->comp_desc }}</textarea>
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="no_of_cleaners{{ $complaint->id }}" class="form-label">Number of Cleaners</label>
-                                                <input type="number" name="no_of_cleaners" id="no_of_cleaners{{ $complaint->id }}" class="form-control" value="{{ $complaint->no_of_cleaners }}" min="1" required>
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="comp_image{{ $complaint->id }}" class="form-label">Complaint Image</label>
-                                                <input class="form-control" type="file" id="comp_image{{ $complaint->id }}" name="comp_image" accept="image/*">
-                                                @if($complaint->comp_image)
-                                                    <div class="mt-2">
-                                                        <img src="{{ asset('storage/' . $complaint->comp_image) }}" alt="Complaint Image" class="img-thumbnail rounded shadow-sm" width="150">
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                            <button type="submit" class="btn btn-primary">Save Changes</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- /Edit Modal -->
-                    @endforeach
-                    </tbody>
-                </table>
-            </div>
+                                <!-- /Edit Modal -->
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             @endif
         </div>
 
         <!-- Ongoing Tab -->
         <div class="tab-pane fade" id="ongoing" role="tabpanel">
-            @if($complaints->where('comp_status', 'ongoing')->isEmpty())
+            @php
+                $ongoingComplaintsList = $complaints->getCollection()->filter(function($complaint) {
+                    return strtolower($complaint->comp_status) === 'ongoing';
+                });
+            @endphp
+
+            @if($ongoingComplaintsList->isEmpty())
                 <div class="alert alert-info text-center">No ongoing complaints found.</div>
             @else
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th class="text-center">
-                                <input type="checkbox" class="select-all" data-bs-toggle="tooltip" title="Select All">
-                            </th>
-                            <th>ID</th>
-                            <th>Status</th>
-                            <th>Location</th>
-                            <th>Assigned Date</th>
-                            <th>Complaint By</th>
-                            <th>Assigned By</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @foreach($complaints->where('comp_status', 'ongoing') as $complaint)
-                        <tr>
-                            <td class="text-center">
-                                <input type="checkbox" name="selected_complaints[]" value="{{ $complaint->id }}" class="select-box" data-bs-toggle="tooltip" title="Select Complaint">
-                            </td>
-                            <td>{{ $complaint->id }}</td>
-                            <td>
-                                <select class="status-select" data-complaint-id="{{ $complaint->id }}"
-                                        data-url="{{ route('admin.complaints.inlineUpdate', $complaint->id) }}"
-                                        data-bs-toggle="tooltip" title="Change Status">
-                                    <option value="pending"   {{ $complaint->comp_status == 'pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="ongoing"   {{ $complaint->comp_status == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
-                                    <option value="completed" {{ $complaint->comp_status == 'completed' ? 'selected' : '' }}>Completed</option>
-                                </select>
-                            </td>
-                            <td>{{ $complaint->comp_location }}</td>
-                            <td>
-                                @if($complaint->assigned_date)
-                                    <span class="assigned-date" data-bs-toggle="tooltip" title="Date assigned">
-                                        {{ $complaint->assigned_date->format('d M Y H:i') }}
-                                    </span>
-                                @else
-                                    N/A
-                                @endif
-                            </td>
-                            <td>{{ $complaint->officer->name ?? 'N/A' }}</td>
-                            <td>{{ $complaint->supervisor->name ?? 'N/A' }}</td>
-                            <td>
-                                <button type="button" class="btn btn-pastel-view btn-sm me-1"
-                                        data-bs-toggle="modal" data-bs-target="#viewModal{{ $complaint->id }}"
-                                        style="border-radius:12px" data-bs-toggle="tooltip" title="View Details">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                <button type="button" class="btn btn-pastel-edit btn-sm me-1" 
-                                        data-bs-toggle="modal" data-bs-target="#editModal{{ $complaint->id }}"
-                                        style="border-radius:12px" data-bs-toggle="tooltip" title="Edit Complaint">
-                                    <i class="bi bi-pencil-square"></i>
-                                </button>
-                                <button type="button" class="btn btn-pastel-delete btn-sm delete-button"
-                                        data-complaint-id="{{ $complaint->id }}"
-                                        style="border-radius:12px" data-bs-toggle="tooltip" title="Delete Complaint">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-
-                        <!-- (View and Edit modals for this complaint are the same as above) -->
-                        <!-- You can either include them again here or extract them into an include/partial -->
-                    @endforeach
-                    </tbody>
-                </table>
-            </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th class="text-center">
+                                    <input type="checkbox" class="select-all" data-bs-toggle="tooltip" title="Select All">
+                                </th>
+                                <th>ID</th>
+                                <th>Status</th>
+                                <th>Location</th>
+                                <th>Assigned Date</th>
+                                <th>Complaint By</th>
+                                <th>Assigned By</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach($ongoingComplaintsList as $complaint)
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" name="selected_complaints[]" value="{{ $complaint->id }}" class="select-box" data-bs-toggle="tooltip" title="Select Complaint">
+                                </td>
+                                <td>{{ $complaint->id }}</td>
+                                <td>
+                                    <select class="status-select" data-complaint-id="{{ $complaint->id }}"
+                                            data-url="{{ route('admin.complaints.inlineUpdate', $complaint->id) }}"
+                                            data-bs-toggle="tooltip" title="Change Status">
+                                        <option value="pending"   {{ strtolower($complaint->comp_status)=='pending' ? 'selected' : '' }}>Pending</option>
+                                        <option value="ongoing"   {{ strtolower($complaint->comp_status)=='ongoing' ? 'selected' : '' }}>Ongoing</option>
+                                        <option value="completed" {{ strtolower($complaint->comp_status)=='completed' ? 'selected' : '' }}>Completed</option>
+                                    </select>
+                                </td>
+                                <td>{{ $complaint->comp_location }}</td>
+                                <td>
+                                    @if($complaint->assigned_date)
+                                        <span class="assigned-date" data-bs-toggle="tooltip" title="Date assigned">
+                                            {{ $complaint->assigned_date->format('d M Y H:i') }}
+                                        </span>
+                                    @else
+                                        N/A
+                                    @endif
+                                </td>
+                                <td>{{ $complaint->officer->name ?? 'N/A' }}</td>
+                                <td>{{ $complaint->supervisor->name ?? 'N/A' }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-pastel-view btn-sm me-1"
+                                            data-bs-toggle="modal" data-bs-target="#viewModal{{ $complaint->id }}"
+                                            style="border-radius:12px" data-bs-toggle="tooltip" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-pastel-edit btn-sm me-1"
+                                            data-bs-toggle="modal" data-bs-target="#editModal{{ $complaint->id }}"
+                                            style="border-radius:12px" data-bs-toggle="tooltip" title="Edit Complaint">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-pastel-delete btn-sm delete-button"
+                                            data-complaint-id="{{ $complaint->id }}"
+                                            style="border-radius:12px" data-bs-toggle="tooltip" title="Delete Complaint">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
             @endif
         </div>
 
         <!-- Completed Tab -->
         <div class="tab-pane fade" id="completed" role="tabpanel">
-            @if($complaints->where('comp_status', 'completed')->isEmpty())
+            @php
+                $completedComplaintsList = $complaints->getCollection()->filter(function($complaint) {
+                    return strtolower($complaint->comp_status) === 'completed';
+                });
+            @endphp
+
+            @if($completedComplaintsList->isEmpty())
                 <div class="alert alert-info text-center">No completed complaints found.</div>
             @else
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th class="text-center">
-                                <input type="checkbox" class="select-all" data-bs-toggle="tooltip" title="Select All">
-                            </th>
-                            <th>ID</th>
-                            <th>Status</th>
-                            <th>Location</th>
-                            <th>Assigned Date</th>
-                            <th>Complaint By</th>
-                            <th>Assigned By</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @foreach($complaints->where('comp_status', 'completed') as $complaint)
-                        <tr>
-                            <td class="text-center">
-                                <input type="checkbox" name="selected_complaints[]" value="{{ $complaint->id }}" class="select-box" data-bs-toggle="tooltip" title="Select Complaint">
-                            </td>
-                            <td>{{ $complaint->id }}</td>
-                            <td>
-                                <select class="status-select" data-complaint-id="{{ $complaint->id }}"
-                                        data-url="{{ route('admin.complaints.inlineUpdate', $complaint->id) }}"
-                                        data-bs-toggle="tooltip" title="Change Status">
-                                    <option value="pending"   {{ $complaint->comp_status == 'pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="ongoing"   {{ $complaint->comp_status == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
-                                    <option value="completed" {{ $complaint->comp_status == 'completed' ? 'selected' : '' }}>Completed</option>
-                                </select>
-                            </td>
-                            <td>{{ $complaint->comp_location }}</td>
-                            <td>
-                                @if($complaint->assigned_date)
-                                    <span class="assigned-date" data-bs-toggle="tooltip" title="Date assigned">
-                                        {{ $complaint->assigned_date->format('d M Y H:i') }}
-                                    </span>
-                                @else
-                                    N/A
-                                @endif
-                            </td>
-                            <td>{{ $complaint->officer->name ?? 'N/A' }}</td>
-                            <td>{{ $complaint->supervisor->name ?? 'N/A' }}</td>
-                            <td>
-                                <button type="button" class="btn btn-pastel-view btn-sm me-1"
-                                        data-bs-toggle="modal" data-bs-target="#viewModal{{ $complaint->id }}"
-                                        style="border-radius:12px" data-bs-toggle="tooltip" title="View Details">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                <button type="button" class="btn btn-pastel-edit btn-sm me-1" 
-                                        data-bs-toggle="modal" data-bs-target="#editModal{{ $complaint->id }}"
-                                        style="border-radius:12px" data-bs-toggle="tooltip" title="Edit Complaint">
-                                    <i class="bi bi-pencil-square"></i>
-                                </button>
-                                <button type="button" class="btn btn-pastel-delete btn-sm delete-button"
-                                        data-complaint-id="{{ $complaint->id }}"
-                                        style="border-radius:12px" data-bs-toggle="tooltip" title="Delete Complaint">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-
-                        <!-- (View and Edit modals for this complaint are the same as above) -->
-                    @endforeach
-                    </tbody>
-                </table>
-            </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th class="text-center">
+                                    <input type="checkbox" class="select-all" data-bs-toggle="tooltip" title="Select All">
+                                </th>
+                                <th>ID</th>
+                                <th>Status</th>
+                                <th>Location</th>
+                                <th>Assigned Date</th>
+                                <th>Complaint By</th>
+                                <th>Assigned By</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach($completedComplaintsList as $complaint)
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" name="selected_complaints[]" value="{{ $complaint->id }}" class="select-box" data-bs-toggle="tooltip" title="Select Complaint">
+                                </td>
+                                <td>{{ $complaint->id }}</td>
+                                <td>
+                                    <select class="status-select" data-complaint-id="{{ $complaint->id }}"
+                                            data-url="{{ route('admin.complaints.inlineUpdate', $complaint->id) }}"
+                                            data-bs-toggle="tooltip" title="Change Status">
+                                        <option value="pending"   {{ strtolower($complaint->comp_status)=='pending' ? 'selected' : '' }}>Pending</option>
+                                        <option value="ongoing"   {{ strtolower($complaint->comp_status)=='ongoing' ? 'selected' : '' }}>Ongoing</option>
+                                        <option value="completed" {{ strtolower($complaint->comp_status)=='completed' ? 'selected' : '' }}>Completed</option>
+                                    </select>
+                                </td>
+                                <td>{{ $complaint->comp_location }}</td>
+                                <td>
+                                    @if($complaint->assigned_date)
+                                        <span class="assigned-date" data-bs-toggle="tooltip" title="Date assigned">
+                                            {{ $complaint->assigned_date->format('d M Y H:i') }}
+                                        </span>
+                                    @else
+                                        N/A
+                                    @endif
+                                </td>
+                                <td>{{ $complaint->officer->name ?? 'N/A' }}</td>
+                                <td>{{ $complaint->supervisor->name ?? 'N/A' }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-pastel-view btn-sm me-1"
+                                            data-bs-toggle="modal" data-bs-target="#viewModal{{ $complaint->id }}"
+                                            style="border-radius:12px" data-bs-toggle="tooltip" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-pastel-edit btn-sm me-1"
+                                            data-bs-toggle="modal" data-bs-target="#editModal{{ $complaint->id }}"
+                                            style="border-radius:12px" data-bs-toggle="tooltip" title="Edit Complaint">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-pastel-delete btn-sm delete-button"
+                                            data-complaint-id="{{ $complaint->id }}"
+                                            style="border-radius:12px" data-bs-toggle="tooltip" title="Delete Complaint">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
             @endif
         </div>
     </div>
@@ -443,8 +447,8 @@
           </div>
           <div class="modal-footer">
             <input type="hidden" id="deleteComplaintId" value="">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" id="confirmDeleteComplaintButton" class="btn btn-danger">Yes, Delete</button>
+            <button type="button" class="btn btn-secondary" style="background-color:rgb(228, 227, 227); border-radius:12px;" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" id="confirmDeleteComplaintButton" class="btn btn-danger" style="background-color:rgb(220, 117, 117); border-radius:12px; margin-left:2px; padding: 0.8 0.9;">Yes, Delete</button>
           </div>
         </div>
       </div>
@@ -463,7 +467,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" style="background-color:rgb(228, 227, 227); border-radius:12px;" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" id="confirmBulkDeleteButton" style="background-color:rgb(220, 117, 117); border-radius:12px; margin-left:2px; padding: 0.8 0.9;" class="btn btn-danger">Yes, Delete</button>
+            <button type="button" id="confirmBulkDeleteButton" class="btn btn-danger" style="background-color:rgb(220, 117, 117); border-radius:12px; margin-left:2px; padding: 0.8 0.9;">Yes, Delete</button>
           </div>
         </div>
       </div>
@@ -482,7 +486,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" style="background-color:rgb(228, 227, 227); border-radius:12px;" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" id="confirmBulkMarkCompletedButton" style="background-color:rgb(97, 126, 149); border-radius:12px; margin-left:2px; padding: 0.8 0.9;" class="btn btn-success">Yes</button>
+            <button type="button" id="confirmBulkMarkCompletedButton" class="btn btn-success" style="background-color:rgb(97, 126, 149); border-radius:12px; margin-left:2px; padding: 0.8 0.9;">Yes</button>
           </div>
         </div>
       </div>
@@ -496,170 +500,162 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 <meta name="csrf-token" content="{{ csrf_token() }}">
-
 @vite([
     'resources/admin/app.js',
     'resources/admin/dashboard.js',
     'resources/admin/complaint.js',
 ])
 <script>
-    $(document).ready(function() {
-        // CSRF token from meta
-        var csrfToken = $('meta[name="csrf-token"]').attr('content');
-
-        // Initialize tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-
-        // 1) Individual delete button
-        $('.delete-button').on('click', function() {
-            var complaintId = $(this).data('complaint-id');
-            $('#deleteComplaintId').val(complaintId);
-            $('#deleteModal').modal('show');
-        });
-
-        $('#confirmDeleteComplaintButton').on('click', function() {
-            var complaintId = $('#deleteComplaintId').val();
-            var actionUrl = '{{ route("admin.complaints.bulkAction") }}';
-
-            var form = $('<form>', {
-                method: 'POST',
-                action: actionUrl
-            });
-            form.append('<input type="hidden" name="_token" value="' + csrfToken + '">');
-            form.append('<input type="hidden" name="action" value="delete">');
-            form.append('<input type="hidden" name="selected_complaints[]" value="' + complaintId + '">');
-            $('body').append(form);
-            form.submit();
-        });
-
-        // 2) Bulk delete
-        $('#bulkDeleteButton').on('click', function(e) {
-            e.preventDefault();
-            var selectedComplaints = $('.select-box:checked').map(function() {
-                return $(this).val();
-            }).get();
-
-            if (!selectedComplaints.length) {
-                toastr.warning('Please select at least one complaint to delete.');
-                return;
-            }
-            $('#bulkDeleteModal').modal('show');
-        });
-
-        $('#confirmBulkDeleteButton').on('click', function() {
-            var actionUrl = '{{ route("admin.complaints.bulkAction") }}';
-            var selectedComplaints = $('.select-box:checked').map(function() {
-                return $(this).val();
-            }).get();
-
-            var form = $('<form>', {
-                method: 'POST',
-                action: actionUrl
-            });
-            form.append('<input type="hidden" name="_token" value="' + csrfToken + '">');
-            form.append('<input type="hidden" name="action" value="delete">');
-
-            selectedComplaints.forEach(function(id) {
-                form.append('<input type="hidden" name="selected_complaints[]" value="' + id + '">');
-            });
-
-            $('body').append(form);
-            form.submit();
-        });
-
-        // 3) Bulk mark as completed
-        $('#bulkMarkCompletedButton').on('click', function(e) {
-            e.preventDefault();
-            var selectedComplaints = $('.select-box:checked').map(function() {
-                return $(this).val();
-            }).get();
-
-            if (!selectedComplaints.length) {
-                toastr.warning('Please select at least one complaint to mark as completed.');
-                return;
-            }
-            $('#bulkMarkCompletedModal').modal('show');
-        });
-
-        $('#confirmBulkMarkCompletedButton').on('click', function() {
-            var actionUrl = '{{ route("admin.complaints.bulkAction") }}';
-            var selectedComplaints = $('.select-box:checked').map(function() {
-                return $(this).val();
-            }).get();
-
-            var form = $('<form>', {
-                method: 'POST',
-                action: actionUrl
-            });
-            form.append('<input type="hidden" name="_token" value="' + csrfToken + '">');
-            form.append('<input type="hidden" name="action" value="mark_completed">');
-
-            selectedComplaints.forEach(function(id) {
-                form.append('<input type="hidden" name="selected_complaints[]" value="' + id + '">');
-            });
-
-            $('body').append(form);
-            form.submit();
-        });
-
-        // 4) "Select All" checkbox (works within each table separately)
-        $('.select-all').on('click', function(){
-            $(this).closest('table').find('.select-box').prop('checked', this.checked);
-            toggleBulkActions();
-        });
-        $('.select-box').on('change', toggleBulkActions);
-
-        function toggleBulkActions() {
-            var selectedCount = $('.select-box:checked').length;
-            if (selectedCount > 0) {
-                $('.bulk-actions-toolbar').addClass('active');
-            } else {
-                $('.bulk-actions-toolbar').removeClass('active');
-            }
-        }
-
-        // 5) Inline status update
-        $('.status-select').on('change', function(e) {
-            e.stopPropagation();
-            var selectElement = $(this);
-            var complaintId   = selectElement.data('complaint-id');
-            var newStatus     = selectElement.val();
-            var url           = selectElement.data('url');
-
-            selectElement.addClass('loading').prop('disabled', true);
-
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: {
-                    comp_status: newStatus,
-                    _token: csrfToken
-                },
-                success: function(response) {
-                    selectElement.removeClass('loading').prop('disabled', false);
-                    if(response.status !== 'success') {
-                        toastr.error(response.message || 'An error occurred while updating the status.');
-                    } else {
-                        toastr.success('Status updated successfully.');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    selectElement.removeClass('loading').prop('disabled', false);
-                    toastr.error('An error occurred while updating the status.');
-                }
-            });
-        });
-
-        // 6) Toastr notifications for success/error
-        @if(session('success'))
-            toastr.success("{{ session('success') }}");
-        @endif
-        @if(session('error'))
-            toastr.error("{{ session('error') }}");
-        @endif
+$(document).ready(function() {
+    var csrfToken = $('meta[name="csrf-token"]').attr('content');
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
     });
+
+    // 1) Individual delete button
+    $('.delete-button').on('click', function() {
+        var complaintId = $(this).data('complaint-id');
+        $('#deleteComplaintId').val(complaintId);
+        $('#deleteModal').modal('show');
+    });
+
+    $('#confirmDeleteComplaintButton').on('click', function() {
+        var complaintId = $('#deleteComplaintId').val();
+        var actionUrl = '{{ route("admin.complaints.bulkAction") }}';
+
+        var form = $('<form>', {
+            method: 'POST',
+            action: actionUrl
+        });
+        form.append('<input type="hidden" name="_token" value="' + csrfToken + '">');
+        form.append('<input type="hidden" name="action" value="delete">');
+        form.append('<input type="hidden" name="selected_complaints[]" value="' + complaintId + '">');
+        $('body').append(form);
+        form.submit();
+    });
+
+    // 2) Bulk delete
+    $('#bulkDeleteButton').on('click', function(e) {
+        e.preventDefault();
+        var selectedComplaints = $('.select-box:checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        if (!selectedComplaints.length) {
+            toastr.warning('Please select at least one complaint to delete.');
+            return;
+        }
+        $('#bulkDeleteModal').modal('show');
+    });
+
+    $('#confirmBulkDeleteButton').on('click', function() {
+        var actionUrl = '{{ route("admin.complaints.bulkAction") }}';
+        var selectedComplaints = $('.select-box:checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        var form = $('<form>', {
+            method: 'POST',
+            action: actionUrl
+        });
+        form.append('<input type="hidden" name="_token" value="' + csrfToken + '">');
+        form.append('<input type="hidden" name="action" value="delete">');
+
+        selectedComplaints.forEach(function(id) {
+            form.append('<input type="hidden" name="selected_complaints[]" value="' + id + '">');
+        });
+
+        $('body').append(form);
+        form.submit();
+    });
+
+    // 3) Bulk mark as completed
+    $('#bulkMarkCompletedButton').on('click', function(e) {
+        e.preventDefault();
+        var selectedComplaints = $('.select-box:checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        if (!selectedComplaints.length) {
+            toastr.warning('Please select at least one complaint to mark as completed.');
+            return;
+        }
+        $('#bulkMarkCompletedModal').modal('show');
+    });
+
+    $('#confirmBulkMarkCompletedButton').on('click', function() {
+        var actionUrl = '{{ route("admin.complaints.bulkAction") }}';
+        var selectedComplaints = $('.select-box:checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        var form = $('<form>', {
+            method: 'POST',
+            action: actionUrl
+        });
+        form.append('<input type="hidden" name="_token" value="' + csrfToken + '">');
+        form.append('<input type="hidden" name="action" value="mark_completed">');
+
+        selectedComplaints.forEach(function(id) {
+            form.append('<input type="hidden" name="selected_complaints[]" value="' + id + '">');
+        });
+
+        $('body').append(form);
+        form.submit();
+    });
+
+    // 4) "Select All" checkbox (works within each table separately)
+    $('.select-all').on('click', function(){
+        $(this).closest('table').find('.select-box').prop('checked', this.checked);
+        toggleBulkActions();
+    });
+    $('.select-box').on('change', toggleBulkActions);
+
+    function toggleBulkActions() {
+        var selectedCount = $('.select-box:checked').length;
+        if (selectedCount > 0) {
+            $('.bulk-actions-toolbar').addClass('active');
+        } else {
+            $('.bulk-actions-toolbar').removeClass('active');
+        }
+    }
+
+    // 5) Inline status update
+    $('.status-select').on('change', function(e) {
+        e.stopPropagation();
+        var selectElement = $(this);
+        var complaintId   = selectElement.data('complaint-id');
+        var newStatus     = selectElement.val();
+        var url           = selectElement.data('url');
+
+        selectElement.addClass('loading').prop('disabled', true);
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: { comp_status: newStatus, _token: csrfToken },
+            success: function(response) {
+                selectElement.removeClass('loading').prop('disabled', false);
+                if(response.status !== 'success') {
+                    toastr.error(response.message || 'An error occurred while updating the status.');
+                } else {
+                    toastr.success('Status updated successfully.');
+                }
+            },
+            error: function(xhr, status, error) {
+                selectElement.removeClass('loading').prop('disabled', false);
+                toastr.error('An error occurred while updating the status.');
+            }
+        });
+    });
+
+    // 6) Toastr notifications for success/error
+    @if(session('success'))
+        toastr.success("{{ session('success') }}");
+    @endif
+    @if(session('error'))
+        toastr.error("{{ session('error') }}");
+    @endif
+});
 </script>
 @endpush

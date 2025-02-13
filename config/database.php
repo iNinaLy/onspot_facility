@@ -62,6 +62,20 @@ return [
             ]) : [],
         ],
 
+        'supabase' => [
+            'driver' => 'pgsql',
+            'host' => env('SUPABASE_HOST'),
+            'port' => env('SUPABASE_PORT', 5432),
+            'database' => env('SUPABASE_DATABASE', 'onspot'),
+            'username' => env('SUPABASE_USERNAME','root'),
+            'password' => env('SUPABASE_PASSWORD'),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'schema' => 'public',
+            'sslmode' => 'prefer',
+        ],
+
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),
